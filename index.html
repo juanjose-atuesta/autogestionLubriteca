@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoGestión — Sistema de Mantenimientos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+  <!-- ═══ LOGIN ═══ -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-bg">
+      <div class="login-bg-grid"></div>
+      <div class="login-bg-glow"></div>
+      <div class="login-bg-stripes"></div>
+    </div>
+    <div class="login-panel">
+      <div class="login-brand">
+        <div class="login-logo-wrap">
+          <span class="login-gear login-gear-1">⚙</span>
+          <span class="login-gear login-gear-2">⚙</span>
+        </div>
+        <h1 class="login-title">AutoGestión</h1>
+        <p class="login-subtitle">Sistema de Gestión de Mantenimientos</p>
+      </div>
+      <div class="login-divider"></div>
+      <form id="loginForm" class="login-form" onsubmit="intentarLogin(event)">
+        <div class="login-field">
+          <label for="loginUser">Usuario</label>
+          <div class="login-input-wrap">
+            <input type="text" id="loginUser" placeholder="Ingresa tu usuario" autocomplete="username" required>
+          </div>
+        </div>
+        <div class="login-field">
+          <label for="loginPass">Contraseña</label>
+          <div class="login-input-wrap">
+            <input type="password" id="loginPass" placeholder="Ingresa tu contraseña" autocomplete="current-password"
+              required>
+            <button type="button" class="login-toggle-pass" onclick="togglePassword()"
+              title="Mostrar/ocultar">👁</button>
+          </div>
+        </div>
+        <div class="login-error" id="loginError">✕ Usuario o contraseña incorrectos</div>
+        <button type="submit" class="login-btn" id="loginBtn">
+          <span id="loginBtnText">Iniciar Sesión</span>
+          <span id="loginBtnLoader" class="login-loader" style="display:none">⟳</span>
+        </button>
+      </form>
+      <div class="login-footer">
+        <span class="login-footer-dot"></span>Acceso restringido · Solo personal autorizado<span
+          class="login-footer-dot"></span>
+      </div>
+    </div>
+    <div class="login-deco login-deco-tl">— SISTEMA ACTIVO —</div>
+    <div class="login-deco login-deco-br">v3.4 · AutoGestión</div>
+  </div>
+
+  <!-- ═══ APP ═══ -->
+  <div id="appWrapper" style="display:none">
+
+    <div class="topbar">
+      <button class="menu-toggle" id="menuBtn" onclick="toggleMenu()"><span></span><span></span><span></span></button>
+      <div class="topbar-brand">
+        <span class="topbar-logo">⚙</span>
+        <div><strong>AutoGestión</strong><small id="tab-indicator">Panel Principal</small></div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-badge" id="badge-alertas" title="Alertas activas">0</div>
+        <button class="btn-logout" onclick="cerrarSesion()" title="Cerrar sesión">⏻</button>
+      </div>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="cerrarMenu()"></div>
+
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">⚙</div>
+        <p class="sidebar-brand-text">AutoGestión</p>
+        <p class="sidebar-sub">Sistema de Mantenimientos</p>
+      </div>
+      <ul class="nav-list">
+        <li class="nav-item active" id="nav-principal" onclick="seleccionarTab('principal')">
+          <span class="nav-icon">▣</span><span class="nav-label">Panel Principal</span>
+          <span class="nav-badge" id="nav-badge">0</span>
+        </li>
+        <li class="nav-item" id="nav-database" onclick="seleccionarTab('database')">
+          <span class="nav-icon">◫</span><span class="nav-label">Base de Datos</span>
+        </li>
+        <li class="nav-item" id="nav-historial" onclick="seleccionarTab('historial')">
+          <span class="nav-icon">◎</span><span class="nav-label">Historial por Placa</span>
+        </li>
+        <li class="nav-item" id="nav-contactados" onclick="seleccionarTab('contactados')">
+          <span class="nav-icon">✓</span><span class="nav-label">Contactados</span>
+          <span class="nav-badge-green" id="nav-badge-contactados">0</span>
+        </li>
+        <li class="nav-item" id="nav-agenda" onclick="seleccionarTab('agenda')">
+          <span class="nav-icon">◷</span><span class="nav-label">Agenda</span>
+          <span class="nav-badge-agenda" id="nav-badge-agenda">0</span>
+        </li>
+      </ul>
+      <div class="sidebar-footer">v3.4 · AutoGestión</div>
+    </nav>
+
+    <main>
+
+      <!-- PANEL PRINCIPAL -->
+      <div id="tab-principal" class="tab-view active">
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">+</span>
+            <div>
+              <h3>Registrar Cliente</h3>
+              <p>Agrega un nuevo vehículo al sistema</p>
+            </div>
+          </div>
+          <form id="clienteForm" class="form-grid">
+            <div class="field"><label>Nombre completo</label><input type="text" id="nombre" placeholder="Ej: Juan Pérez"
+                required></div>
+            <div class="field"><label>Teléfono</label><input type="tel" id="telefono" placeholder="Ej: 3001234567"
+                required></div>
+            <div class="field"><label>Placa</label><input type="text" id="placa" placeholder="Ej: ABC123" required
+                style="text-transform:uppercase"></div>
+            <div class="field">
+              <label>Tipo de servicio</label>
+              <select id="categoria" required>
+                <option value="" disabled selected>Seleccione...</option>
+                <option value="Cambio de Aceite">🛢️ Cambio de Aceite</option>
+                <option value="Revisión de Frenos">🛑 Revisión de Frenos</option>
+                <option value="Mantenimiento General">🔧 Mantenimiento General</option>
+                <option value="Sistema Eléctrico">⚡ Sistema Eléctrico</option>
+                <option value="Otros">⚙️ Otros</option>
+              </select>
+            </div>
+            <div class="field"><label>Fecha de ingreso</label><input type="date" id="fechaActual" required></div>
+            <div class="field"><label>Próximo Contacto</label><input type="date" id="fechaFutura" required></div>
+            <div class="field"><label>Kilometraje</label><input type="number" id="kilometraje" placeholder="Ej: 45000"
+                required></div>
+            <div class="field field-submit" style="flex-direction:column;gap:8px;">
+              <button type="submit" class="btn-save" id="btnGuardar">💾 Guardar Cliente</button>
+              <button type="button" class="btn-wa btn-wa-auth btn-auth-form" onclick="enviarAutorizacion()">🔒
+                Autorización datos personales</button>
+            </div>
+          </form>
+          <div class="toast" id="toastGuardado">✅ Cliente guardado correctamente</div>
+        </div>
+        <div class="card">
+          <div class="card-header card-header-danger">
+            <span class="card-icon">⚠</span>
+            <div>
+              <h3>Alertas Activas</h3>
+              <p>Citas de hoy y registros vencidos</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table id="tablaAlertas">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Teléfono</th>
+                  <th>Placa</th>
+                  <th>Ingreso</th>
+                  <th>Próximo Contacto</th>
+                  <th>Estado</th>
+                  <th>KM</th>
+                  <th>Agenda</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="listaAlertas"></tbody>
+            </table>
+            <div class="empty-state" id="emptyAlertas" style="display:none">
+              <div class="empty-icon">✓</div>
+              <p>Sin alertas activas. ¡Todo al día!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BASE DE DATOS -->
+      <div id="tab-database" class="tab-view" style="display:none">
+        <div class="card">
+          <div class="card-header"><span class="card-icon">◫</span>
+            <div>
+              <h3>Base de Datos</h3>
+              <p>Todos los registros del sistema</p>
+            </div>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="buscadorGeneral" oninput="filtrarGeneral()"
+              placeholder="🔍 Buscar por nombre, placa, teléfono o servicio...">
+            <button onclick="limpiarBuscadorGeneral()" class="btn-clear">Limpiar</button>
+          </div>
+          <div class="db-stats" id="dbStats"></div>
+          <div class="table-wrap">
+            <table id="tablaGeneral">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Teléfono</th>
+                  <th>Placa</th>
+                  <th>Ingreso</th>
+                  <th>Próximo Contacto</th>
+                  <th>Estado</th>
+                  <th>KM</th>
+                  <th>Agenda</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="listaGeneral"></tbody>
+            </table>
+            <div class="empty-state" id="emptyGeneral" style="display:none">
+              <div class="empty-icon">○</div>
+              <p>No hay registros aún.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORIAL -->
+      <div id="tab-historial" class="tab-view" style="display:none">
+        <div class="card">
+          <div class="card-header"><span class="card-icon">◎</span>
+            <div>
+              <h3>Historial por Placa</h3>
+              <p>Todos los servicios y dueños de un vehículo</p>
+            </div>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="buscadorPlaca" oninput="buscarHistorial()"
+              placeholder="🔍 Escribe una placa para ver su historial..." style="text-transform:uppercase">
+            <button onclick="limpiarHistorial()" class="btn-clear">Limpiar</button>
+          </div>
+          <div id="historialResultado">
+            <div class="empty-state">
+              <div class="empty-icon">◎</div>
+              <p>Ingresa una placa para ver su historial completo.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTACTADOS -->
+      <div id="tab-contactados" class="tab-view" style="display:none">
+        <div class="card">
+          <div class="card-header card-header-contactados"><span class="card-icon card-icon-contactados">✓</span>
+            <div>
+              <h3>Registro de Contactados</h3>
+              <p>Historial de todos los clientes contactados</p>
+            </div>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="buscadorContactados" oninput="filtrarContactados()"
+              placeholder="🔍 Buscar por nombre, placa o servicio...">
+            <button onclick="limpiarBuscadorContactados()" class="btn-clear">Limpiar</button>
+          </div>
+          <div class="db-stats" id="statsContactados"></div>
+          <div class="table-wrap">
+            <table id="tablaContactados">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Teléfono</th>
+                  <th>Placa</th>
+                  <th>Servicio</th>
+                  <th>Ingreso</th>
+                  <th>Próximo Contacto</th>
+                  <th>KM</th>
+                  <th>Fecha Contacto</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="listaContactados"></tbody>
+            </table>
+            <div class="empty-state" id="emptyContactados" style="display:none">
+              <div class="empty-icon">✓</div>
+              <p>Aún no has marcado ningún cliente como contactado.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENDA -->
+      <div id="tab-agenda" class="tab-view" style="display:none">
+        <div class="card">
+          <div class="card-header card-header-agenda">
+            <span class="card-icon card-icon-agenda">◷</span>
+            <div>
+              <h3>Agenda del Taller</h3>
+              <p>Citas por espacio y hora — Cárcamo · Gato Hidráulico · Gato Eléctrico</p>
+            </div>
+          </div>
+
+          <!-- Toolbar -->
+          <div class="agenda-toolbar">
+            <button class="agenda-nav-btn" onclick="cambiarDiaAgenda(-1)">‹ Anterior</button>
+            <div class="agenda-fecha-wrap">
+              <input type="date" id="agendaFecha" onchange="renderAgenda()">
+              <span class="agenda-fecha-label" id="agendaFechaLabel"></span>
+            </div>
+            <button class="agenda-nav-btn" onclick="cambiarDiaAgenda(1)">Siguiente ›</button>
+            <button class="agenda-hoy-btn" onclick="irHoyAgenda()">Hoy</button>
+          </div>
+
+          <!-- Leyenda de espacios + filtros -->
+          <div class="agenda-leyenda">
+            <span class="agenda-leyenda-title">Espacios:</span>
+            <button class="agenda-filtro-btn activo" id="filtro-todos" onclick="setFiltroAgenda('todos')">Todos</button>
+            <button class="agenda-filtro-btn" id="filtro-carcamo" onclick="setFiltroAgenda('carcamo')">
+              <span class="agenda-dot" style="background:#2563eb"></span>Cárcamo
+            </button>
+            <button class="agenda-filtro-btn" id="filtro-gato_hidraulico" onclick="setFiltroAgenda('gato_hidraulico')">
+              <span class="agenda-dot" style="background:#059669"></span>Gato Hidráulico
+            </button>
+            <button class="agenda-filtro-btn" id="filtro-gato_electrico" onclick="setFiltroAgenda('gato_electrico')">
+              <span class="agenda-dot" style="background:#d97706"></span>Gato Eléctrico
+            </button>
+            <div class="agenda-resumen" id="agendaResumen"></div>
+          </div>
+
+          <!-- Contenido de la agenda -->
+          <div id="agendaContenido" class="agenda-contenido"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- MODAL ELIMINAR -->
+  <div class="modal-overlay" id="modalEliminar">
+    <div class="modal">
+      <div class="modal-icon modal-icon-danger">✕</div>
+      <h3>¿Eliminar registro?</h3>
+      <p id="modalEliminarTexto">Esta acción moverá el cliente a la papelera en Google Sheets.</p>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="cerrarModalEliminar()">Cancelar</button>
+        <button class="btn-modal-confirm" id="btnConfirmarEliminar">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR -->
+  <div class="modal-overlay" id="modalEditar">
+    <div class="modal modal-wide">
+      <div class="modal-icon modal-icon-primary">✎</div>
+      <h3>Editar Cliente</h3>
+      <form id="formEditar" class="form-grid form-grid-modal">
+        <input type="hidden" id="editId">
+        <div class="field"><label>Nombre completo</label><input type="text" id="editNombre" required></div>
+        <div class="field"><label>Teléfono</label><input type="tel" id="editTelefono" required></div>
+        <div class="field"><label>Placa</label><input type="text" id="editPlaca" required
+            style="text-transform:uppercase"></div>
+        <div class="field">
+          <label>Tipo de servicio</label>
+          <select id="editCategoria" required>
+            <option value="Cambio de Aceite">🛢️ Cambio de Aceite</option>
+            <option value="Revisión de Frenos">🛑 Revisión de Frenos</option>
+            <option value="Mantenimiento General">🔧 Mantenimiento General</option>
+            <option value="Sistema Eléctrico">⚡ Sistema Eléctrico</option>
+            <option value="Otros">⚙️ Otros</option>
+          </select>
+        </div>
+        <div class="field"><label>Fecha de ingreso</label><input type="date" id="editFechaActual" required></div>
+        <div class="field"><label>Próximo Contacto</label><input type="date" id="editFechaFutura" required></div>
+        <div class="field"><label>Kilometraje</label><input type="number" id="editKm" required></div>
+      </form>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="cerrarModalEditar()">Cancelar</button>
+        <button class="btn-modal-confirm" onclick="guardarEdicion()">💾 Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL RESERVAR CITA -->
+  <div class="modal-overlay" id="modalReservar">
+    <div class="modal modal-wide">
+      <div class="modal-icon modal-icon-agenda">◷</div>
+      <h3>Reservar Cita</h3>
+
+      <!-- Info del cliente -->
+      <div class="reservar-info" id="reservarInfo"></div>
+      <input type="hidden" id="reservarPlacaH">
+      <input type="hidden" id="reservarNombreH">
+      <input type="hidden" id="reservarTelefonoH">
+      <input type="hidden" id="reservarCategoriaH">
+      <input type="hidden" id="reservarClienteId">
+
+      <!-- PASO 1: Fecha -->
+      <div class="reservar-paso" id="reservarPaso1">
+        <div class="reservar-paso-label">Paso 1 — Selecciona la fecha</div>
+        <div class="form-grid form-grid-modal">
+          <div class="field" style="grid-column:1/-1;">
+            <label>Fecha de la cita</label>
+            <input type="date" id="reservarFecha" onchange="mostrarPaso2()">
+          </div>
+        </div>
+      </div>
+
+      <!-- PASO 2: Espacio -->
+      <div class="reservar-paso" id="reservarPaso2" style="display:none">
+        <div class="reservar-paso-label">Paso 2 — Selecciona el espacio</div>
+        <div class="espacios-grid">
+          <button class="espacio-btn espacio-carcamo" onclick="seleccionarEspacio('carcamo')">
+            <span class="espacio-icon">🔩</span>
+            <span class="espacio-nombre">Cárcamo</span>
+          </button>
+          <button class="espacio-btn espacio-hidraulico" onclick="seleccionarEspacio('gato_hidraulico')">
+            <span class="espacio-icon">🔧</span>
+            <span class="espacio-nombre">Gato Hidráulico</span>
+          </button>
+          <button class="espacio-btn espacio-electrico" onclick="seleccionarEspacio('gato_electrico')">
+            <span class="espacio-icon">⚡</span>
+            <span class="espacio-nombre">Gato Eléctrico</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- PASO 3: Hora -->
+      <div class="reservar-paso" id="reservarPaso3" style="display:none">
+        <div class="reservar-paso-label">Paso 3 — Selecciona la hora disponible</div>
+        <div id="horasDisponibles" class="horas-grid"></div>
+        <div id="horaSeleccionadaInfo" class="hora-seleccionada-info" style="display:none"></div>
+        <input type="hidden" id="reservarHora">
+        <input type="hidden" id="reservarEspacio">
+      </div>
+
+      <!-- PASO 4: Notas -->
+      <div class="reservar-paso" id="reservarPaso4" style="display:none">
+        <div class="reservar-paso-label">Paso 4 — Notas adicionales (opcional)</div>
+        <div class="form-grid form-grid-modal">
+          <div class="field" style="grid-column:1/-1;">
+            <label>Notas</label>
+            <input type="text" id="reservarNotas" placeholder="Ej: Traer factura anterior, revisar frenos...">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="cerrarModalReservar()">Cancelar</button>
+        <button class="btn-modal-confirm btn-modal-agenda" id="btnConfirmarReserva" onclick="confirmarReserva()"
+          style="display:none">📅 Confirmar cita</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DETALLE CITA -->
+  <div class="modal-overlay" id="modalDetalleCita">
+    <div class="modal modal-wide">
+      <div class="modal-icon modal-icon-agenda">◷</div>
+      <h3>Detalle de la Reserva</h3>
+      <div id="detalleCitaContenido"></div>
+      <div class="modal-actions" style="margin-top:0;">
+        <button class="btn-modal-cancel" onclick="cerrarDetalleCita()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="JSpagina.js"></script>
+</body>
+
+</html>
