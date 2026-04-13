@@ -1,0 +1,23 @@
+
+function getHoy() { return new Date().toLocaleDateString('en-CA'); }
+function diasRestantes(fechaStr) {
+  return Math.ceil((new Date(String(fechaStr).trim()) - new Date(getHoy())) / 86400000);
+}
+function fechaHoraActual() {
+  return new Date().toLocaleString('es-CO', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+function formatearFechaLarga(fechaStr) {
+  const [y, m, d] = fechaStr.split('-');
+  return new Date(+y, +m - 1, +d).toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+// Generar ID numérico consistente a partir de placa + fecha
+function generarIdCliente(placa, fecha) {
+  const str = String(placa) + String(fecha);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return Math.abs(hash) || Date.now();
+}

@@ -1,0 +1,150 @@
+
+// ═══════════ INDICADOR DE CARGA ═══════════
+function mostrarCargando(visible) {
+  let el = document.getElementById('syncIndicador');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'syncIndicador';
+    el.style.cssText = 'position:fixed;top:70px;right:20px;z-index:500;background:#0f172a;color:#38bdf8;padding:8px 16px;border-radius:8px;font-family:Syne,sans-serif;font-size:0.78rem;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,0.3);display:flex;align-items:center;gap:8px;transition:opacity 0.3s;';
+    document.body.appendChild(el);
+  }
+  if (visible) {
+    el.innerHTML = '<span style="animation:spin-slow 0.8s linear infinite;display:inline-block">⟳</span> Sincronizando...';
+    el.style.opacity = '1';
+    el.style.display = 'flex';
+  } else {
+    el.style.opacity = '0';
+    setTimeout(() => { el.style.display = 'none'; }, 400);
+  }
+}
+
+
+// ═══════════ SINCRONIZAR CON GOOGLE SHEETS (CORREGIDO) ═══════════
+function sincronizarConSheets() {
+  mostrarCargando(true);
+
+  fetch(urlGoogle + '?v=' + Date.now(), { method: 'GET', cache: 'no-cache' })
+    .then(res => {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(datos => {
+      if (!datos.ok || !Array.isArray(datos.clientes)) {
+        throw new Error('Respuesta inválida');
+      }
+
+      // Sincronizar clientes
+      const clientesSheets = datos.clientes
+        .filter(c => c.nombre || c.placa)
+        .map(c => ({
+          ...c,
+          id: Number(c.id) || generarIdCliente(c.placa, c.fechaActual),
+          nombre: String(c.nombre || ''),
+          telefono: String(c.telefono || ''),
+          placa: String(c.placa || '').toUpperCase().trim(),
+          categoria: String(c.categoria || ''),
+          fechaActual: String(c.fechaActual || ''),
+          fechaFutura: String(c.fechaFutura || ''),
+          km: String(c.km || '0')
+        }));
+
+      if (clientesSheets.length > 0) {
+        setClientes(clientesSheets);
+      }
+
+      // 🔧 CORREGIDO: Sincronizar citas usando String para citaId y comparación correcta
+      if (Array.isArray(datos.citas)) {
+        const citasSheets = datos.citas.map(c => ({
+          citaId: String(c.citaId),   // Forzar string
+          placa: String(c.placa || '').toUpperCase().trim(),
+          nombre: String(c.nombre || ''),
+          telefono: String(c.telefono || ''),
+          categoria: String(c.categoria || ''),
+          fecha: String(c.fecha || ''),
+          hora: String(c.hora || ''),
+          espacio: String(c.espacio || ''),
+          notas: String(c.notas || '')
+        }));
+        const idsSheets = new Set(citasSheets.map(c => c.citaId));
+        const citasLocal = getCitas();
+        const ahora = Date.now();
+        // Conservar citas locales recientes (< 2 min) que Sheets aún no confirmó
+        const pendientes = citasLocal.filter(c =>
+          !idsSheets.has(String(c.citaId)) && (ahora - Number(c.citaId)) < 120000
+        );
+        setCitas([...citasSheets, ...pendientes]);
+        console.log('✓ ' + citasSheets.length + ' citas + ' + pendientes.length + ' pendientes locales');
+      }
+
+      migrarClientesAHistorial();
+      actualizarStats();
+      mostrarAlertas();
+      actualizarBadgeContactados();
+      actualizarBadgeAgenda();
+      if (document.getElementById('tab-database').classList.contains('active'))
+        mostrarGeneral(document.getElementById('buscadorGeneral').value);
+      if (document.getElementById('tab-contactados').classList.contains('active'))
+        mostrarContactados();
+      if (document.getElementById('tab-historial').classList.contains('active'))
+        buscarHistorial();
+      if (document.getElementById('tab-agenda').classList.contains('active'))
+        renderAgenda();
+      console.log('✓ ' + clientesSheets.length + ' clientes sincronizados desde Sheets');
+    })
+    .catch(err => {
+      console.warn('Sheets no disponible — usando datos locales:', err.message);
+    })
+    .finally(() => {
+      mostrarCargando(false);
+    });
+}
+
+
+// 🔧 CORREGIDO: sincronizarSoloCitas con manejo de string para citaId
+async function sincronizarSoloCitas() {
+  try {
+    const res = await fetch(urlGoogle + '?v=' + Date.now(), { method: 'GET', cache: 'no-cache' });
+    const datos = await res.json();
+    if (!datos.ok || !Array.isArray(datos.citas)) return;
+
+    const citasSheets = datos.citas.map(c => ({
+      citaId: String(c.citaId),
+      placa: String(c.placa || '').toUpperCase().trim(),
+      nombre: String(c.nombre || ''),
+      telefono: String(c.telefono || ''),
+      categoria: String(c.categoria || ''),
+      fecha: String(c.fecha || ''),
+      hora: String(c.hora || ''),
+      espacio: String(c.espacio || ''),
+      notas: String(c.notas || '')
+    }));
+
+    const idsSheets = new Set(citasSheets.map(c => c.citaId));
+    const citasLocales = getCitas();
+    const ahora = Date.now();
+
+    const pendientes = citasLocales.filter(c =>
+      !idsSheets.has(String(c.citaId)) && (ahora - Number(c.citaId)) < 600000
+    );
+
+    const citasMerge = [...citasSheets, ...pendientes];
+
+    const localIds = new Set(citasLocales.map(c => String(c.citaId)));
+    const sheetsIds = new Set(citasMerge.map(c => String(c.citaId)));
+    const hayDiferencia =
+      citasMerge.length !== citasLocales.length ||
+      [...sheetsIds].some(id => !localIds.has(id)) ||
+      [...localIds].some(id => !sheetsIds.has(id));
+
+    if (hayDiferencia) {
+      setCitas(citasMerge);
+      actualizarBadgeAgenda();
+      mostrarAlertas();
+      if (document.getElementById('tab-database').classList.contains('active'))
+        mostrarGeneral(document.getElementById('buscadorGeneral').value);
+    }
+  } catch (err) {
+    console.warn('Sync citas falló:', err.message);
+  }
+}
+
