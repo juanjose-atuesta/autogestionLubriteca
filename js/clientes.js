@@ -13,16 +13,26 @@ function migrarClientesAHistorial() {
 document.getElementById('clienteForm').addEventListener('submit', e => {
   e.preventDefault();
   const c = {
-    id: Date.now(),
-    nombre: document.getElementById('nombre').value.trim(),
-    telefono: document.getElementById('telefono').value.trim(),
-    placa: document.getElementById('placa').value.toUpperCase().trim(),
-    categoria: document.getElementById('categoria').value,
-    fechaActual: document.getElementById('fechaActual').value,
-    fechaFutura: document.getElementById('fechaFutura').value,
-    km: document.getElementById('kilometraje').value
+    name: document.getElementById('nombre').value.toUpperCase(),
+    telephone: document.getElementById('telefono').value.trim(),
+    plate: document.getElementById('placa').value.toUpperCase().trim(),
+    service: document.getElementById('categoria').value,
+    entryDate: document.getElementById('fechaActual').value,
+    nextContact: document.getElementById('fechaFutura').value,
+    mileage: document.getElementById('kilometraje').value,
+    createAt: document.getElementById('fechaActual').value
   };
-  fetch(urlGoogle, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ ...c, accion: "guardar" }) }).catch(console.error);
+  fetch(API_BACKEND_URL + "addCustomer", {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(c)
+  })
+    .then(response => response.json())
+    .then(data => {
+      console.log(data.status);
+      console.log("se logro");
+    })
+    .catch(console.error);
   const cl = getClientes(); cl.push(c); setClientes(cl);
   const h = getHistorialDB(); h.push({ ...c, eliminado: false, fechaRegistro: fechaHoraActual() }); setHistorialDB(h);
   document.getElementById('clienteForm').reset();

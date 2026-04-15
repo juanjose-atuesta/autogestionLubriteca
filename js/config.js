@@ -1,5 +1,5 @@
 
-const urlGoogle = "https://script.google.com/macros/s/AKfycbz10qVrREJLgl7MyA09WKi__xPJ7Ff2LTpZ2n8pTArS_xcHBGF-3im7q8FxzUhabXKCow/exec";
+const API_BACKEND_URL = "http://192.168.80.25:3000/api/customers/";
 
 // ═══════════ CREDENCIALES ═══════════
 const USUARIOS = [
