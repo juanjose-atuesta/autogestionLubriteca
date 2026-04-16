@@ -23,8 +23,7 @@ autogestionLubriteca/
     ├── sync.js
     ├── auth.js
     ├── navigation.js
-    ├── main.js
-    └── servidor.js
+    └── main.js 
 ```
 
 ## 📦 ¿Qué hace cada archivo?
