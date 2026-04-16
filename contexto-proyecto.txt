@@ -1,0 +1,109 @@
+Contexto de trabajo - sesion 2026-04-15
+=======================================
+
+Objetivo principal acordado
+---------------------------
+Migrar el proyecto de Google Sheets/localStorage a una arquitectura con backend + MongoDB.
+
+
+Decisiones tomadas hoy
+----------------------
+1) Arquitectura
+- Frontend no se conecta directo a MongoDB.
+- Se usara backend (Node + Express + Mongoose) con API REST.
+- MongoDB sera la fuente de verdad.
+- localStorage puede quedar como cache/offline temporal.
+
+2) Colecciones recomendadas
+- clientes
+- citas
+- historial_servicios
+- contactos_log
+- usuarios
+
+3) Endpoints base recomendados
+- /api/clientes (GET, GET:id, POST, PUT/PATCH:id, DELETE:id)
+- /api/citas (GET, GET:id, POST, PATCH:id, DELETE:id)
+- /api/historial (GET por placa, GET:id, POST, PATCH:id, DELETE:id opcional)
+- /api/contactos-log (GET, POST, DELETE:id)
+- /api/auth (login, logout, me) y /api/usuarios (admin)
+
+4) Indices clave
+- clientes: placa unique
+- citas: unique compuesto (fecha, hora, espacio)
+- historial_servicios: index en placa y fechaActual
+- contactos_log: index en fechaContacto
+
+5) Estrategia de implementacion
+- Recomendado: backend primero, luego frontend por vertical slices.
+- Orden recomendado:
+  - Slice 0: infraestructura de API en frontend
+  - Slice 1: clientes
+  - Slice 2: citas/agenda
+  - Slice 3: historial
+  - Slice 4: contactados
+  - Slice 5: auth
+
+
+Funciones frontend identificadas para migracion
+----------------------------------------------
+Slice 0 (infra)
+- js/config.js: cambiar urlGoogle -> API_BASE_URL
+- index.html: incluir js/api.js (si se crea helper central)
+
+Slice 1 (clientes)
+- js/clientes.js:
+  - submit de clienteForm
+  - eliminarCliente(id)
+  - guardarEdicion()
+- js/sync.js:
+  - sincronizarConSheets() -> lectura desde backend
+
+Slice 2 (citas)
+- js/agenda.js:
+  - confirmarReserva()
+  - eliminarCita(citaId)
+  - onDrop(event, nuevaHora)
+- js/sync.js:
+  - sincronizarSoloCitas() -> lectura desde backend
+- js/navigation.js:
+  - seleccionarTab(tab) (llamada de sync agenda)
+  - setInterval(..., 30000) (sync periodica)
+
+Slice 3 (historial)
+- js/historial.js:
+  - buscarHistorial()
+- js/clientes.js:
+  - hooks de guardado/edicion/eliminacion para historial
+- js/sync.js:
+  - sync de historial si sigue cache local
+
+Slice 4 (contactados)
+- js/contactados.js:
+  - toggleContactado(id)
+  - mostrarContactados(filtro)
+  - eliminarLogContactado(id)
+- js/sync.js:
+  - sync de contactos si aplica
+
+Slice 5 (auth)
+- js/auth.js:
+  - intentarLogin(e)
+  - verificarSesion()
+  - cerrarSesion()
+- js/config.js:
+  - retirar USUARIOS hardcodeados al migrar auth
+
+
+Estado actual de documentos
+---------------------------
+- Existe documento tecnico detallado: migracion-mongodb.txt
+- Este archivo (contexto-proyecto.txt) es resumen rapido para retomar contexto.
+
+
+Nota para futuras conversaciones
+--------------------------------
+Si volvemos a hablar de esta migracion, leer primero:
+1) contexto-proyecto.txt (resumen rapido)
+2) migracion-mongodb.txt (detalle completo)
+
