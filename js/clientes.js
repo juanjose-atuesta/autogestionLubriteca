@@ -13,6 +13,7 @@ function migrarClientesAHistorial() {
 document.getElementById('clienteForm').addEventListener('submit', e => {
   e.preventDefault();
   const c = {
+    id: Date.now(),
     name: document.getElementById('nombre').value.toUpperCase(),
     telephone: document.getElementById('telefono').value.trim(),
     plate: document.getElementById('placa').value.toUpperCase().trim(),
@@ -60,13 +61,13 @@ function eliminarCliente(id) {
 function abrirModalEditar(id) {
   const c = getClientes().find(x => x.id === id); if (!c) return;
   document.getElementById('editId').value = c.id;
-  document.getElementById('editNombre').value = c.nombre;
-  document.getElementById('editTelefono').value = c.telefono;
-  document.getElementById('editPlaca').value = c.placa;
-  document.getElementById('editCategoria').value = c.categoria;
-  document.getElementById('editFechaActual').value = c.fechaActual;
-  document.getElementById('editFechaFutura').value = c.fechaFutura;
-  document.getElementById('editKm').value = c.km;
+  document.getElementById('editNombre').value = c.name;
+  document.getElementById('editTelefono').value = c.telephone;
+  document.getElementById('editPlaca').value = c.plate;
+  document.getElementById('editCategoria').value = c.service;
+  document.getElementById('editFechaActual').value = c.entryDate;
+  document.getElementById('editFechaFutura').value = c.nextContact;
+  document.getElementById('editKm').value = c.mileage;
   document.getElementById('modalEditar').classList.add('active');
 }
 
@@ -82,13 +83,13 @@ function guardarEdicion() {
 
   const act = {
     ...cl[idx],
-    nombre: document.getElementById('editNombre').value.trim(),
-    telefono: document.getElementById('editTelefono').value.trim(),
-    placa: document.getElementById('editPlaca').value.toUpperCase().trim(),
-    categoria: document.getElementById('editCategoria').value,
-    fechaActual: document.getElementById('editFechaActual').value,
-    fechaFutura: fNueva,
-    km: document.getElementById('editKm').value
+    name: document.getElementById('editNombre').value.trim(),
+    telephone: document.getElementById('editTelefono').value.trim(),
+    plate: document.getElementById('editPlaca').value.toUpperCase().trim(),
+    service: document.getElementById('editCategoria').value,
+    entryDate: document.getElementById('editFechaActual').value,
+    nextContact: fNueva,
+    mileage: document.getElementById('editKm').value
   };
 
   if (fAnt !== fNueva) setIdsContactados(getIdsContactados().filter(x => x !== id));
@@ -96,11 +97,14 @@ function guardarEdicion() {
   const h = getHistorialDB(), hIdx = h.findLastIndex(x => x.id === id);
   if (hIdx !== -1) { h[hIdx] = { ...h[hIdx], ...act, eliminado: false }; setHistorialDB(h); }
 
-  fetch(urlGoogle, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: JSON.stringify({ ...act, accion: "actualizar", placaAnterior: placaAnterior })
-  }).catch(console.error);
+  fetch(API_BACKEND_URL + "editCustomer", {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...act })
+  })
+    .then(response => response.json())
+    .then(data => { console.log(data.status); console.log("se logro editar"); })
+    .catch(console.error);
 
   cl[idx] = act; setClientes(cl);
   cerrarModalEditar(); actualizarStats(); mostrarAlertas();
