@@ -21,13 +21,13 @@ function buildBadge(fechaStr, eliminado = false) {
 
 // ═══════════ CONSTRUIR FILA ═══════════
 function construirFila(c) {
-  const nombre = String(c.nombre || '');
-  const telefono = String(c.telefono || '');
-  const placa = String(c.placa || '').toUpperCase().trim();
-  const categoria = String(c.categoria || 'Servicio General');
-  const fechaActual = String(c.fechaActual || '');
-  const fechaFutura = String(c.fechaFutura || '');
-  const km = String(c.km || '0');
+  const nombre = String(c.name || '');
+  const telefono = String(c.telephone || '');
+  const placa = String(c.plate || '').toUpperCase().trim();
+  const categoria = String(c.service || 'Servicio General');
+  const fechaActual = String(c.entryDate || '');
+  const fechaFutura = String(c.nextContact || '');
+  const km = String(c.mileage || '0');
   const id = c.id;
 
   const hoy = getHoy(), f = fechaFutura.trim();
@@ -88,9 +88,9 @@ function mostrarAlertas() {
 function mostrarGeneral(filtro = '') {
   const tbody = document.getElementById('listaGeneral'), empty = document.getElementById('emptyGeneral'), hoy = getHoy();
   let cl = getClientes();
-  if (filtro) { const f = filtro.toUpperCase(); cl = cl.filter(c => c.nombre.toUpperCase().includes(f) || c.placa.toUpperCase().includes(f) || (c.categoria || '').toUpperCase().includes(f) || c.telefono.includes(filtro)); }
-  cl.sort((a, b) => String(a.fechaFutura).localeCompare(String(b.fechaFutura)));
-  const todos = getClientes(), v = todos.filter(c => String(c.fechaFutura).trim() < hoy).length, hC = todos.filter(c => String(c.fechaFutura).trim() === hoy).length;
+  //if (filtro) { const f = filtro.toUpperCase(); cl = cl.filter(c => c.name.toUpperCase() || c.plate.toUpperCase().includes(f) || (c.service || '').toUpperCase().includes(f) || c.telephone.includes(filtro)); }
+  cl.sort((a, b) => String(a.nextContact).localeCompare(String(b.nextContact)));
+  const todos = getClientes(), v = todos.filter(c => String(c.nextContact).trim() < hoy).length, hC = todos.filter(c => String(c.nextContact).trim() === hoy).length;
   document.getElementById('dbStats').innerHTML = `
         <div class="db-stat-item"><span class="db-dot" style="background:#ef4444"></span>${v} vencidos</div>
         <div class="db-stat-item"><span class="db-dot" style="background:#f59e0b"></span>${hC} hoy</div>

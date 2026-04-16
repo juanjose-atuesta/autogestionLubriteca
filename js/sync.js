@@ -23,59 +23,59 @@ function mostrarCargando(visible) {
 function sincronizarConSheets() {
   mostrarCargando(true);
 
-  fetch(urlGoogle + '?v=' + Date.now(), { method: 'GET', cache: 'no-cache' })
+  fetch(API_BACKEND_URL + "customersList")
     .then(res => {
       if (!res.ok) throw new Error('HTTP ' + res.status);
       return res.json();
     })
     .then(datos => {
-      if (!datos.ok || !Array.isArray(datos.clientes)) {
+      if (!datos || !Array.isArray(datos.customers)) {
         throw new Error('Respuesta inválida');
       }
 
       // Sincronizar clientes
-      const clientesSheets = datos.clientes
-        .filter(c => c.nombre || c.placa)
+      console.log(datos);
+      const clientesSheets = datos.customers
         .map(c => ({
           ...c,
           id: Number(c.id) || generarIdCliente(c.placa, c.fechaActual),
-          nombre: String(c.nombre || ''),
-          telefono: String(c.telefono || ''),
-          placa: String(c.placa || '').toUpperCase().trim(),
-          categoria: String(c.categoria || ''),
-          fechaActual: String(c.fechaActual || ''),
-          fechaFutura: String(c.fechaFutura || ''),
-          km: String(c.km || '0')
+          name: String(c.name),
+          telephone: String(c.telephone),
+          plate: String(c.plate).toUpperCase().trim(),
+          service: String(c.service),
+          entryDate: String(c.entryDate),
+          nextContact: String(c.nextContact),
+          mileage: String(c.mileage)
         }));
 
       if (clientesSheets.length > 0) {
         setClientes(clientesSheets);
       }
-
-      // 🔧 CORREGIDO: Sincronizar citas usando String para citaId y comparación correcta
-      if (Array.isArray(datos.citas)) {
-        const citasSheets = datos.citas.map(c => ({
-          citaId: String(c.citaId),   // Forzar string
-          placa: String(c.placa || '').toUpperCase().trim(),
-          nombre: String(c.nombre || ''),
-          telefono: String(c.telefono || ''),
-          categoria: String(c.categoria || ''),
-          fecha: String(c.fecha || ''),
-          hora: String(c.hora || ''),
-          espacio: String(c.espacio || ''),
-          notas: String(c.notas || '')
-        }));
-        const idsSheets = new Set(citasSheets.map(c => c.citaId));
-        const citasLocal = getCitas();
-        const ahora = Date.now();
-        // Conservar citas locales recientes (< 2 min) que Sheets aún no confirmó
-        const pendientes = citasLocal.filter(c =>
-          !idsSheets.has(String(c.citaId)) && (ahora - Number(c.citaId)) < 120000
-        );
-        setCitas([...citasSheets, ...pendientes]);
-        console.log('✓ ' + citasSheets.length + ' citas + ' + pendientes.length + ' pendientes locales');
-      }
-
+      /*
+            // 🔧 CORREGIDO: Sincronizar citas usando String para citaId y comparación correcta
+            if (Array.isArray(datos.citas)) {
+              const citasSheets = datos.citas.map(c => ({
+                citaId: String(c.citaId),   // Forzar string
+                placa: String(c.placa || '').toUpperCase().trim(),
+                nombre: String(c.nombre || ''),
+                telefono: String(c.telefono || ''),
+                categoria: String(c.categoria || ''),
+                fecha: String(c.fecha || ''),
+                hora: String(c.hora || ''),
+                espacio: String(c.espacio || ''),
+                notas: String(c.notas || '')
+              }));
+              const idsSheets = new Set(citasSheets.map(c => c.citaId));
+              const citasLocal = getCitas();
+              const ahora = Date.now();
+              // Conservar citas locales recientes (< 2 min) que Sheets aún no confirmó
+              const pendientes = citasLocal.filter(c =>
+                !idsSheets.has(String(c.citaId)) && (ahora - Number(c.citaId)) < 120000
+              );
+              setCitas([...citasSheets, ...pendientes]);
+              console.log('✓ ' + citasSheets.length + ' citas + ' + pendientes.length + ' pendientes locales');
+            }
+      */
       migrarClientesAHistorial();
       actualizarStats();
       mostrarAlertas();
