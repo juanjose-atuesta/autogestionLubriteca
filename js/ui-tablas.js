@@ -2,8 +2,8 @@
 // ═══════════ STATS ═══════════
 function actualizarStats() {
   const cl = getClientes(), hoy = getHoy();
-  const v = cl.filter(c => String(c.fechaFutura).trim() < hoy).length;
-  const h = cl.filter(c => String(c.fechaFutura).trim() === hoy).length;
+  const v = cl.filter(c => String(c.nextContact).trim() < hoy).length;
+  const h = cl.filter(c => String(c.nextContact).trim() === hoy).length;
   document.getElementById('statsGrid').innerHTML = `
         <div class="stat-card stat-primary"><div class="stat-value">${cl.length}</div><div class="stat-label">Total clientes</div></div>
         <div class="stat-card stat-danger"><div class="stat-value">${v}</div><div class="stat-label">Vencidos</div></div>
@@ -75,8 +75,8 @@ function construirFila(c) {
 // ═══════════ ALERTAS ═══════════
 function mostrarAlertas() {
   const tbody = document.getElementById('listaAlertas'), empty = document.getElementById('emptyAlertas'), hoy = getHoy();
-  const al = getClientes().filter(c => { const f = String(c.fechaFutura).trim(); return f === hoy || f < hoy; })
-    .sort((a, b) => { const fa = String(a.fechaFutura).trim(), fb = String(b.fechaFutura).trim(); if (fa === hoy && fb !== hoy) return -1; if (fb === hoy && fa !== hoy) return 1; return fb.localeCompare(fa); });
+  const al = getClientes().filter(c => { const f = String(c.nextContact).trim(); return f === hoy || f < hoy; })
+    .sort((a, b) => { const fa = String(a.nextContact).trim(), fb = String(b.nextContact).trim(); if (fa === hoy && fb !== hoy) return -1; if (fb === hoy && fa !== hoy) return 1; return fb.localeCompare(fa); });
   tbody.innerHTML = '';
   if (!al.length) { empty.style.display = 'block'; document.getElementById('tablaAlertas').style.display = 'none'; }
   else { empty.style.display = 'none'; document.getElementById('tablaAlertas').style.display = ''; al.forEach(c => tbody.appendChild(construirFila(c))); }
