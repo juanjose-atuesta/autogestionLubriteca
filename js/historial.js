@@ -4,7 +4,8 @@ function buscarHistorial() {
   const placa = document.getElementById('buscadorPlaca').value.toUpperCase().trim();
   const res = document.getElementById('historialResultado');
   if (placa.length < 3) { res.innerHTML = `<div class="empty-state"><div class="empty-icon">◎</div><p>Ingresa una placa para ver su historial completo.</p></div>`; return; }
-  const regs = getHistorialDB().filter(c => c.plate.toUpperCase().includes(placa)).sort((a, b) => String(a.entryDate).localeCompare(String(b.nextContact)));
+  //Ojo, cambiamos donde esta el getClientes por getHistorialDB de forma momentanea, pues como tal aun no hacemos un historial en el backend
+  const regs = getClientes().filter(c => c.plate.toUpperCase().includes(placa)).sort((a, b) => String(a.entryDate).localeCompare(String(b.nextContact)));
   if (!regs.length) { res.innerHTML = `<div class="empty-state"><div class="empty-icon">○</div><p>No se encontraron registros para "<strong>${placa}</strong>".</p></div>`; return; }
   const hoy = getHoy(), pu = [...new Set(regs.map(c => c.plate))];
   let html = '';
