@@ -26,6 +26,7 @@ function actualizar() {
       actualizarStats();
       buscarHistorial();
       actualizarBadgeContactados();
+      mostrarContactados();
     })
 
 }
