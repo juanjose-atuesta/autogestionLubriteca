@@ -1,0 +1,10 @@
+La mejor opción para ustedes es pasar de “cargar al entrar” a “sincronización continua”; así cada PC refresca solo cuando hay cambios.
+
+1. Rápido y fácil (ya): polling inteligente
+Cada 3–10s haces fetch de clientes/contactados (idealmente solo cambios desde updatedAt o version). Si cambió algo, repintas tabla.
+
+2. Tiempo real real (recomendado): WebSocket
+Cuando un PC crea/edita/elimina cliente, el backend emite evento (customer_created, customer_updated) y todos los navegadores conectados actualizan al instante sin recargar.
+
+3. Más simple que WebSocket: SSE (Server-Sent Events)
+El backend mantiene un stream de eventos a cada cliente; cuando hay cambios, empuja notificación y el front vuelve a pedir datos o aplica patch local.

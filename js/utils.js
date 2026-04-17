@@ -11,6 +11,16 @@ function formatearFechaLarga(fechaStr) {
   return new Date(+y, +m - 1, +d).toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+function normalizarBooleanContactado(valor) {
+  if (typeof valor === 'boolean') return valor;
+  if (typeof valor === 'number') return valor === 1;
+  if (typeof valor === 'string') {
+    const v = valor.trim().toLowerCase();
+    return v === 'true' || v === '1' || v === 'si' || v === 'sí' || v === 'yes';
+  }
+  return false;
+}
+
 // Generar ID numérico consistente a partir de placa + fecha
 function generarIdCliente(placa, fecha) {
   const str = String(placa) + String(fecha);
