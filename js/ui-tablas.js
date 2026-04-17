@@ -33,7 +33,7 @@ function construirFila(c) {
   const hoy = getHoy(), f = fechaFutura.trim();
   const esHoy = f === hoy, esV = f < hoy;
 
-  const marcado = c.wasContacted;
+  const marcado = normalizarBooleanContactado(c.wasContacted);
   const cl = esHoy ? 'fila-hoy' : esV ? 'fila-vencido' : '';
 
   const waTxt = esHoy
@@ -94,7 +94,16 @@ function mostrarAlertas() {
 function mostrarGeneral(filtro = '') {
   const tbody = document.getElementById('listaGeneral'), empty = document.getElementById('emptyGeneral'), hoy = getHoy();
   let cl = getClientes();
-  //if (filtro) { const f = filtro.toUpperCase(); cl = cl.filter(c => c.name.toUpperCase() || c.plate.toUpperCase().includes(f) || (c.service || '').toUpperCase().includes(f) || c.telephone.includes(filtro)); }
+  if (filtro.trim()) {
+    const f = filtro.trim().toUpperCase();
+    cl = cl.filter(c => {
+      const nombre = String(c.name || '').toUpperCase();
+      const placa = String(c.plate || '').toUpperCase();
+      const servicio = String(c.service || '').toUpperCase();
+      const telefono = String(c.telephone || '');
+      return nombre.includes(f) || placa.includes(f) || servicio.includes(f) || telefono.includes(filtro.trim());
+    });
+  }
   cl.sort((a, b) => String(a.nextContact).localeCompare(String(b.nextContact)));
   const todos = getClientes(), v = todos.filter(c => String(c.nextContact).trim() < hoy).length, hC = todos.filter(c => String(c.nextContact).trim() === hoy).length;
   document.getElementById('dbStats').innerHTML = `
@@ -108,4 +117,3 @@ function mostrarGeneral(filtro = '') {
 }
 function filtrarGeneral() { mostrarGeneral(document.getElementById('buscadorGeneral').value); }
 function limpiarBuscadorGeneral() { document.getElementById('buscadorGeneral').value = ''; mostrarGeneral(); document.getElementById('buscadorGeneral').focus(); }
-

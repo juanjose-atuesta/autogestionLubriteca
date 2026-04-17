@@ -1,39 +1,55 @@
 
 // ═══════════ CONTACTADO ═══════════
 function toggleContactado(id) {
+  const clienteId = String(id);
+  const clientes = getClientes();
+  const idxCliente = clientes.findIndex(c => String(c.id) === clienteId);
+  const estadoActual = idxCliente !== -1 ? normalizarBooleanContactado(clientes[idxCliente].wasContacted) : false;
+
   fetch(API_BACKEND_URL + "toogleWasContacted/" + id, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
   }).then(res => res.json())
     .then(data => {
       console.log("Respuesta al togglear contacto:", data);
+      const estadoDesdeBackend =
+        data?.wasContacted ??
+        data?.isContacted ??
+        data?.contacted ??
+        data?.customer?.wasContacted ??
+        data?.customerUpdated?.wasContacted;
+      const nuevoEstado = estadoDesdeBackend === undefined
+        ? !estadoActual
+        : normalizarBooleanContactado(estadoDesdeBackend);
 
+      if (idxCliente !== -1) {
+        clientes[idxCliente] = { ...clientes[idxCliente], wasContacted: nuevoEstado };
+        setClientes(clientes);
+      }
 
-      fetch(API_BACKEND_URL + "listCustomersContacted")
+      return fetch(API_BACKEND_URL + "listCustomersContacted")
         .then(res => res.json())
-        .then(data => {
-          setContactados(data.customerList);
-          if (document.getElementById('tab-database').classList.contains('active')) mostrarGeneral(document.getElementById('buscadorGeneral').value);
-          if (document.getElementById('tab-contactados').classList.contains('active')) mostrarContactados();
-          actualizarBadgeContactados(); mostrarAlertas(); mostrarGeneral();
-        })
+        .catch(err => {
+          console.error("No se pudo refrescar contactados:", err);
+          return null;
+        });
+    })
+    .then(listado => {
+      if (listado?.status === 'success' && Array.isArray(listado.customerList)) {
+        setContactados(listado.customerList);
+      }
+      actualizarBadgeContactados();
+      mostrarAlertas();
+      if (document.getElementById('tab-database').classList.contains('active')) {
+        mostrarGeneral(document.getElementById('buscadorGeneral').value);
+      }
+      if (document.getElementById('tab-contactados').classList.contains('active')) {
+        mostrarContactados(document.getElementById('buscadorContactados').value);
+      }
     })
     .catch(err => {
       console.error("Error de red al togglear contacto:", err);
     })
-
-
-  /*
-  const c = getClientes().find(x => x.id === id); if (!c) return;
-  let ids = getIdsContactados();
-  if (ids.includes(id)) { setIdsContactados(ids.filter(x => x !== id)); }
-  else {
-    ids.push(id); setIdsContactados(ids);
-    const log = getContactados();
-    log.push({ logId: Date.now(), clienteId: c.id, nombre: c.nombre, telefono: c.telefono, placa: c.placa, categoria: c.categoria, fechaActual: c.fechaActual, fechaFutura: c.fechaFutura, km: c.km, fechaContacto: fechaHoraActual() });
-    setContactados(log);
-  }
-*/
 }
 function actualizarBadgeContactados() { document.getElementById('nav-badge-contactados').textContent = getContactados().length; }
 
