@@ -14,11 +14,9 @@ function actualizar() {
           if (data.status === 'success') {
             setContactados(data.customerList);
           }
-          migrarClientesAHistorial();
-          actualizarStats();
-          mostrarAlertas();
-          actualizarBadgeContactados();
-          actualizarBadgeAgenda();
+          console.log("Se actualizo la lista de contactados:", data);
+          mostrarAlestas();
+          mostrarGeneral();
         })
 
     })
