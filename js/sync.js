@@ -38,7 +38,7 @@ function sincronizarConSheets() {
       const clientesSheets = datos.customers
         .map(c => ({
           ...c,
-          id: Number(c.id) || generarIdCliente(c.placa, c.fechaActual),
+          id: String(c.id),
           name: String(c.name),
           telephone: String(c.telephone),
           plate: String(c.plate).toUpperCase().trim(),
@@ -99,7 +99,7 @@ function sincronizarConSheets() {
     });
 }
 
-
+/*
 // 🔧 CORREGIDO: sincronizarSoloCitas con manejo de string para citaId
 async function sincronizarSoloCitas() {
   try {
@@ -147,4 +147,4 @@ async function sincronizarSoloCitas() {
     console.warn('Sync citas falló:', err.message);
   }
 }
-
+*/

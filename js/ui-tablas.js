@@ -29,10 +29,11 @@ function construirFila(c) {
   const fechaFutura = String(c.nextContact || '');
   const km = String(c.mileage || '0');
   const id = c.id;
-
+  console.log(id);
   const hoy = getHoy(), f = fechaFutura.trim();
   const esHoy = f === hoy, esV = f < hoy;
-  const marcado = getIdsContactados().includes(id);
+
+  const marcado = c.wasContacted;
   const cl = esHoy ? 'fila-hoy' : esV ? 'fila-vencido' : '';
 
   const waTxt = esHoy
@@ -79,7 +80,12 @@ function mostrarAlertas() {
     .sort((a, b) => { const fa = String(a.nextContact).trim(), fb = String(b.nextContact).trim(); if (fa === hoy && fb !== hoy) return -1; if (fb === hoy && fa !== hoy) return 1; return fb.localeCompare(fa); });
   tbody.innerHTML = '';
   if (!al.length) { empty.style.display = 'block'; document.getElementById('tablaAlertas').style.display = 'none'; }
-  else { empty.style.display = 'none'; document.getElementById('tablaAlertas').style.display = ''; al.forEach(c => tbody.appendChild(construirFila(c))); }
+  else {
+    empty.style.display = 'none'; document.getElementById('tablaAlertas').style.display = ''; al.forEach(c => {
+      tbody.appendChild(construirFila(c))
+      console.log(c)
+    });
+  }
   document.getElementById('badge-alertas').textContent = al.length;
   document.getElementById('nav-badge').textContent = al.length;
 }
