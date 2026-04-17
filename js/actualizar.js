@@ -24,7 +24,7 @@ function actualizar() {
       mostrarGeneral();
       mostrarAlertas();
       actualizarStats();
-
+      buscarHistorial();
     })
 
 }
