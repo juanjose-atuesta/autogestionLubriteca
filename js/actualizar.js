@@ -7,6 +7,8 @@ function actualizar() {
       if (data.status === 'success') {
         const clientes = data.customers;
         setClientes(clientes);
+
+        console.log("Se actualizo la lista de clientes:", clientes);
       }
       fetch(API_BACKEND_URL + "listCustomersContacted")
         .then(res => res.json())
@@ -25,4 +27,5 @@ function actualizar() {
 
 }
 
-setTimeout(actualizar, 3000);
+setInterval(() => { actualizar(); }, 3000);
+
