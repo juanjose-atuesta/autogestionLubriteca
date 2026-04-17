@@ -21,8 +21,10 @@ function actualizar() {
         })
 
     }).then(() => {
-      mostrarAlertas();
       mostrarGeneral();
+      mostrarAlertas();
+      actualizarStats();
+
     })
 
 }
