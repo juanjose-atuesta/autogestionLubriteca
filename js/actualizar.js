@@ -15,7 +15,7 @@ function actualizar() {
             setContactados(data.customerList);
           }
           console.log("Se actualizo la lista de contactados:", data);
-          mostrarAlestas();
+          mostrarAlertas();
           mostrarGeneral();
         })
 
