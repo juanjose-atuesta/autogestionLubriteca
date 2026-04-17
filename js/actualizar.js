@@ -25,6 +25,7 @@ function actualizar() {
       mostrarAlertas();
       actualizarStats();
       buscarHistorial();
+      actualizarBadgeContactados();
     })
 
 }
