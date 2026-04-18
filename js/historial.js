@@ -1,11 +1,20 @@
 
 // ═══════════ HISTORIAL ═══════════
 function buscarHistorial() {
+  fetch("http://192.168.80.25:3000/api/historial/historialDBList")
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'success') {
+        setHistorialDB(data.historialDBList);
+      }
+      console.log("Se actualizo la lista de historial:", data);
+    })
+    .catch(console.error);
   const placa = document.getElementById('buscadorPlaca').value.toUpperCase().trim();
   const res = document.getElementById('historialResultado');
   if (placa.length < 3) { res.innerHTML = `<div class="empty-state"><div class="empty-icon">◎</div><p>Ingresa una placa para ver su historial completo.</p></div>`; return; }
   //Ojo, cambiamos donde esta el getClientes por getHistorialDB de forma momentanea, pues como tal aun no hacemos un historial en el backend
-  const regs = getClientes().filter(c => c.plate.toUpperCase().includes(placa)).sort((a, b) => String(a.entryDate).localeCompare(String(b.nextContact)));
+  const regs = getHistorialDB().filter(c => c.plate.toUpperCase().includes(placa)).sort((a, b) => String(a.entryDate).localeCompare(String(b.nextContact)));
   if (!regs.length) { res.innerHTML = `<div class="empty-state"><div class="empty-icon">○</div><p>No se encontraron registros para "<strong>${placa}</strong>".</p></div>`; return; }
   const hoy = getHoy(), pu = [...new Set(regs.map(c => c.plate))];
   let html = '';

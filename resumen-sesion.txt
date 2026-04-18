@@ -1,0 +1,25 @@
+Resumen de la sesión (2026-04-17 / 2026-04-18)
+
+1) Sincronización en tiempo real entre PCs
+- Se explicó una estrategia de polling inteligente para que varios equipos vean cambios casi en tiempo real sin saturar el backend.
+- Recomendaciones clave:
+  - Polling general con control de concurrencia (evitar peticiones superpuestas).
+  - Intervalo dinámico por visibilidad de pestaña (más frecuente en primer plano, más lento en segundo plano).
+  - Sincronización inmediata al volver al foco o recuperar conexión.
+  - Refrescar la UI solo cuando realmente cambien los datos.
+- Se mostró ejemplo de código orientado a usar funciones existentes del proyecto (sin modificar archivos).
+
+2) Identificación de funciones del proyecto
+- Totales en página principal (clientes, vencidos, citas de hoy, al día):
+  - Función: actualizarStats()
+  - Ubicación: js/ui-tablas.js (también aparece en js/main.js).
+- Mostrar usuarios/registros por placa:
+  - Función: buscarHistorial()
+  - Filtra por buscador de placa y renderiza en historial.
+- Cantidad de contactados en sidebar lateral:
+  - Función: actualizarBadgeContactados()
+  - Actualiza el badge #nav-badge-contactados con getContactados().length.
+
+3) Resultado general
+- Quedó definido qué funciones usar para cada parte de la interfaz.
+- Quedó propuesta una implementación de polling inteligente para visualización casi en tiempo real en múltiples PCs.
