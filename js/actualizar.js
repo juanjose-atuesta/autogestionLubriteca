@@ -32,6 +32,6 @@ function actualizar() {
     });
 }
 
-setInterval(() => { actualizar(); }, 30000); // Actualiza cada 30 segundos
+setInterval(() => { actualizar(); }, 3000); // Actualiza cada 30 segundos
 
 

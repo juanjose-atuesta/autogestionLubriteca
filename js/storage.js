@@ -2,7 +2,16 @@
 // ═══════════ STORAGE ═══════════
 function getClientes() { return JSON.parse(localStorage.getItem('db_clientes')) || []; }
 function setClientes(arr) { localStorage.setItem('db_clientes', JSON.stringify(arr)); }
-function getHistorialDB() { return JSON.parse(localStorage.getItem('db_historial')) || []; }
+async function getHistorialDB() {
+  try {
+    const response = await fetch("http://192.168.80.25:3000/api/historial/historialDBList");
+    const data = await response.json();
+    return data.historialDBList || [];
+  } catch (error) {
+    console.error('Error fetching historialDB:', error);
+    return JSON.parse(localStorage.getItem('db_historial')) || [];
+  }
+}
 function setHistorialDB(arr) { localStorage.setItem('db_historial', JSON.stringify(arr)); }
 function getContactados() { return JSON.parse(localStorage.getItem('db_contactados_log')) || []; }
 function setContactados(arr) { localStorage.setItem('db_contactados_log', JSON.stringify(arr)); }
