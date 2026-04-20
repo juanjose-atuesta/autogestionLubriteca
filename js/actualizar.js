@@ -1,5 +1,5 @@
 function actualizar() {
-  fetch(API_BACKEND_URL + "customersList")
+  fetch(API_BACKEND_URL + "customers/customersList")
     .then(res => res.json())
     .then(data => {
       if (data.status === 'success') {
@@ -7,7 +7,7 @@ function actualizar() {
         setClientes(clientes);
         console.log("Se actualizo la lista de clientes:", clientes);
       }
-      return fetch(API_BACKEND_URL + "listCustomersContacted");
+      return fetch(API_BACKEND_URL + "customers/listCustomersContacted");
     })
     .then(res => res.json())
     .then(data => {

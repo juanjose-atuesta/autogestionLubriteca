@@ -23,7 +23,7 @@ function mostrarCargando(visible) {
 function sincronizarConSheets() {
   mostrarCargando(true);
 
-  fetch(API_BACKEND_URL + "customersList")
+  fetch(API_BACKEND_URL + "customers/customersList")
     .then(res => {
       if (!res.ok) throw new Error('HTTP ' + res.status);
       return res.json();

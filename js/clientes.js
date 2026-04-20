@@ -23,7 +23,7 @@ document.getElementById('clienteForm').addEventListener('submit', e => {
     mileage: document.getElementById('kilometraje').value,
     createAt: document.getElementById('fechaActual').value
   };
-  fetch(API_BACKEND_URL + "addCustomer", {
+  fetch(API_BACKEND_URL + "customers/addCustomer", {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(c)
@@ -102,7 +102,7 @@ function guardarEdicion() {
   const h = getHistorialDB(), hIdx = h.findLastIndex(x => x.id === id);
   if (hIdx !== -1) { h[hIdx] = { ...h[hIdx], ...act, eliminado: false }; setHistorialDB(h); }
 
-  fetch(API_BACKEND_URL + "editCustomer", {
+  fetch(API_BACKEND_URL + "customers/editCustomer", {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...act })

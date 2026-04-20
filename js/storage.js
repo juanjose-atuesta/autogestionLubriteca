@@ -1,15 +1,26 @@
 
 // ═══════════ STORAGE ═══════════
-function getClientes() { return JSON.parse(localStorage.getItem('db_clientes')) || []; }
+async function getClientes() {
+  try {
+    const response = await fetch(API_BACKEND_URL + "customers/listCustomers");
+    const data = await response.json();
+    return data.customers || [];
+
+  }
+  catch (error) {
+    console.error('Error fetching clientes:', error);
+    return [];
+  }
+
+}
 function setClientes(arr) { localStorage.setItem('db_clientes', JSON.stringify(arr)); }
 async function getHistorialDB() {
   try {
-    const response = await fetch("http://192.168.80.25:3000/api/historial/historialDBList");
+    const response = await fetch(API_BACKEND_URL + "historial/historialDBList");
     const data = await response.json();
     return data.historialDBList || [];
   } catch (error) {
     console.error('Error fetching historialDB:', error);
-    return JSON.parse(localStorage.getItem('db_historial')) || [];
   }
 }
 function setHistorialDB(arr) { localStorage.setItem('db_historial', JSON.stringify(arr)); }

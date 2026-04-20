@@ -6,7 +6,7 @@ function toggleContactado(id) {
   const idxCliente = clientes.findIndex(c => String(c.id) === clienteId);
   const estadoActual = idxCliente !== -1 ? normalizarBooleanContactado(clientes[idxCliente].wasContacted) : false;
 
-  fetch(API_BACKEND_URL + "toogleWasContacted/" + id, {
+  fetch(API_BACKEND_URL + "customers/toogleWasContacted/" + id, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
   }).then(res => res.json())
@@ -27,7 +27,7 @@ function toggleContactado(id) {
         setClientes(clientes);
       }
 
-      return fetch(API_BACKEND_URL + "listCustomersContacted")
+      return fetch(API_BACKEND_URL + "customers/listCustomersContacted")
         .then(res => res.json())
         .catch(err => {
           console.error("No se pudo refrescar contactados:", err);
@@ -57,7 +57,7 @@ function actualizarBadgeContactados() { document.getElementById('nav-badge-conta
 // ═══════════ CONTACTADOS ═══════════
 function mostrarContactados(filtro = '') {
   console.log("Aqui se hace el fetch")
-  fetch(API_BACKEND_URL + "listCustomersContacted")
+  fetch(API_BACKEND_URL + "customers/listCustomersContacted")
     .then(res => res.json())
     .then(data => {
       console.log("Esta es la data para los contactados:", data);
