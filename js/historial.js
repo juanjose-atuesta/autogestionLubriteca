@@ -18,12 +18,12 @@ function buscarHistorial() {
     const res = document.getElementById('historialResultado');
     if (placa.length < 3) { res.innerHTML = `<div class="empty-state"><div class="empty-icon">◎</div><p>Ingresa una placa para ver su historial completo.</p></div>`; return; }
 
-    regs.filter(c => c.plate.toUpperCase().includes(placa)).sort((a, b) => String(a.entryDate).localeCompare(String(b.nextContact)));
-    if (!regs.length) { res.innerHTML = `<div class="empty-state"><div class="empty-icon">○</div><p>No se encontraron registros para "<strong>${placa}</strong>".</p></div>`; return; }
-    const hoy = getHoy(), pu = [...new Set(regs.map(c => c.plate))];
+    let regsFiltered = regs.filter(c => c.plate.toUpperCase().includes(placa)).sort((a, b) => String(a.entryDate).localeCompare(String(b.nextContact)));
+    if (!regsFiltered.length) { res.innerHTML = `<div class="empty-state"><div class="empty-icon">○</div><p>No se encontraron registros para "<strong>${placa}</strong>".</p></div>`; return; }
+    const hoy = getHoy(), pu = [...new Set(regsFiltered.map(c => c.plate))];
     let html = '';
     pu.forEach(p => {
-      const r = regs.filter(c => c.plate === p), d = new Set(r.map(x => x.nombre)).size;
+      const r = regsFiltered.filter(c => c.plate === p), d = new Set(r.map(x => x.nombre)).size;
       html += `<div class="historial-placa-header"><div class="historial-placa-badge">${p}</div><div class="historial-meta"><strong>${r.length}</strong> servicio${r.length !== 1 ? 's' : ''} · <strong>${d}</strong> dueño${d !== 1 ? 's' : ''}</div></div><div class="historial-timeline">`;
       r.forEach((c, idx) => {
         const esE = c.eliminado === true, esH = !esE && String(c.nextContact).trim() === hoy, esV = !esE && String(c.nextContact).trim() < hoy;

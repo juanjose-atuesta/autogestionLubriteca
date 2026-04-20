@@ -13,7 +13,7 @@ async function getClientes() {
   }
 
 }
-function setClientes(arr) { localStorage.setItem('db_clientes', JSON.stringify(arr)); }
+//function setClientes(arr) { localStorage.setItem('db_clientes', JSON.stringify(arr)); }
 async function getHistorialDB() {
   try {
     const response = await fetch(API_BACKEND_URL + "historial/historialDBList");
@@ -23,7 +23,7 @@ async function getHistorialDB() {
     console.error('Error fetching historialDB:', error);
   }
 }
-function setHistorialDB(arr) { localStorage.setItem('db_historial', JSON.stringify(arr)); }
+//function setHistorialDB(arr) { localStorage.setItem('db_historial', JSON.stringify(arr)); }
 async function getContactados() {
   try {
     const response = await fetch(API_BACKEND_URL + "historial/historialListCustomersContacted");
@@ -32,8 +32,8 @@ async function getContactados() {
   }
   catch (error) { console.error(error); return []; }
 }
-function setContactados(arr) { localStorage.setItem('db_contactados_log', JSON.stringify(arr)); }
-function getIdsContactados() { return JSON.parse(localStorage.getItem('db_contactados_ids')) || []; }
-function setIdsContactados(arr) { localStorage.setItem('db_contactados_ids', JSON.stringify(arr)); }
+//function setContactados(arr) { localStorage.setItem('db_contactados_log', JSON.stringify(arr)); }
+//function getIdsContactados() { return JSON.parse(localStorage.getItem('db_contactados_ids')) || []; }
+//function setIdsContactados(arr) { localStorage.setItem('db_contactados_ids', JSON.stringify(arr)); }
 function getCitas() { return JSON.parse(localStorage.getItem('db_citas')) || []; }
 function setCitas(arr) { localStorage.setItem('db_citas', JSON.stringify(arr)); }
