@@ -55,80 +55,143 @@ document.getElementById('clienteForm').addEventListener('submit', e => {
 });
 
 function eliminarCliente(id) {
+  console.log("Hiciste click en eliminar cliente con id:", id);
   getClientes().then(cl => {
     const c = cl.find(x => x.id === id);
     if (c) {
-      fetch(urlGoogle, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ placa: c.placa, accion: "eliminar" }) }).catch(console.error);
-      const h = getHistorialDB(), idx = h.findLastIndex(x => x.id === id);
-      if (idx !== -1) { h[idx].eliminado = true; setHistorialDB(h); }
-      setCitas(getCitas().filter(ct => String(ct.placa).toUpperCase() !== String(c.placa).toUpperCase()));
+      fetch(API_BACKEND_URL + "customers/deleteCustomer/" + id, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      }).then(response => response.json())
+        .then(data => {
+          console.log("Se borro un cliente" + data.status);
+          actualizarStats(); mostrarAlertas(); actualizarBadgeAgenda();
+          if (document.getElementById('tab-database').classList.contains('active'))
+            mostrarGeneral(document.getElementById('buscadorGeneral').value);
+          if (document.getElementById('tab-agenda').classList.contains('active'))
+            renderAgenda();
+
+          // cerrarModalEliminar();
+        })
+      //No se para que es esto, pero no lo borro por si las moscas 
+      //setCitas(getCitas().filter(ct => String(ct.placa).toUpperCase() !== String(c.placa).toUpperCase()));
     }
-    setIdsContactados(getIdsContactados().filter(x => x !== id));
-    setClientes(cl.filter(x => x.id !== id));
-    actualizarStats(); mostrarAlertas(); actualizarBadgeAgenda();
-    if (document.getElementById('tab-database').classList.contains('active'))
-      mostrarGeneral(document.getElementById('buscadorGeneral').value);
-    if (document.getElementById('tab-agenda').classList.contains('active'))
-      renderAgenda();
   }).catch(console.error);
 }
+function formatoParaInput(fecha) {
+  // Convierte "dd-mm-aaaa" a "aaaa-mm-dd"
+  const anio = fecha.slice(0, 4);
+  const mes = fecha.slice(5, 7);
+  const dia = fecha.slice(8, 10);
+  return `${anio}-${mes}-${dia}`;
+}
+
 
 // ═══════════ MODAL EDITAR ═══════════
 function abrirModalEditar(id) {
+
+  id = String(id);
   getClientes().then(clientes => {
     const c = clientes.find(x => x.id === id);
     if (!c) return;
-    document.getElementById('editId').value = c.id;
+    //document.getElementById('editId').value = c.id;
     document.getElementById('editNombre').value = c.name;
     document.getElementById('editTelefono').value = c.telephone;
     document.getElementById('editPlaca').value = c.plate;
     document.getElementById('editCategoria').value = c.service;
-    document.getElementById('editFechaActual').value = c.entryDate;
-    document.getElementById('editFechaFutura').value = c.nextContact;
+
+    document.getElementById('editFechaActual').value = formatoParaInput(c.entryDate);
+    document.getElementById('editFechaFutura').value = formatoParaInput(c.nextContact);
     document.getElementById('editKm').value = c.mileage;
     document.getElementById('modalEditar').classList.add('active');
   }).catch(console.error);
+  document.querySelector("#buttonSaveEdition").addEventListener("click", () => {
+
+    fetch(API_BACKEND_URL + "customers/editCustomer/" + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: id,
+        name: document.getElementById('editNombre').value.toUpperCase(),
+        telephone: document.getElementById('editTelefono').value.trim(),
+        plate: document.getElementById('editPlaca').value.toUpperCase().trim(),
+        service: document.getElementById('editCategoria').value,
+        entryDate: document.getElementById('editFechaActual').value,
+        nextContact: document.getElementById('editFechaFutura').value,
+        mileage: document.getElementById('editKm').value
+      })
+    })
+      .then(() => {
+        fetch(API_BACKEND_URL + "historial/editHistorialDBCustomer/" + id, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: id,
+            name: document.getElementById('editNombre').value.toUpperCase(),
+            telephone: document.getElementById('editTelefono').value.trim(),
+            plate: document.getElementById('editPlaca').value.toUpperCase().trim(),
+            service: document.getElementById('editCategoria').value,
+            entryDate: document.getElementById('editFechaActual').value,
+            nextContact: document.getElementById('editFechaFutura').value,
+            mileage: document.getElementById('editKm').value
+
+          })
+        })
+
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === "success") {
+              cerrarModalEditar(); actualizarStats(); mostrarAlertas();
+              if (document.getElementById('tab-database').classList.contains('active'))
+                mostrarGeneral(document.getElementById('buscadorGeneral').value);
+
+            }
+          })
+      })
+  });
 }
 
 
-function guardarEdicion() {
-  const id = parseInt(document.getElementById('editId').value);
-  getClientes().then(cl => {
-    const idx = cl.findIndex(x => x.id === id);
-    if (idx === -1) return;
+function guardarEdicion(idAux) {
 
-    const fAnt = cl[idx].fechaFutura;
-    const fNueva = document.getElementById('editFechaFutura').value;
-    const placaAnterior = cl[idx].placa;
-
-    const act = {
-      ...cl[idx],
-      name: document.getElementById('editNombre').value.trim(),
-      telephone: document.getElementById('editTelefono').value.trim(),
-      plate: document.getElementById('editPlaca').value.toUpperCase().trim(),
-      service: document.getElementById('editCategoria').value,
-      entryDate: document.getElementById('editFechaActual').value,
-      nextContact: fNueva,
-      mileage: document.getElementById('editKm').value
-    };
-
-    if (fAnt !== fNueva) setIdsContactados(getIdsContactados().filter(x => x !== id));
-
-    const h = getHistorialDB(), hIdx = h.findLastIndex(x => x.id === id);
-    if (hIdx !== -1) { h[hIdx] = { ...h[hIdx], ...act, eliminado: false }; setHistorialDB(h); }
-
-    fetch(API_BACKEND_URL + "customers/editCustomer", {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...act })
-    })
-      .then(response => response.json())
-      .then(data => { console.log(data.status); console.log("se logro editar"); })
-      .catch(console.error);
-
-    cl[idx] = act; setClientes(cl);
-    cerrarModalEditar(); actualizarStats(); mostrarAlertas();
-    if (document.getElementById('tab-database').classList.contains('active'))
-      mostrarGeneral(document.getElementById('buscadorGeneral').value);
-  }).catch(console.error);
+  //const id = document.getElementById('editId').value;
+  /*
+      const idx = cl.findIndex(x => x.id === id);
+      console.log(idx);
+      if (idx === -1) return;
+  
+      const fAnt = cl[idx].fechaFutura;
+      const fNueva = document.getElementById('editFechaFutura').value;
+      const placaAnterior = cl[idx].placa;
+  
+      const act = {
+        ...cl[idx],
+        name: document.getElementById('editNombre').value.trim(),
+        telephone: document.getElementById('editTelefono').value.trim(),
+        plate: document.getElementById('editPlaca').value.toUpperCase().trim(),
+        service: document.getElementById('editCategoria').value,
+        entryDate: document.getElementById('editFechaActual').value,
+        nextContact: fNueva,
+        mileage: document.getElementById('editKm').value
+      };
+  
+      // if (fAnt !== fNueva) setIdsContactados(getIdsContactados().filter(x => x !== id));
+  
+      //const h = getHistorialDB(), hIdx = h.findLastIndex(x => x.id === id);
+      //if (hIdx !== -1) { h[hIdx] = { ...h[hIdx], ...act, eliminado: false }; setHistorialDB(h); }
+  
+      fetch(API_BACKEND_URL + "customers/editCustomer", {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...act })
+      })
+        .then(response => response.json())
+        .then(data => { console.log(data.status); console.log("se logro editar"); })
+        .catch(console.error);
+  
+      cl[idx] = act; setClientes(cl);
+    */
+  cerrarModalEditar(); actualizarStats(); mostrarAlertas();
+  if (document.getElementById('tab-database').classList.contains('active'))
+    mostrarGeneral(document.getElementById('buscadorGeneral').value);
 }

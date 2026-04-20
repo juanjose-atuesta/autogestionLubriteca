@@ -161,7 +161,7 @@
             </div>
             <div class="field"><label>Fecha de ingreso</label><input type="date" id="fechaActual" required></div>
             <div class="field"><label>Próximo Contacto</label><input type="date" id="fechaFutura" required></div>
-            <div class="field"><label>Kilometraje</label><input type="number" id="kilometraje" placeholder="Ej: 45000"
+            <div class="field"><label>Kilometraje</label><input type="text" id="kilometraje" placeholder="Ej: 45000"
                 required></div>
             <div class="field field-submit" style="flex-direction:column;gap:8px;">
               <button type="submit" class="btn-save" id="btnGuardar">💾 Guardar Cliente</button>
@@ -389,11 +389,11 @@
         </div>
         <div class="field"><label>Fecha de ingreso</label><input type="date" id="editFechaActual" required></div>
         <div class="field"><label>Próximo Contacto</label><input type="date" id="editFechaFutura" required></div>
-        <div class="field"><label>Kilometraje</label><input type="number" id="editKm" required></div>
+        <div class="field"><label>Kilometraje</label><input type="text" id="editKm" required></div>
       </form>
       <div class="modal-actions">
         <button class="btn-modal-cancel" onclick="cerrarModalEditar()">Cancelar</button>
-        <button class="btn-modal-confirm" onclick="guardarEdicion()">💾 Guardar cambios</button>
+        <button class="btn-modal-confirm" id="buttonSaveEdition">💾 Guardar cambios</button>
       </div>
     </div>
   </div>

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════
-// AUTOGESTIÓN v3.4 — JS (CORREGIDO)
+// AUTOGESTIÓN v3.4 — JS (CORREGIDO
 // ═══════════════════════════════════════════════
 
 // ⚠️ GOOGLE SHEETS — NO MODIFICAR
@@ -35,24 +35,26 @@ let reservarEspacioActual = null;
 let reservarHoraActual = null;
 
 
-
 // ═══════════ MODAL ELIMINAR ═══════════
 let idPendienteEliminar = null;
 function abrirModalEliminar(id) {
+  id = String(id);
   getClientes()
     .then(clientes => {
       const c = clientes.find(x => x.id === id);
       if (!c) return;
       idPendienteEliminar = id;
-      document.getElementById('modalEliminarTexto').textContent = `¿Eliminar a "${c.nombre}" (${c.placa})? Se moverá a la papelera en Google Sheets.`;
+      document.getElementById('modalEliminarTexto').textContent = `¿Eliminar a "${c.name}" (${c.plate})? Se moverá a la papelera en Google Sheets.`;
       document.getElementById('modalEliminar').classList.add('active');
-      document.getElementById('btnConfirmarEliminar').onclick = confirmarEliminar;
     })
+    .then(
+      () => {
+        document.getElementById('btnConfirmarEliminar').onclick = confirmarEliminar.bind(null, idPendienteEliminar);
+      }
+    )
     .catch(console.error);
 }
 function cerrarModalEliminar() { document.getElementById('modalEliminar').classList.remove('active'); idPendienteEliminar = null; }
 function confirmarEliminar() { if (idPendienteEliminar) { eliminarCliente(idPendienteEliminar); cerrarModalEliminar(); } }
 
-
 function cerrarModalEditar() { document.getElementById('modalEditar').classList.remove('active'); }
-

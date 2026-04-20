@@ -58,10 +58,10 @@ function toggleContactado(id) {
 
 // ═══════════ CONTACTADOS ═══════════
 function mostrarContactados(filtro = '') {
-  console.log("Aqui se hace el fetch")
+  //console.log("Aqui se hace el fetch")
   getContactados()
     .then(data => {
-      console.log("Esta es la data para los contactados:", data);
+      // console.log("Esta es la data para los contactados:", data);
       if (!data || typeof data !== 'object') {
         console.error("Respuesta inesperada al obtener contactados:", data);
 

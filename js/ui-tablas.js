@@ -34,7 +34,7 @@ function construirFila(c) {
   const fechaFutura = String(c.nextContact || '');
   const km = String(c.mileage || '0');
   const id = c.id;
-  console.log(id);
+  //console.log(id);
   const hoy = getHoy(), f = fechaFutura.trim();
   const esHoy = f === hoy, esV = f < hoy;
 
@@ -51,7 +51,7 @@ function construirFila(c) {
   const categoriaSafe = categoria.replace(/'/g, "\\'").replace(/"/g, '&quot;');
   const btnReservar = tieneReserva
     ? `<button class="btn-reservar-cita btn-reservado" onclick="abrirModalReservar(${id},'${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">✅ Reservado</button>`
-    : `<button class="btn-reservar-cita" onclick="abrirModalReservar(${id},'${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">📅 Reservar</button>`;
+    : `<button class="btn-reservar-cita" onclick="abrirModalReservar('${id}','${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">📅 Reservar</button>`;
 
   const tr = document.createElement('tr');
   if (cl) tr.classList.add(cl);
@@ -68,10 +68,10 @@ function construirFila(c) {
             <div class="acciones">
                 <div class="btn-wa-wrap">
                     <a href="https://wa.me/57${telefono}?text=${waTxt}" target="_blank" class="btn-wa">📱 WhatsApp</a>
-                    <button class="btn-chulo ${marcado ? 'marcado' : ''}" onclick="toggleContactado(${id})" title="${marcado ? 'Contactado ✓' : 'Marcar contactado'}">✓</button>
+                    <button class="btn-chulo ${marcado ? 'marcado' : ''}" onclick="toggleContactado('${id}')" title="${marcado ? 'Contactado ✓' : 'Marcar contactado'}">✓</button>
                 </div>
-                <button class="btn-edit" onclick="abrirModalEditar(${id})">✎ Editar</button>
-                <button class="btn-del"  onclick="abrirModalEliminar(${id})">✕ Eliminar</button>
+                <button class="btn-edit" onclick="abrirModalEditar('${id}')">✎ Editar</button>
+                <button class="btn-del"  onclick="abrirModalEliminar('${id}')">✕ Eliminar</button>
             </div>
         </td>`;
   return tr;
@@ -89,7 +89,7 @@ function mostrarAlertas() {
     else {
       empty.style.display = 'none'; document.getElementById('tablaAlertas').style.display = ''; al.forEach(c => {
         tbody.appendChild(construirFila(c))
-        console.log(c)
+        //console.log(c)
       });
     }
     document.getElementById('badge-alertas').textContent = al.length;
