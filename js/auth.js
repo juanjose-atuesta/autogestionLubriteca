@@ -34,7 +34,7 @@ function mostrarApp() {
   document.getElementById('appWrapper').style.display = 'block';
   if (Notification.permission !== "granted") Notification.requestPermission();
 
-  migrarClientesAHistorial();
+  //migrarClientesAHistorial();
   actualizarStats();
   mostrarAlertas();
   revisarCitasDeHoy();

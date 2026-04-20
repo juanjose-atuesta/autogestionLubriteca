@@ -2,7 +2,7 @@
 // ═══════════ STORAGE ═══════════
 async function getClientes() {
   try {
-    const response = await fetch(API_BACKEND_URL + "customers/listCustomers");
+    const response = await fetch(API_BACKEND_URL + "customers/customersList");
     const data = await response.json();
     return data.customers || [];
 

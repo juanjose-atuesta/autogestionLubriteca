@@ -2,36 +2,38 @@
 // ═══════════ CONTACTADO ═══════════
 function toggleContactado(id) {
   const clienteId = String(id);
-  const clientes = getClientes();
-  const idxCliente = clientes.findIndex(c => String(c.id) === clienteId);
-  const estadoActual = idxCliente !== -1 ? normalizarBooleanContactado(clientes[idxCliente].wasContacted) : false;
+  getClientes()
+    .then(clientes => {
+      const idxCliente = clientes.findIndex(c => String(c.id) === clienteId);
+      const estadoActual = idxCliente !== -1 ? normalizarBooleanContactado(clientes[idxCliente].wasContacted) : false;
 
-  fetch(API_BACKEND_URL + "customers/toogleWasContacted/" + id, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-  }).then(res => res.json())
-    .then(data => {
-      console.log("Respuesta al togglear contacto:", data);
-      const estadoDesdeBackend =
-        data?.wasContacted ??
-        data?.isContacted ??
-        data?.contacted ??
-        data?.customer?.wasContacted ??
-        data?.customerUpdated?.wasContacted;
-      const nuevoEstado = estadoDesdeBackend === undefined
-        ? !estadoActual
-        : normalizarBooleanContactado(estadoDesdeBackend);
+      return fetch(API_BACKEND_URL + "customers/toogleWasContacted/" + id, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+      }).then(res => res.json())
+        .then(data => {
+          console.log("Respuesta al togglear contacto:", data);
+          const estadoDesdeBackend =
+            data?.wasContacted ??
+            data?.isContacted ??
+            data?.contacted ??
+            data?.customer?.wasContacted ??
+            data?.customerUpdated?.wasContacted;
+          const nuevoEstado = estadoDesdeBackend === undefined
+            ? !estadoActual
+            : normalizarBooleanContactado(estadoDesdeBackend);
 
-      if (idxCliente !== -1) {
-        clientes[idxCliente] = { ...clientes[idxCliente], wasContacted: nuevoEstado };
-        setClientes(clientes);
-      }
+          if (idxCliente !== -1) {
+            clientes[idxCliente] = { ...clientes[idxCliente], wasContacted: nuevoEstado };
+            setClientes(clientes);
+          }
 
-      return fetch(API_BACKEND_URL + "customers/listCustomersContacted")
-        .then(res => res.json())
-        .catch(err => {
-          console.error("No se pudo refrescar contactados:", err);
-          return null;
+          return fetch(API_BACKEND_URL + "customers/listCustomersContacted")
+            .then(res => res.json())
+            .catch(err => {
+              console.error("No se pudo refrescar contactados:", err);
+              return null;
+            });
         });
     })
     .then(listado => {

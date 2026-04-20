@@ -76,7 +76,7 @@ function sincronizarConSheets() {
               console.log('✓ ' + citasSheets.length + ' citas + ' + pendientes.length + ' pendientes locales');
             }
       */
-      migrarClientesAHistorial();
+      //migrarClientesAHistorial();
       actualizarStats();
       mostrarAlertas();
       actualizarBadgeContactados();

@@ -39,11 +39,16 @@ let reservarHoraActual = null;
 // ═══════════ MODAL ELIMINAR ═══════════
 let idPendienteEliminar = null;
 function abrirModalEliminar(id) {
-  const c = getClientes().find(x => x.id === id); if (!c) return;
-  idPendienteEliminar = id;
-  document.getElementById('modalEliminarTexto').textContent = `¿Eliminar a "${c.nombre}" (${c.placa})? Se moverá a la papelera en Google Sheets.`;
-  document.getElementById('modalEliminar').classList.add('active');
-  document.getElementById('btnConfirmarEliminar').onclick = confirmarEliminar;
+  getClientes()
+    .then(clientes => {
+      const c = clientes.find(x => x.id === id);
+      if (!c) return;
+      idPendienteEliminar = id;
+      document.getElementById('modalEliminarTexto').textContent = `¿Eliminar a "${c.nombre}" (${c.placa})? Se moverá a la papelera en Google Sheets.`;
+      document.getElementById('modalEliminar').classList.add('active');
+      document.getElementById('btnConfirmarEliminar').onclick = confirmarEliminar;
+    })
+    .catch(console.error);
 }
 function cerrarModalEliminar() { document.getElementById('modalEliminar').classList.remove('active'); idPendienteEliminar = null; }
 function confirmarEliminar() { if (idPendienteEliminar) { eliminarCliente(idPendienteEliminar); cerrarModalEliminar(); } }

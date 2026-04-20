@@ -4,7 +4,10 @@
 // ═══════════════════════════════════════════
 function revisarCitasDeHoy() {
   const hoy = getHoy();
-  getClientes().forEach(c => { if (String(c.fechaFutura).trim() === hoy) dispararNotificacion(c); });
+  getClientes().then(clientes => {
+    clientes.forEach(c => { if (String(c.nextContact).trim() === hoy) dispararNotificacion(c); });
+
+  })
 }
 function dispararNotificacion(c) {
   if (Notification.permission === "granted")

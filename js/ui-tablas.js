@@ -1,14 +1,19 @@
 
 // ═══════════ STATS ═══════════
 function actualizarStats() {
-  const cl = getClientes(), hoy = getHoy();
-  const v = cl.filter(c => String(c.nextContact).trim() < hoy).length;
-  const h = cl.filter(c => String(c.nextContact).trim() === hoy).length;
-  document.getElementById('statsGrid').innerHTML = `
+  const cl = getClientes().then(
+    cl => {
+
+      hoy = getHoy();
+      const v = cl.filter(c => String(c.nextContact).trim() < hoy).length;
+      const h = cl.filter(c => String(c.nextContact).trim() === hoy).length;
+      document.getElementById('statsGrid').innerHTML = `
         <div class="stat-card stat-primary"><div class="stat-value">${cl.length}</div><div class="stat-label">Total clientes</div></div>
         <div class="stat-card stat-danger"><div class="stat-value">${v}</div><div class="stat-label">Vencidos</div></div>
         <div class="stat-card stat-warning"><div class="stat-value">${h}</div><div class="stat-label">Citas hoy</div></div>
         <div class="stat-card stat-success"><div class="stat-value">${cl.length - v - h}</div><div class="stat-label">Al día</div></div>`;
+    }
+  )
 }
 function buildBadge(fechaStr, eliminado = false) {
   if (eliminado) return `<span class="badge-eliminado">● Eliminado</span>`;
@@ -76,44 +81,49 @@ function construirFila(c) {
 // ═══════════ ALERTAS ═══════════
 function mostrarAlertas() {
   const tbody = document.getElementById('listaAlertas'), empty = document.getElementById('emptyAlertas'), hoy = getHoy();
-  const al = getClientes().filter(c => { const f = String(c.nextContact).trim(); return f === hoy || f < hoy; })
-    .sort((a, b) => { const fa = String(a.nextContact).trim(), fb = String(b.nextContact).trim(); if (fa === hoy && fb !== hoy) return -1; if (fb === hoy && fa !== hoy) return 1; return fb.localeCompare(fa); });
-  tbody.innerHTML = '';
-  if (!al.length) { empty.style.display = 'block'; document.getElementById('tablaAlertas').style.display = 'none'; }
-  else {
-    empty.style.display = 'none'; document.getElementById('tablaAlertas').style.display = ''; al.forEach(c => {
-      tbody.appendChild(construirFila(c))
-      console.log(c)
-    });
-  }
-  document.getElementById('badge-alertas').textContent = al.length;
-  document.getElementById('nav-badge').textContent = al.length;
+  getClientes().then(clientes => {
+    const al = clientes.filter(c => { const f = String(c.nextContact).trim(); return f === hoy || f < hoy; })
+      .sort((a, b) => { const fa = String(a.nextContact).trim(), fb = String(b.nextContact).trim(); if (fa === hoy && fb !== hoy) return -1; if (fb === hoy && fa !== hoy) return 1; return fb.localeCompare(fa); });
+    tbody.innerHTML = '';
+    if (!al.length) { empty.style.display = 'block'; document.getElementById('tablaAlertas').style.display = 'none'; }
+    else {
+      empty.style.display = 'none'; document.getElementById('tablaAlertas').style.display = ''; al.forEach(c => {
+        tbody.appendChild(construirFila(c))
+        console.log(c)
+      });
+    }
+    document.getElementById('badge-alertas').textContent = al.length;
+    document.getElementById('nav-badge').textContent = al.length;
+  }).catch(console.error);
 }
 
 // ═══════════ BASE DE DATOS ═══════════
 function mostrarGeneral(filtro = '') {
   const tbody = document.getElementById('listaGeneral'), empty = document.getElementById('emptyGeneral'), hoy = getHoy();
-  let cl = getClientes();
-  if (filtro.trim()) {
-    const f = filtro.trim().toUpperCase();
-    cl = cl.filter(c => {
-      const nombre = String(c.name || '').toUpperCase();
-      const placa = String(c.plate || '').toUpperCase();
-      const servicio = String(c.service || '').toUpperCase();
-      const telefono = String(c.telephone || '');
-      return nombre.includes(f) || placa.includes(f) || servicio.includes(f) || telefono.includes(filtro.trim());
-    });
-  }
-  cl.sort((a, b) => String(a.nextContact).localeCompare(String(b.nextContact)));
-  const todos = getClientes(), v = todos.filter(c => String(c.nextContact).trim() < hoy).length, hC = todos.filter(c => String(c.nextContact).trim() === hoy).length;
-  document.getElementById('dbStats').innerHTML = `
+  getClientes().then(todos => {
+    let cl = todos;
+    if (filtro.trim()) {
+      const f = filtro.trim().toUpperCase();
+      cl = cl.filter(c => {
+        const nombre = String(c.name || '').toUpperCase();
+        const placa = String(c.plate || '').toUpperCase();
+        const servicio = String(c.service || '').toUpperCase();
+        const telefono = String(c.telephone || '');
+        return nombre.includes(f) || placa.includes(f) || servicio.includes(f) || telefono.includes(filtro.trim());
+      });
+    }
+    cl.sort((a, b) => String(a.nextContact).localeCompare(String(b.nextContact)));
+    const v = todos.filter(c => String(c.nextContact).trim() < hoy).length;
+    const hC = todos.filter(c => String(c.nextContact).trim() === hoy).length;
+    document.getElementById('dbStats').innerHTML = `
         <div class="db-stat-item"><span class="db-dot" style="background:#ef4444"></span>${v} vencidos</div>
         <div class="db-stat-item"><span class="db-dot" style="background:#f59e0b"></span>${hC} hoy</div>
         <div class="db-stat-item"><span class="db-dot" style="background:#10b981"></span>${todos.length - v - hC} al día</div>
         <div class="db-stats-total">${todos.length} registros</div>`;
-  tbody.innerHTML = '';
-  if (!cl.length) { empty.style.display = 'block'; document.getElementById('tablaGeneral').style.display = 'none'; }
-  else { empty.style.display = 'none'; document.getElementById('tablaGeneral').style.display = ''; cl.forEach(c => tbody.appendChild(construirFila(c))); }
+    tbody.innerHTML = '';
+    if (!cl.length) { empty.style.display = 'block'; document.getElementById('tablaGeneral').style.display = 'none'; }
+    else { empty.style.display = 'none'; document.getElementById('tablaGeneral').style.display = ''; cl.forEach(c => tbody.appendChild(construirFila(c))); }
+  }).catch(console.error);
 }
 function filtrarGeneral() { mostrarGeneral(document.getElementById('buscadorGeneral').value); }
 function limpiarBuscadorGeneral() { document.getElementById('buscadorGeneral').value = ''; mostrarGeneral(); document.getElementById('buscadorGeneral').focus(); }
