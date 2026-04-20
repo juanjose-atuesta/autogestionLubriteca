@@ -24,7 +24,14 @@ async function getHistorialDB() {
   }
 }
 function setHistorialDB(arr) { localStorage.setItem('db_historial', JSON.stringify(arr)); }
-function getContactados() { return JSON.parse(localStorage.getItem('db_contactados_log')) || []; }
+async function getContactados() {
+  try {
+    const response = await fetch(API_BACKEND_URL + "historial/historialListCustomersContacted");
+    const data = await response.json();
+    return data.customerList;
+  }
+  catch (error) { console.error(error); return []; }
+}
 function setContactados(arr) { localStorage.setItem('db_contactados_log', JSON.stringify(arr)); }
 function getIdsContactados() { return JSON.parse(localStorage.getItem('db_contactados_ids')) || []; }
 function setIdsContactados(arr) { localStorage.setItem('db_contactados_ids', JSON.stringify(arr)); }

@@ -39,16 +39,19 @@ document.getElementById('clienteForm').addEventListener('submit', e => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(c)
-      });
+      }).then(res => res.json())
+        .then(data => {
+
+          mostrarToast(); actualizarStats(); mostrarAlertas(); revisarCitasDeHoy();
+          document.getElementById('clienteForm').reset();
+        })
     })
     .catch(console.error);
   getClientes().then(cl => {
     cl.push(c);
     setClientes(cl);
   }).catch(console.error);
-  const h = getHistorialDB(); h.push({ ...c, eliminado: false, fechaRegistro: fechaHoraActual() }); setHistorialDB(h);
-  document.getElementById('clienteForm').reset();
-  mostrarToast(); actualizarStats(); mostrarAlertas(); revisarCitasDeHoy();
+
 });
 
 function eliminarCliente(id) {
