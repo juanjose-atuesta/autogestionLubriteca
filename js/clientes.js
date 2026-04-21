@@ -33,8 +33,8 @@ document.getElementById('clienteForm').addEventListener('submit', e => {
   })
     .then(response => response.json())
     .then(data => {
-      console.log(data.status);
-      console.log("se logro");
+      //console.log(data.status);
+      //console.log("se logro");
       fetch("http://192.168.80.25:3000/api/historial/saveToHistorialDB", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,11 +47,6 @@ document.getElementById('clienteForm').addEventListener('submit', e => {
         })
     })
     .catch(console.error);
-  getClientes().then(cl => {
-    cl.push(c);
-    setClientes(cl);
-  }).catch(console.error);
-
 });
 
 function eliminarCliente(id) {
