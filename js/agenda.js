@@ -53,14 +53,14 @@ function seleccionarEspacio(espacio) {
 }
 
 function mostrarHorasDisponibles() {
-  const fecha = document.getElementById('reservarFecha').value;
-  const espacio = reservarEspacioActual;
-  if (!fecha || !espacio) return;
+  const date = document.getElementById('reservarFecha').value;
+  const space = reservarEspacioActual;
+  if (!date || !space) return;
 
   const ocupadas = new Set(
     getCitas()
-      .filter(c => c.fecha === fecha && c.espacio === espacio)
-      .map(c => c.hora)
+      .filter(c => c.date === date && c.space === space)
+      .map(c => c.hour)
   );
 
   const hayDisponibles = HORAS.some(h => !ocupadas.has(h));
@@ -114,37 +114,39 @@ function confirmarReserva() {
   const customerId = document.getElementById('reservarClienteId').value;
 
   if (!date || !hour || !space) { alert('Completa todos los pasos antes de confirmar.'); return; }
+  setCitas().then(() => {
+    const conflicto = getCitas().find(c => c.date === date && c.hour === hour && c.space === space);
+    if (conflicto) {
+      alert(`⚠ Ya existe una reserva en ese horario para ${ESPACIOS[space].name}. Selecciona otra hora o espacio.`);
+      return;
+    }
 
-  const conflicto = getCitas().find(c => c.date === date && c.hour === hour && c.space === space);
-  if (conflicto) {
-    alert(`⚠ Ya existe una reserva en ese horario para ${ESPACIOS[space].name}. Selecciona otra hora o espacio.`);
-    return;
-  }
+    const nuevaCita = {
+      reservationId: String(Date.now()),  // 🔧 CORREGIDO: string en lugar de número
+      date, hour, space, notes, plate, name, telephone, service, customerId
+    };
+    /* que horror 
+      const citas = getCitas();
+      citas.push(nuevaCita);
+      setCitas(citas);
+      */
 
-  const nuevaCita = {
-    reservationId: String(Date.now()),  // 🔧 CORREGIDO: string en lugar de número
-    date, hour, space, notes, plate, name, telephone, service, customerId
-  };
-  /* que horror 
-    const citas = getCitas();
-    citas.push(nuevaCita);
-    setCitas(citas);
-    */
+    // guardamos la cita en la DB 
+    fetch(API_BACKEND_URL + "reservations/saveReservation", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...nuevaCita })
+    }).then(res => { console.log("ggs") })
+      .catch(console.error);
 
-  // guardamos la cita en la DB 
-  fetch(API_BACKEND_URL + "reservations/saveReservation", {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...nuevaCita })
-  }).then(res => { console.log("ggs") })
-    .catch(console.error);
+    cerrarModalReservar();
+    actualizarBadgeAgenda();
+    mostrarAlertas();
+    if (document.getElementById('tab-database').classList.contains('active'))
+      mostrarGeneral(document.getElementById('buscadorGeneral').value);
+    if (document.getElementById('tab-agenda').classList.contains('active')) renderAgenda();
 
-  cerrarModalReservar();
-  actualizarBadgeAgenda();
-  mostrarAlertas();
-  if (document.getElementById('tab-database').classList.contains('active'))
-    mostrarGeneral(document.getElementById('buscadorGeneral').value);
-  if (document.getElementById('tab-agenda').classList.contains('active')) renderAgenda();
+  })
 
   // 🔧 Forzar sincronización inmediata para reflejar en la nube
   //sincronizarSoloCitas();
@@ -156,8 +158,9 @@ function cerrarModalReservar() { document.getElementById('modalReservar').classL
 // AGENDA — RENDER PRINCIPAL
 // ═══════════════════════════════════════════
 function actualizarBadgeAgenda() {
+
   const hoy = getHoy();
-  const total = getCitas().filter(c => c.fecha === hoy).length;
+  const total = getCitas().filter(c => c.date === hoy).length;
   document.getElementById('nav-badge-agenda').textContent = total;
 }
 
@@ -189,23 +192,24 @@ function renderAgenda() {
   const horaActual = new Date().toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit', hour12: false }).substring(0, 5);
 
   label.textContent = formatearFechaLarga(fecha);
+  setCitas().then(() => {
 
-  let citasDelDia = getCitas().filter(c => c.fecha === fecha);
-  if (filtroAgendaActual !== 'todos') citasDelDia = citasDelDia.filter(c => c.espacio === filtroAgendaActual);
+    let citasDelDia = getCitas().filter(c => c.date === fecha);
+    if (filtroAgendaActual !== 'todos') citasDelDia = citasDelDia.filter(c => c.space === filtroAgendaActual);
 
-  const totalCitas = citasDelDia.length;
-  const espaciosOcupados = new Set(citasDelDia.map(c => c.espacio)).size;
-  resumen.textContent = totalCitas > 0
-    ? `${totalCitas} cita${totalCitas !== 1 ? 's' : ''} · ${espaciosOcupados} espacio${espaciosOcupados !== 1 ? 's' : ''} ocupado${espaciosOcupados !== 1 ? 's' : ''}`
-    : 'Sin citas para este día';
+    const totalCitas = citasDelDia.length;
+    const espaciosOcupados = new Set(citasDelDia.map(c => c.space)).size;
+    resumen.textContent = totalCitas > 0
+      ? `${totalCitas} cita${totalCitas !== 1 ? 's' : ''} · ${espaciosOcupados} espacio${espaciosOcupados !== 1 ? 's' : ''} ocupado${espaciosOcupados !== 1 ? 's' : ''}`
+      : 'Sin citas para este día';
 
-  let html = '';
+    let html = '';
 
-  HORAS.forEach(hora => {
-    const citasEnEstaHora = citasDelDia.filter(c => c.hora === hora);
-    const esHoraActual = fecha === getHoy() && horaActual >= hora && horaActual < siguienteHora(hora);
+    HORAS.forEach(hora => {
+      const citasEnEstaHora = citasDelDia.filter(c => c.hour === hora);
+      const esHoraActual = fecha === getHoy() && horaActual >= hora && horaActual < siguienteHora(hora);
 
-    html += `<div class="agenda-slot ${citasEnEstaHora.length > 0 ? 'tiene-citas' : ''}"
+      html += `<div class="agenda-slot ${citasEnEstaHora.length > 0 ? 'tiene-citas' : ''}"
             data-fecha="${fecha}" data-hora="${hora}"
             ondragover="onDragOver(event)" ondrop="onDrop(event,'${hora}')">
 
@@ -215,39 +219,40 @@ function renderAgenda() {
 
             <div class="agenda-citas-col">`;
 
-    if (citasEnEstaHora.length > 0) {
-      citasEnEstaHora.forEach(cita => {
-        const esp = ESPACIOS[cita.espacio] || {};
-        html += `
+      if (citasEnEstaHora.length > 0) {
+        citasEnEstaHora.forEach(cita => {
+          const esp = ESPACIOS[cita.space] || {};
+          html += `
                 <div class="agenda-cita-chip ${esp.clase || ''}"
                     draggable="true"
-                    data-citaid="${cita.citaId}"
-                    ondragstart="onDragStart(event,${cita.citaId})"
+                    data-citaid="${cita.reservartionId}"
+                    ondragstart="onDragStart(event,${cita.reservationId})"
                     ondragend="onDragEnd(event)">
-                    <span class="cita-espacio-tag ${esp.tag || ''}">${esp.icono || ''} ${esp.nombre || cita.espacio}</span>
-                    <span class="cita-placa">${cita.placa}</span>
+                    <span class="cita-espacio-tag ${esp.tag || ''}">${esp.icono || ''} ${esp.name || cita.space}</span>
+                    <span class="cita-placa">${cita.plate}</span>
                     <div class="cita-info">
-                        ${cita.nombre}
-                        ${cita.notas ? `<small>📝 ${cita.notas}</small>` : ''}
+                        ${cita.name}
+                        ${cita.notes ? `<small>📝 ${cita.notes}</small>` : ''}
                     </div>
                     <div class="cita-acciones">
-                        <button class="btn-ver-cita" onclick="verDetalleCita(${cita.citaId})" title="Ver detalle">👁</button>
-                        <button class="btn-del-cita-chip" onclick="eliminarCita(${cita.citaId})">✕</button>
+                        <button class="btn-ver-cita" onclick="verDetalleCita(${cita.reservationId})" title="Ver detalle">👁</button>
+                        <button class="btn-del-cita-chip" onclick="eliminarCita(${cita.reservationId})">✕</button>
                     </div>
                 </div>`;
-      });
-    } else {
-      html += `<div class="agenda-empty-slot"
+        });
+      } else {
+        html += `<div class="agenda-empty-slot"
                 ondragover="onDragOver(event)" ondrop="onDrop(event,'${hora}')">
                 Sin reservas
             </div>`;
-    }
+      }
 
-    html += `</div></div>`;
-  });
+      html += `</div></div>`;
+    });
 
-  contenido.innerHTML = html;
-  actualizarBadgeAgenda();
+    contenido.innerHTML = html;
+    actualizarBadgeAgenda();
+  })
 }
 
 function siguienteHora(hora) {
@@ -257,7 +262,7 @@ function siguienteHora(hora) {
 
 // 🔧 CORREGIDO: eliminarCita sin código duplicado y con fetch mode:'cors'
 function eliminarCita(citaId) {
-  setCitas(getCitas().filter(c => c.citaId !== citaId));
+  setCitas();
 
   // Enviar eliminación a Google Sheets
   fetch(urlGoogle, {
@@ -274,14 +279,14 @@ function eliminarCita(citaId) {
 }
 
 function verDetalleCita(citaId) {
-  const cita = getCitas().find(c => c.citaId === citaId);
+  const cita = getCitas().find(c => c.reservationId === citaId);
   if (!cita) return;
 
-  const esp = ESPACIOS[cita.espacio] || {};
+  const esp = ESPACIOS[cita.space] || {};
   const hoy = getHoy();
-  const waTxt = encodeURIComponent(`Hola ${cita.nombre}, te confirmamos tu cita en ${esp.nombre} el ${cita.fecha} a las ${HORAS_DISPLAY[cita.hora]}. ¡Te esperamos!`);
-  const esHoy = cita.fecha === hoy;
-  const esPasada = cita.fecha < hoy;
+  const waTxt = encodeURIComponent(`Hola ${cita.name}, te confirmamos tu cita en ${cita.space} el ${cita.date} a las ${HORAS_DISPLAY[cita.hour]}. ¡Te esperamos!`);
+  const esHoy = cita.date === hoy;
+  const esPasada = cita.date < hoy;
 
   const estadoFecha = esHoy
     ? `<span class="badge-estado badge-hoy">⚠ HOY</span>`
@@ -290,35 +295,35 @@ function verDetalleCita(citaId) {
       : `<span class="badge-estado badge-ok">Próxima</span>`;
 
   document.getElementById('detalleCitaContenido').innerHTML = `
-        <div class="detalle-espacio-header detalle-espacio-${cita.espacio}">
+        <div class="detalle-espacio-header detalle-espacio-${cita.space}">
             <span class="detalle-espacio-icon">${esp.icono}</span>
             <div>
-                <div class="detalle-espacio-nombre">${esp.nombre}</div>
-                <div class="detalle-espacio-hora">${HORAS_DISPLAY[cita.hora]} · ${cita.fecha} ${estadoFecha}</div>
+                <div class="detalle-espacio-nombre">${cita.space}</div>
+                <div class="detalle-espacio-hora">${HORAS_DISPLAY[cita.hour]} · ${cita.date} ${estadoFecha}</div>
             </div>
         </div>
         <div class="detalle-seccion">
             <div class="detalle-seccion-titulo">📋 Datos de la Cita</div>
             <div class="detalle-grid">
-                <div class="detalle-item"><span class="detalle-label">Placa</span><span class="detalle-valor detalle-placa">${cita.placa}</span></div>
-                <div class="detalle-item"><span class="detalle-label">Servicio</span><span class="detalle-valor">${cita.categoria}</span></div>
+                <div class="detalle-item"><span class="detalle-label">Placa</span><span class="detalle-valor detalle-placa">${cita.plate}</span></div>
+                <div class="detalle-item"><span class="detalle-label">Servicio</span><span class="detalle-valor">${cita.service}</span></div>
                 <div class="detalle-item"><span class="detalle-label">Fecha</span><span class="detalle-valor">${cita.fecha}</span></div>
-                <div class="detalle-item"><span class="detalle-label">Hora</span><span class="detalle-valor">${HORAS_DISPLAY[cita.hora]}</span></div>
-                ${cita.notas ? `<div class="detalle-item detalle-item-full"><span class="detalle-label">Notas</span><span class="detalle-valor">📝 ${cita.notas}</span></div>` : ''}
+                <div class="detalle-item"><span class="detalle-label">Hora</span><span class="detalle-valor">${HORAS_DISPLAY[cita.hour]}</span></div>
+                ${cita.notas ? `<div class="detalle-item detalle-item-full"><span class="detalle-label">Notas</span><span class="detalle-valor">📝 ${cita.notes}</span></div>` : ''}
             </div>
         </div>
         <div class="detalle-seccion">
             <div class="detalle-seccion-titulo">👤 Datos del Cliente</div>
             <div class="detalle-grid">
-                <div class="detalle-item"><span class="detalle-label">Nombre</span><span class="detalle-valor">${cita.nombre}</span></div>
-                <div class="detalle-item"><span class="detalle-label">Teléfono</span><span class="detalle-valor">${cita.telefono}</span></div>
+                <div class="detalle-item"><span class="detalle-label">Nombre</span><span class="detalle-valor">${cita.name}</span></div>
+                <div class="detalle-item"><span class="detalle-label">Teléfono</span><span class="detalle-valor">${cita.telephone}</span></div>
             </div>
         </div>
         <div class="detalle-acciones">
             <a href="https://wa.me/57${cita.telefono}?text=${waTxt}" target="_blank" class="btn-wa btn-detalle-wa">
                 📱 Contactar por WhatsApp
             </a>
-            <button class="btn-del btn-detalle-del" onclick="if(confirm('¿Cancelar esta reserva?')){eliminarCita(${cita.citaId});cerrarDetalleCita();}">
+            <button class="btn-del btn-detalle-del" onclick="if(confirm('¿Cancelar esta reserva?')){eliminarCita(${cita.reservationId});cerrarDetalleCita();}">
                 ✕ Cancelar reserva
             </button>
         </div>`;
@@ -373,7 +378,7 @@ function onDrop(event, nuevaHora) {
   }
 
   citas[citaIdx] = { ...cita, hora: nuevaHora };
-  setCitas(citas);
+  setCitas();
   fetch(urlGoogle, {
     method: 'POST',
     mode: 'no-cors',

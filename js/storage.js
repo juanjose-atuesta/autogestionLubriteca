@@ -36,4 +36,9 @@ async function getContactados() {
 //function getIdsContactados() { return JSON.parse(localStorage.getItem('db_contactados_ids')) || []; }
 //function setIdsContactados(arr) { localStorage.setItem('db_contactados_ids', JSON.stringify(arr)); }
 function getCitas() { return JSON.parse(localStorage.getItem('db_citas')) || []; }
-function setCitas(arr) { localStorage.setItem('db_citas', JSON.stringify(arr)); }
+async function setCitas() {
+  lista = await fetch(API_BACKEND_URL + "reservations/reservationsList")
+  listaCorrecta = await lista.json()
+
+  localStorage.setItem('db_citas', JSON.stringify(listaCorrecta.reservationList));
+}

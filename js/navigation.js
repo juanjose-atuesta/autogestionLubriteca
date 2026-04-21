@@ -22,21 +22,23 @@ function seleccionarTab(tab) {
   if (tab === 'contactados') mostrarContactados();
   if (tab === 'agenda') {
     irHoyAgenda();
+    /*
     sincronizarSoloCitas().then(() => {
       if (document.getElementById('tab-agenda').classList.contains('active'))
         renderAgenda();
     });
+    */
   }
   cerrarMenu();
 }
-
+/*
 setInterval(() => {
   sincronizarSoloCitas().then(() => {
     if (document.getElementById('tab-agenda').classList.contains('active'))
       renderAgenda();
   });
 }, 30000);
-
+*/
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { cerrarModalEliminar(); cerrarModalEditar(); cerrarModalReservar(); cerrarDetalleCita(); }
 });
