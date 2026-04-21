@@ -195,19 +195,19 @@ async function renderAgenda() {
   let citasDelDia = citas.filter(c => c.date === fecha);
   if (filtroAgendaActual !== 'todos') citasDelDia = citasDelDia.filter(c => c.space === filtroAgendaActual);
 
-    const totalCitas = citasDelDia.length;
-    const espaciosOcupados = new Set(citasDelDia.map(c => c.space)).size;
-    resumen.textContent = totalCitas > 0
-      ? `${totalCitas} cita${totalCitas !== 1 ? 's' : ''} · ${espaciosOcupados} espacio${espaciosOcupados !== 1 ? 's' : ''} ocupado${espaciosOcupados !== 1 ? 's' : ''}`
-      : 'Sin citas para este día';
+  const totalCitas = citasDelDia.length;
+  const espaciosOcupados = new Set(citasDelDia.map(c => c.space)).size;
+  resumen.textContent = totalCitas > 0
+    ? `${totalCitas} cita${totalCitas !== 1 ? 's' : ''} · ${espaciosOcupados} espacio${espaciosOcupados !== 1 ? 's' : ''} ocupado${espaciosOcupados !== 1 ? 's' : ''}`
+    : 'Sin citas para este día';
 
-    let html = '';
+  let html = '';
 
-    HORAS.forEach(hora => {
-      const citasEnEstaHora = citasDelDia.filter(c => c.hour === hora);
-      const esHoraActual = fecha === getHoy() && horaActual >= hora && horaActual < siguienteHora(hora);
+  HORAS.forEach(hora => {
+    const citasEnEstaHora = citasDelDia.filter(c => c.hour === hora);
+    const esHoraActual = fecha === getHoy() && horaActual >= hora && horaActual < siguienteHora(hora);
 
-      html += `<div class="agenda-slot ${citasEnEstaHora.length > 0 ? 'tiene-citas' : ''}"
+    html += `<div class="agenda-slot ${citasEnEstaHora.length > 0 ? 'tiene-citas' : ''}"
             data-fecha="${fecha}" data-hora="${hora}"
             ondragover="onDragOver(event)" ondrop="onDrop(event,'${hora}')">
 
@@ -217,10 +217,10 @@ async function renderAgenda() {
 
             <div class="agenda-citas-col">`;
 
-      if (citasEnEstaHora.length > 0) {
-        citasEnEstaHora.forEach(cita => {
-          const esp = ESPACIOS[cita.space] || {};
-          html += `
+    if (citasEnEstaHora.length > 0) {
+      citasEnEstaHora.forEach(cita => {
+        const esp = ESPACIOS[cita.space] || {};
+        html += `
                 <div class="agenda-cita-chip ${esp.clase || ''}"
                     draggable="true"
                     data-citaid="${cita.reservationId}"
@@ -234,19 +234,19 @@ async function renderAgenda() {
                     </div>
                     <div class="cita-acciones">
                         <button class="btn-ver-cita" onclick="verDetalleCita('${cita.reservationId}')" title="Ver detalle">👁</button>
-                        <button class="btn-del-cita-chip" onclick="eliminarCita('${cita.reservationId}')">✕</button>
+                        <button class="btn-del-cita-chip" onclick="if(confirm('¿Cancelar esta reserva?')){eliminarCita('${cita.reservationId}')}">✕</button>
                     </div>
                 </div>`;
-        });
-      } else {
-        html += `<div class="agenda-empty-slot"
+      });
+    } else {
+      html += `<div class="agenda-empty-slot"
                 ondragover="onDragOver(event)" ondrop="onDrop(event,'${hora}')">
                 Sin reservas
             </div>`;
-      }
+    }
 
-      html += `</div></div>`;
-    });
+    html += `</div></div>`;
+  });
 
   contenido.innerHTML = html;
   await actualizarBadgeAgenda();
@@ -259,14 +259,15 @@ function siguienteHora(hora) {
 
 // 🔧 CORREGIDO: eliminarCita sin código duplicado y con fetch mode:'cors'
 function eliminarCita(citaId) {
-  setCitas();
 
   // Enviar eliminación a Google Sheets
-  fetch(urlGoogle, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: JSON.stringify({ citaId: String(citaId), accion: 'eliminar_cita' })
-  }).catch(console.error);
+  fetch(API_BACKEND_URL + "reservations/deleteReservation/" + citaId, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' }
+  }).then(response => {
+    console.log(response.status);
+  })
+    .catch(console.error);
 
   actualizarBadgeAgenda();
   mostrarAlertas();
