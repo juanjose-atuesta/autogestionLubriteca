@@ -45,6 +45,8 @@ function construirFila(c) {
     ? `Hola%20${encodeURIComponent(nombre)},%20te%20recordamos%20que%20tu%20servicio%20de%20${encodeURIComponent(categoria)}%20es%20HOY.%20%C2%A1Te%20esperamos!`
     : `Hola%20${encodeURIComponent(nombre)},%20tu%20servicio%20de%20${encodeURIComponent(categoria)}%20est%C3%A1%20vencido.%20%C2%A1Cont%C3%A1ctanos!`;
 
+
+  /*OJO, ESTO TENEMOS QUE RESOLVERLO DESPUES */
   const citasCliente = getCitas().filter(ct => String(ct.placa).toUpperCase() === placa && ct.fecha >= hoy);
   const tieneReserva = citasCliente.length > 0;
   const nombreSafe = nombre.replace(/'/g, "\\'").replace(/"/g, '&quot;');

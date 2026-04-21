@@ -103,39 +103,41 @@ function seleccionarHora(hora) {
 
 // 🔧 CORREGIDO: confirmarReserva con citaId string y fetch mode:'cors'
 function confirmarReserva() {
-  const fecha = document.getElementById('reservarFecha').value;
-  const hora = document.getElementById('reservarHora').value;
-  const espacio = document.getElementById('reservarEspacio').value;
-  const notas = document.getElementById('reservarNotas').value.trim();
-  const placa = document.getElementById('reservarPlacaH').value;
-  const nombre = document.getElementById('reservarNombreH').value;
-  const telefono = document.getElementById('reservarTelefonoH').value;
-  const categoria = document.getElementById('reservarCategoriaH').value;
-  const clienteId = document.getElementById('reservarClienteId').value;
+  const date = document.getElementById('reservarFecha').value;
+  const hour = document.getElementById('reservarHora').value;
+  const space = document.getElementById('reservarEspacio').value;
+  const notes = document.getElementById('reservarNotas').value.trim();
+  const plate = document.getElementById('reservarPlacaH').value;
+  const name = document.getElementById('reservarNombreH').value;
+  const telephone = document.getElementById('reservarTelefonoH').value;
+  const service = document.getElementById('reservarCategoriaH').value;
+  const customerId = document.getElementById('reservarClienteId').value;
 
-  if (!fecha || !hora || !espacio) { alert('Completa todos los pasos antes de confirmar.'); return; }
+  if (!date || !hour || !space) { alert('Completa todos los pasos antes de confirmar.'); return; }
 
-  const conflicto = getCitas().find(c => c.fecha === fecha && c.hora === hora && c.espacio === espacio);
+  const conflicto = getCitas().find(c => c.date === date && c.hour === hour && c.space === space);
   if (conflicto) {
-    alert(`⚠ Ya existe una reserva en ese horario para ${ESPACIOS[espacio].nombre}. Selecciona otra hora o espacio.`);
+    alert(`⚠ Ya existe una reserva en ese horario para ${ESPACIOS[space].name}. Selecciona otra hora o espacio.`);
     return;
   }
 
   const nuevaCita = {
-    citaId: String(Date.now()),  // 🔧 CORREGIDO: string en lugar de número
-    clienteId, placa, nombre, telefono, categoria, fecha, hora, espacio, notas
+    reservationId: String(Date.now()),  // 🔧 CORREGIDO: string en lugar de número
+    date, hour, space, notes, plate, name, telephone, service, customerId
   };
+  /* que horror 
+    const citas = getCitas();
+    citas.push(nuevaCita);
+    setCitas(citas);
+    */
 
-  const citas = getCitas();
-  citas.push(nuevaCita);
-  setCitas(citas);
-
-  // Guardar en Google Sheets
-  fetch(urlGoogle, {
+  // guardamos la cita en la DB 
+  fetch(API_BACKEND_URL + "reservations/saveReservation", {
     method: 'POST',
-    mode: 'no-cors',                // 🔧 CORREGIDO: 'cors' en lugar de 'no-cors'
-    body: JSON.stringify({ ...nuevaCita, accion: 'guardar_cita' })
-  }).catch(console.error);
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...nuevaCita })
+  }).then(res => { console.log("ggs") })
+    .catch(console.error);
 
   cerrarModalReservar();
   actualizarBadgeAgenda();
@@ -145,7 +147,7 @@ function confirmarReserva() {
   if (document.getElementById('tab-agenda').classList.contains('active')) renderAgenda();
 
   // 🔧 Forzar sincronización inmediata para reflejar en la nube
-  sincronizarSoloCitas();
+  //sincronizarSoloCitas();
 }
 
 function cerrarModalReservar() { document.getElementById('modalReservar').classList.remove('active'); }

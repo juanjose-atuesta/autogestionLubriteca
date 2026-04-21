@@ -48,9 +48,7 @@ function sincronizarConSheets() {
           mileage: String(c.mileage)
         }));
 
-      if (clientesSheets.length > 0) {
-        setClientes(clientesSheets);
-      }
+
       /*
             // 🔧 CORREGIDO: Sincronizar citas usando String para citaId y comparación correcta
             if (Array.isArray(datos.citas)) {
@@ -99,52 +97,53 @@ function sincronizarConSheets() {
     });
 }
 
-/*
+
 // 🔧 CORREGIDO: sincronizarSoloCitas con manejo de string para citaId
+/*
 async function sincronizarSoloCitas() {
-  try {
-    const res = await fetch(urlGoogle + '?v=' + Date.now(), { method: 'GET', cache: 'no-cache' });
-    const datos = await res.json();
-    if (!datos.ok || !Array.isArray(datos.citas)) return;
+ try {
+   const res = await fetch(urlGoogle + '?v=' + Date.now(), { method: 'GET', cache: 'no-cache' });
+   const datos = await res.json();
+   if (!datos.ok || !Array.isArray(datos.citas)) return;
 
-    const citasSheets = datos.citas.map(c => ({
-      citaId: String(c.citaId),
-      placa: String(c.placa || '').toUpperCase().trim(),
-      nombre: String(c.nombre || ''),
-      telefono: String(c.telefono || ''),
-      categoria: String(c.categoria || ''),
-      fecha: String(c.fecha || ''),
-      hora: String(c.hora || ''),
-      espacio: String(c.espacio || ''),
-      notas: String(c.notas || '')
-    }));
+   const citasSheets = datos.citas.map(c => ({
+     citaId: String(c.citaId),
+     placa: String(c.placa || '').toUpperCase().trim(),
+     nombre: String(c.nombre || ''),
+     telefono: String(c.telefono || ''),
+     categoria: String(c.categoria || ''),
+     fecha: String(c.fecha || ''),
+     hora: String(c.hora || ''),
+     espacio: String(c.espacio || ''),
+     notas: String(c.notas || '')
+   }));
 
-    const idsSheets = new Set(citasSheets.map(c => c.citaId));
-    const citasLocales = getCitas();
-    const ahora = Date.now();
+   const idsSheets = new Set(citasSheets.map(c => c.citaId));
+   const citasLocales = getCitas();
+   const ahora = Date.now();
 
-    const pendientes = citasLocales.filter(c =>
-      !idsSheets.has(String(c.citaId)) && (ahora - Number(c.citaId)) < 600000
-    );
+   const pendientes = citasLocales.filter(c =>
+     !idsSheets.has(String(c.citaId)) && (ahora - Number(c.citaId)) < 600000
+   );
 
-    const citasMerge = [...citasSheets, ...pendientes];
+   const citasMerge = [...citasSheets, ...pendientes];
 
-    const localIds = new Set(citasLocales.map(c => String(c.citaId)));
-    const sheetsIds = new Set(citasMerge.map(c => String(c.citaId)));
-    const hayDiferencia =
-      citasMerge.length !== citasLocales.length ||
-      [...sheetsIds].some(id => !localIds.has(id)) ||
-      [...localIds].some(id => !sheetsIds.has(id));
+   const localIds = new Set(citasLocales.map(c => String(c.citaId)));
+   const sheetsIds = new Set(citasMerge.map(c => String(c.citaId)));
+   const hayDiferencia =
+     citasMerge.length !== citasLocales.length ||
+     [...sheetsIds].some(id => !localIds.has(id)) ||
+     [...localIds].some(id => !sheetsIds.has(id));
 
-    if (hayDiferencia) {
-      setCitas(citasMerge);
-      actualizarBadgeAgenda();
-      mostrarAlertas();
-      if (document.getElementById('tab-database').classList.contains('active'))
-        mostrarGeneral(document.getElementById('buscadorGeneral').value);
-    }
-  } catch (err) {
-    console.warn('Sync citas falló:', err.message);
-  }
+   if (hayDiferencia) {
+     setCitas(citasMerge);
+     actualizarBadgeAgenda();
+     mostrarAlertas();
+     if (document.getElementById('tab-database').classList.contains('active'))
+       mostrarGeneral(document.getElementById('buscadorGeneral').value);
+   }
+ } catch (err) {
+   console.warn('Sync citas falló:', err.message);
+ }
 }
 */
