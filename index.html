@@ -366,6 +366,19 @@
     </div>
   </div>
 
+  <!-- MODAL ELIMINAR CITA -->
+  <div class="modal-overlay" id="modalEliminarCita">
+    <div class="modal">
+      <div class="modal-icon modal-icon-danger">✕</div>
+      <h3>¿Cancelar reserva?</h3>
+      <p id="modalEliminarCitaTexto">Esta acción eliminará la cita seleccionada.</p>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="cerrarModalEliminarCita()">Cancelar</button>
+        <button class="btn-modal-confirm" id="btnConfirmarEliminarCita">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL EDITAR -->
   <div class="modal-overlay" id="modalEditar">
     <div class="modal modal-wide">

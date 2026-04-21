@@ -28,6 +28,8 @@ function abrirModalReservar(clienteId, placa, nombre, telefono, categoria) {
   mostrarPaso2();
 }
 
+let reservationIdPendienteEliminar = null;
+
 function mostrarPaso2() {
   const fecha = document.getElementById('reservarFecha').value;
   if (!fecha) return;
@@ -234,7 +236,7 @@ async function renderAgenda() {
                     </div>
                     <div class="cita-acciones">
                         <button class="btn-ver-cita" onclick="verDetalleCita('${cita.reservationId}')" title="Ver detalle">👁</button>
-                        <button class="btn-del-cita-chip" onclick="if(confirm('¿Cancelar esta reserva?')){eliminarCita('${cita.reservationId}')}">✕</button>
+                        <button class="btn-del-cita-chip" onclick="eliminarCita('${cita.reservationId}')">✕</button>
                     </div>
                 </div>`;
       });
@@ -257,23 +259,48 @@ function siguienteHora(hora) {
   return idx < HORAS.length - 1 ? HORAS[idx + 1] : '23:59';
 }
 
-// 🔧 CORREGIDO: eliminarCita sin código duplicado y con fetch mode:'cors'
-function eliminarCita(citaId) {
+async function eliminarCita(citaId) {
+  const citas = await getCitas();
+  const cita = citas.find(c => String(c.reservationId) === String(citaId));
+  if (!cita) return;
 
-  // Enviar eliminación a Google Sheets
-  fetch(API_BACKEND_URL + "reservations/deleteReservation/" + citaId, {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' }
-  }).then(response => {
-    console.log(response.status);
-  })
-    .catch(console.error);
+  if (document.getElementById('modalDetalleCita').classList.contains('active')) {
+    cerrarDetalleCita();
+  }
 
-  actualizarBadgeAgenda();
-  mostrarAlertas();
-  if (document.getElementById('tab-database').classList.contains('active'))
-    mostrarGeneral(document.getElementById('buscadorGeneral').value);
-  renderAgenda();
+  reservationIdPendienteEliminar = String(citaId);
+  document.getElementById('modalEliminarCitaTexto').textContent =
+    `¿Eliminar la reserva de "${cita.name}" (${cita.plate}) para ${cita.date} a las ${HORAS_DISPLAY[cita.hour]}?`;
+  document.getElementById('modalEliminarCita').classList.add('active');
+  document.getElementById('btnConfirmarEliminarCita').onclick = confirmarEliminarCita;
+}
+
+function cerrarModalEliminarCita() {
+  document.getElementById('modalEliminarCita').classList.remove('active');
+  reservationIdPendienteEliminar = null;
+}
+
+async function confirmarEliminarCita() {
+  if (!reservationIdPendienteEliminar) return;
+  const reservationId = reservationIdPendienteEliminar;
+
+  try {
+    const response = await fetch(API_BACKEND_URL + "reservations/deleteReservation/" + reservationId, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+
+    cerrarModalEliminarCita();
+    cerrarDetalleCita();
+    await actualizarBadgeAgenda();
+    mostrarAlertas();
+    if (document.getElementById('tab-database').classList.contains('active'))
+      mostrarGeneral(document.getElementById('buscadorGeneral').value);
+    await renderAgenda();
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 async function verDetalleCita(citaId) {
@@ -322,7 +349,7 @@ async function verDetalleCita(citaId) {
             <a href="https://wa.me/57${cita.telephone}?text=${waTxt}" target="_blank" class="btn-wa btn-detalle-wa">
                 📱 Contactar por WhatsApp
             </a>
-            <button class="btn-del btn-detalle-del" onclick="if(confirm('¿Cancelar esta reserva?')){eliminarCita('${cita.reservationId}');cerrarDetalleCita();}">
+            <button class="btn-del btn-detalle-del" onclick="eliminarCita('${cita.reservationId}')">
                 ✕ Cancelar reserva
             </button>
         </div>`;
