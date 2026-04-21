@@ -48,9 +48,7 @@ function sincronizarConSheets() {
           mileage: String(c.mileage)
         }));
 
-      if (clientesSheets.length > 0) {
-        setClientes(clientesSheets);
-      }
+
       /*
             // 🔧 CORREGIDO: Sincronizar citas usando String para citaId y comparación correcta
             if (Array.isArray(datos.citas)) {
@@ -99,24 +97,25 @@ function sincronizarConSheets() {
     });
 }
 
-/*
+
 // 🔧 CORREGIDO: sincronizarSoloCitas con manejo de string para citaId
+/*
 async function sincronizarSoloCitas() {
   try {
-    const res = await fetch(urlGoogle + '?v=' + Date.now(), { method: 'GET', cache: 'no-cache' });
+    const res = await fetch(API_BACKEND_URL + "reservations/reservationsList");
     const datos = await res.json();
-    if (!datos.ok || !Array.isArray(datos.citas)) return;
+    if (!datos.ok || !Array.isArray(datos.reservationList)) return;
 
-    const citasSheets = datos.citas.map(c => ({
-      citaId: String(c.citaId),
-      placa: String(c.placa || '').toUpperCase().trim(),
-      nombre: String(c.nombre || ''),
-      telefono: String(c.telefono || ''),
-      categoria: String(c.categoria || ''),
-      fecha: String(c.fecha || ''),
-      hora: String(c.hora || ''),
-      espacio: String(c.espacio || ''),
-      notas: String(c.notas || '')
+    const citasSheets = datos.reservationList.map(c => ({
+      reservationId: String(c.reservationId),
+      plate: String(c.plate || '').toUpperCase().trim(),
+      name: String(c.name || ''),
+      telephone: String(c.telephone || ''),
+      service: String(c.service || ''),
+      date: String(c.date || ''),
+      hour: String(c.hour || ''),
+      space: String(c.space || ''),
+      notes: String(c.notes || '')
     }));
 
     const idsSheets = new Set(citasSheets.map(c => c.citaId));
@@ -137,14 +136,17 @@ async function sincronizarSoloCitas() {
       [...localIds].some(id => !sheetsIds.has(id));
 
     if (hayDiferencia) {
-      setCitas(citasMerge);
-      actualizarBadgeAgenda();
-      mostrarAlertas();
-      if (document.getElementById('tab-database').classList.contains('active'))
-        mostrarGeneral(document.getElementById('buscadorGeneral').value);
+      setCitas().then(respuesta => {
+        console.log(respuesta.status);
+        actualizarBadgeAgenda();
+        mostrarAlertas();
+        if (document.getElementById('tab-database').classList.contains('active'))
+          mostrarGeneral(document.getElementById('buscadorGeneral').value);
+      })
     }
   } catch (err) {
     console.warn('Sync citas falló:', err.message);
   }
 }
-*/
+ */
+

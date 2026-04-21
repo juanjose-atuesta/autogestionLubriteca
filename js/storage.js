@@ -35,5 +35,17 @@ async function getContactados() {
 //function setContactados(arr) { localStorage.setItem('db_contactados_log', JSON.stringify(arr)); }
 //function getIdsContactados() { return JSON.parse(localStorage.getItem('db_contactados_ids')) || []; }
 //function setIdsContactados(arr) { localStorage.setItem('db_contactados_ids', JSON.stringify(arr)); }
-function getCitas() { return JSON.parse(localStorage.getItem('db_citas')) || []; }
-function setCitas(arr) { localStorage.setItem('db_citas', JSON.stringify(arr)); }
+async function getCitas() {
+  try {
+    const response = await fetch(API_BACKEND_URL + "reservations/reservationsList");
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const data = await response.json();
+    return data.reservationList || [];
+  } catch (error) {
+    console.error('Error fetching citas:', error);
+    return [];
+  }
+}
+async function setCitas() {
+  return getCitas();
+}

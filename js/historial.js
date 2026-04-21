@@ -18,7 +18,7 @@ function buscarHistorial() {
     const res = document.getElementById('historialResultado');
     if (placa.length < 3) { res.innerHTML = `<div class="empty-state"><div class="empty-icon">◎</div><p>Ingresa una placa para ver su historial completo.</p></div>`; return; }
 
-    let regsFiltered = regs.filter(c => c.plate.toUpperCase().includes(placa)).sort((a, b) => String(a.entryDate).localeCompare(String(b.nextContact)));
+    let regsFiltered = regs.filter(c => c.plate.toUpperCase().includes(placa)).sort((a, b) => String(a.entryDate).localeCompare(String(b.nextContact)));//filter no edita, toca guardarlo en algo
     if (!regsFiltered.length) { res.innerHTML = `<div class="empty-state"><div class="empty-icon">○</div><p>No se encontraron registros para "<strong>${placa}</strong>".</p></div>`; return; }
     const hoy = getHoy(), pu = [...new Set(regsFiltered.map(c => c.plate))];
     let html = '';

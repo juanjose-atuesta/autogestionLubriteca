@@ -28,6 +28,8 @@ function abrirModalReservar(clienteId, placa, nombre, telefono, categoria) {
   mostrarPaso2();
 }
 
+let reservationIdPendienteEliminar = null;
+
 function mostrarPaso2() {
   const fecha = document.getElementById('reservarFecha').value;
   if (!fecha) return;
@@ -52,15 +54,16 @@ function seleccionarEspacio(espacio) {
   mostrarHorasDisponibles();
 }
 
-function mostrarHorasDisponibles() {
-  const fecha = document.getElementById('reservarFecha').value;
-  const espacio = reservarEspacioActual;
-  if (!fecha || !espacio) return;
+async function mostrarHorasDisponibles() {
+  const date = document.getElementById('reservarFecha').value;
+  const space = reservarEspacioActual;
+  if (!date || !space) return;
+  const citas = await getCitas();
 
   const ocupadas = new Set(
-    getCitas()
-      .filter(c => c.fecha === fecha && c.espacio === espacio)
-      .map(c => c.hora)
+    citas
+      .filter(c => c.date === date && c.space === space)
+      .map(c => c.hour)
   );
 
   const hayDisponibles = HORAS.some(h => !ocupadas.has(h));
@@ -102,50 +105,51 @@ function seleccionarHora(hora) {
 }
 
 // 🔧 CORREGIDO: confirmarReserva con citaId string y fetch mode:'cors'
-function confirmarReserva() {
-  const fecha = document.getElementById('reservarFecha').value;
-  const hora = document.getElementById('reservarHora').value;
-  const espacio = document.getElementById('reservarEspacio').value;
-  const notas = document.getElementById('reservarNotas').value.trim();
-  const placa = document.getElementById('reservarPlacaH').value;
-  const nombre = document.getElementById('reservarNombreH').value;
-  const telefono = document.getElementById('reservarTelefonoH').value;
-  const categoria = document.getElementById('reservarCategoriaH').value;
-  const clienteId = document.getElementById('reservarClienteId').value;
+async function confirmarReserva() {
+  const date = document.getElementById('reservarFecha').value;
+  const hour = document.getElementById('reservarHora').value;
+  const space = document.getElementById('reservarEspacio').value;
+  const notes = document.getElementById('reservarNotas').value.trim();
+  const plate = document.getElementById('reservarPlacaH').value;
+  const name = document.getElementById('reservarNombreH').value;
+  const telephone = document.getElementById('reservarTelefonoH').value;
+  const service = document.getElementById('reservarCategoriaH').value;
+  const customerId = document.getElementById('reservarClienteId').value;
 
-  if (!fecha || !hora || !espacio) { alert('Completa todos los pasos antes de confirmar.'); return; }
+  if (!date || !hour || !space) { alert('Completa todos los pasos antes de confirmar.'); return; }
+  try {
+    const citas = await getCitas();
+    const conflicto = citas.find(c => c.date === date && c.hour === hour && c.space === space);
+    if (conflicto) {
+      alert(`⚠ Ya existe una reserva en ese horario para ${ESPACIOS[space].nombre}. Selecciona otra hora o espacio.`);
+      return;
+    }
 
-  const conflicto = getCitas().find(c => c.fecha === fecha && c.hora === hora && c.espacio === espacio);
-  if (conflicto) {
-    alert(`⚠ Ya existe una reserva en ese horario para ${ESPACIOS[espacio].nombre}. Selecciona otra hora o espacio.`);
-    return;
+    const nuevaCita = {
+      reservationId: String(Date.now()),  // 🔧 CORREGIDO: string en lugar de número
+      date, hour, space, notes, plate, name, telephone, service, customerId
+    };
+
+    // guardamos la cita en la DB 
+    const response = await fetch(API_BACKEND_URL + "reservations/saveReservation", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...nuevaCita })
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+
+    cerrarModalReservar();
+    await actualizarBadgeAgenda();
+    mostrarAlertas();
+    if (document.getElementById('tab-database').classList.contains('active'))
+      mostrarGeneral(document.getElementById('buscadorGeneral').value);
+    if (document.getElementById('tab-agenda').classList.contains('active')) await renderAgenda();
+  } catch (error) {
+    console.error(error);
   }
 
-  const nuevaCita = {
-    citaId: String(Date.now()),  // 🔧 CORREGIDO: string en lugar de número
-    clienteId, placa, nombre, telefono, categoria, fecha, hora, espacio, notas
-  };
-
-  const citas = getCitas();
-  citas.push(nuevaCita);
-  setCitas(citas);
-
-  // Guardar en Google Sheets
-  fetch(urlGoogle, {
-    method: 'POST',
-    mode: 'no-cors',                // 🔧 CORREGIDO: 'cors' en lugar de 'no-cors'
-    body: JSON.stringify({ ...nuevaCita, accion: 'guardar_cita' })
-  }).catch(console.error);
-
-  cerrarModalReservar();
-  actualizarBadgeAgenda();
-  mostrarAlertas();
-  if (document.getElementById('tab-database').classList.contains('active'))
-    mostrarGeneral(document.getElementById('buscadorGeneral').value);
-  if (document.getElementById('tab-agenda').classList.contains('active')) renderAgenda();
-
   // 🔧 Forzar sincronización inmediata para reflejar en la nube
-  sincronizarSoloCitas();
+  //sincronizarSoloCitas();
 }
 
 function cerrarModalReservar() { document.getElementById('modalReservar').classList.remove('active'); }
@@ -153,33 +157,34 @@ function cerrarModalReservar() { document.getElementById('modalReservar').classL
 // ═══════════════════════════════════════════
 // AGENDA — RENDER PRINCIPAL
 // ═══════════════════════════════════════════
-function actualizarBadgeAgenda() {
+async function actualizarBadgeAgenda() {
+  const citas = await getCitas();
   const hoy = getHoy();
-  const total = getCitas().filter(c => c.fecha === hoy).length;
+  const total = citas.filter(c => c.date === hoy).length;
   document.getElementById('nav-badge-agenda').textContent = total;
 }
 
-function irHoyAgenda() {
+async function irHoyAgenda() {
   document.getElementById('agendaFecha').value = getHoy();
-  renderAgenda();
+  await renderAgenda();
 }
 
-function cambiarDiaAgenda(delta) {
+async function cambiarDiaAgenda(delta) {
   const input = document.getElementById('agendaFecha');
   const fecha = input.value || getHoy();
   const [y, m, d] = fecha.split('-').map(Number);
   input.value = new Date(y, m - 1, d + delta).toLocaleDateString('en-CA');
-  renderAgenda();
+  await renderAgenda();
 }
 
-function setFiltroAgenda(filtro) {
+async function setFiltroAgenda(filtro) {
   filtroAgendaActual = filtro;
   document.querySelectorAll('.agenda-filtro-btn').forEach(b => b.classList.remove('activo'));
   document.getElementById('filtro-' + filtro).classList.add('activo');
-  renderAgenda();
+  await renderAgenda();
 }
 
-function renderAgenda() {
+async function renderAgenda() {
   const fecha = document.getElementById('agendaFecha').value || getHoy();
   const label = document.getElementById('agendaFechaLabel');
   const contenido = document.getElementById('agendaContenido');
@@ -187,12 +192,13 @@ function renderAgenda() {
   const horaActual = new Date().toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit', hour12: false }).substring(0, 5);
 
   label.textContent = formatearFechaLarga(fecha);
+  const citas = await getCitas();
 
-  let citasDelDia = getCitas().filter(c => c.fecha === fecha);
-  if (filtroAgendaActual !== 'todos') citasDelDia = citasDelDia.filter(c => c.espacio === filtroAgendaActual);
+  let citasDelDia = citas.filter(c => c.date === fecha);
+  if (filtroAgendaActual !== 'todos') citasDelDia = citasDelDia.filter(c => c.space === filtroAgendaActual);
 
   const totalCitas = citasDelDia.length;
-  const espaciosOcupados = new Set(citasDelDia.map(c => c.espacio)).size;
+  const espaciosOcupados = new Set(citasDelDia.map(c => c.space)).size;
   resumen.textContent = totalCitas > 0
     ? `${totalCitas} cita${totalCitas !== 1 ? 's' : ''} · ${espaciosOcupados} espacio${espaciosOcupados !== 1 ? 's' : ''} ocupado${espaciosOcupados !== 1 ? 's' : ''}`
     : 'Sin citas para este día';
@@ -200,7 +206,7 @@ function renderAgenda() {
   let html = '';
 
   HORAS.forEach(hora => {
-    const citasEnEstaHora = citasDelDia.filter(c => c.hora === hora);
+    const citasEnEstaHora = citasDelDia.filter(c => c.hour === hora);
     const esHoraActual = fecha === getHoy() && horaActual >= hora && horaActual < siguienteHora(hora);
 
     html += `<div class="agenda-slot ${citasEnEstaHora.length > 0 ? 'tiene-citas' : ''}"
@@ -215,22 +221,22 @@ function renderAgenda() {
 
     if (citasEnEstaHora.length > 0) {
       citasEnEstaHora.forEach(cita => {
-        const esp = ESPACIOS[cita.espacio] || {};
+        const esp = ESPACIOS[cita.space] || {};
         html += `
                 <div class="agenda-cita-chip ${esp.clase || ''}"
                     draggable="true"
-                    data-citaid="${cita.citaId}"
-                    ondragstart="onDragStart(event,${cita.citaId})"
+                    data-citaid="${cita.reservationId}"
+                    ondragstart="onDragStart(event,'${cita.reservationId}')"
                     ondragend="onDragEnd(event)">
-                    <span class="cita-espacio-tag ${esp.tag || ''}">${esp.icono || ''} ${esp.nombre || cita.espacio}</span>
-                    <span class="cita-placa">${cita.placa}</span>
+                    <span class="cita-espacio-tag ${esp.tag || ''}">${esp.icono || ''} ${esp.nombre || cita.space}</span>
+                    <span class="cita-placa">${cita.plate}</span>
                     <div class="cita-info">
-                        ${cita.nombre}
-                        ${cita.notas ? `<small>📝 ${cita.notas}</small>` : ''}
+                        ${cita.name}
+                        ${cita.notes ? `<small>📝 ${cita.notes}</small>` : ''}
                     </div>
                     <div class="cita-acciones">
-                        <button class="btn-ver-cita" onclick="verDetalleCita(${cita.citaId})" title="Ver detalle">👁</button>
-                        <button class="btn-del-cita-chip" onclick="eliminarCita(${cita.citaId})">✕</button>
+                        <button class="btn-ver-cita" onclick="verDetalleCita('${cita.reservationId}')" title="Ver detalle">👁</button>
+                        <button class="btn-del-cita-chip" onclick="eliminarCita('${cita.reservationId}')">✕</button>
                     </div>
                 </div>`;
       });
@@ -245,7 +251,7 @@ function renderAgenda() {
   });
 
   contenido.innerHTML = html;
-  actualizarBadgeAgenda();
+  await actualizarBadgeAgenda();
 }
 
 function siguienteHora(hora) {
@@ -253,33 +259,60 @@ function siguienteHora(hora) {
   return idx < HORAS.length - 1 ? HORAS[idx + 1] : '23:59';
 }
 
-// 🔧 CORREGIDO: eliminarCita sin código duplicado y con fetch mode:'cors'
-function eliminarCita(citaId) {
-  setCitas(getCitas().filter(c => c.citaId !== citaId));
-
-  // Enviar eliminación a Google Sheets
-  fetch(urlGoogle, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: JSON.stringify({ citaId: String(citaId), accion: 'eliminar_cita' })
-  }).catch(console.error);
-
-  actualizarBadgeAgenda();
-  mostrarAlertas();
-  if (document.getElementById('tab-database').classList.contains('active'))
-    mostrarGeneral(document.getElementById('buscadorGeneral').value);
-  renderAgenda();
-}
-
-function verDetalleCita(citaId) {
-  const cita = getCitas().find(c => c.citaId === citaId);
+async function eliminarCita(citaId) {
+  const citas = await getCitas();
+  const cita = citas.find(c => String(c.reservationId) === String(citaId));
   if (!cita) return;
 
-  const esp = ESPACIOS[cita.espacio] || {};
+  if (document.getElementById('modalDetalleCita').classList.contains('active')) {
+    cerrarDetalleCita();
+  }
+
+  reservationIdPendienteEliminar = String(citaId);
+  document.getElementById('modalEliminarCitaTexto').textContent =
+    `¿Eliminar la reserva de "${cita.name}" (${cita.plate}) para ${cita.date} a las ${HORAS_DISPLAY[cita.hour]}?`;
+  document.getElementById('modalEliminarCita').classList.add('active');
+  document.getElementById('btnConfirmarEliminarCita').onclick = confirmarEliminarCita;
+}
+
+function cerrarModalEliminarCita() {
+  document.getElementById('modalEliminarCita').classList.remove('active');
+  reservationIdPendienteEliminar = null;
+}
+
+async function confirmarEliminarCita() {
+  if (!reservationIdPendienteEliminar) return;
+  const reservationId = reservationIdPendienteEliminar;
+
+  try {
+    const response = await fetch(API_BACKEND_URL + "reservations/deleteReservation/" + reservationId, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+
+    cerrarModalEliminarCita();
+    cerrarDetalleCita();
+    await actualizarBadgeAgenda();
+    mostrarAlertas();
+    if (document.getElementById('tab-database').classList.contains('active'))
+      mostrarGeneral(document.getElementById('buscadorGeneral').value);
+    await renderAgenda();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function verDetalleCita(citaId) {
+  const citas = await getCitas();
+  const cita = citas.find(c => String(c.reservationId) === String(citaId));
+  if (!cita) return;
+
+  const esp = ESPACIOS[cita.space] || {};
   const hoy = getHoy();
-  const waTxt = encodeURIComponent(`Hola ${cita.nombre}, te confirmamos tu cita en ${esp.nombre} el ${cita.fecha} a las ${HORAS_DISPLAY[cita.hora]}. ¡Te esperamos!`);
-  const esHoy = cita.fecha === hoy;
-  const esPasada = cita.fecha < hoy;
+  const waTxt = encodeURIComponent(`Hola ${cita.name}, te confirmamos tu cita en ${cita.space} el ${cita.date} a las ${HORAS_DISPLAY[cita.hour]}. ¡Te esperamos!`);
+  const esHoy = cita.date === hoy;
+  const esPasada = cita.date < hoy;
 
   const estadoFecha = esHoy
     ? `<span class="badge-estado badge-hoy">⚠ HOY</span>`
@@ -288,35 +321,35 @@ function verDetalleCita(citaId) {
       : `<span class="badge-estado badge-ok">Próxima</span>`;
 
   document.getElementById('detalleCitaContenido').innerHTML = `
-        <div class="detalle-espacio-header detalle-espacio-${cita.espacio}">
+        <div class="detalle-espacio-header detalle-espacio-${cita.space}">
             <span class="detalle-espacio-icon">${esp.icono}</span>
             <div>
-                <div class="detalle-espacio-nombre">${esp.nombre}</div>
-                <div class="detalle-espacio-hora">${HORAS_DISPLAY[cita.hora]} · ${cita.fecha} ${estadoFecha}</div>
+                <div class="detalle-espacio-nombre">${cita.space}</div>
+                <div class="detalle-espacio-hora">${HORAS_DISPLAY[cita.hour]} · ${cita.date} ${estadoFecha}</div>
             </div>
         </div>
         <div class="detalle-seccion">
             <div class="detalle-seccion-titulo">📋 Datos de la Cita</div>
             <div class="detalle-grid">
-                <div class="detalle-item"><span class="detalle-label">Placa</span><span class="detalle-valor detalle-placa">${cita.placa}</span></div>
-                <div class="detalle-item"><span class="detalle-label">Servicio</span><span class="detalle-valor">${cita.categoria}</span></div>
-                <div class="detalle-item"><span class="detalle-label">Fecha</span><span class="detalle-valor">${cita.fecha}</span></div>
-                <div class="detalle-item"><span class="detalle-label">Hora</span><span class="detalle-valor">${HORAS_DISPLAY[cita.hora]}</span></div>
-                ${cita.notas ? `<div class="detalle-item detalle-item-full"><span class="detalle-label">Notas</span><span class="detalle-valor">📝 ${cita.notas}</span></div>` : ''}
+                <div class="detalle-item"><span class="detalle-label">Placa</span><span class="detalle-valor detalle-placa">${cita.plate}</span></div>
+                <div class="detalle-item"><span class="detalle-label">Servicio</span><span class="detalle-valor">${cita.service}</span></div>
+                <div class="detalle-item"><span class="detalle-label">Fecha</span><span class="detalle-valor">${cita.date}</span></div>
+                <div class="detalle-item"><span class="detalle-label">Hora</span><span class="detalle-valor">${HORAS_DISPLAY[cita.hour]}</span></div>
+                ${cita.notes ? `<div class="detalle-item detalle-item-full"><span class="detalle-label">Notas</span><span class="detalle-valor">📝 ${cita.notes}</span></div>` : ''}
             </div>
         </div>
         <div class="detalle-seccion">
             <div class="detalle-seccion-titulo">👤 Datos del Cliente</div>
             <div class="detalle-grid">
-                <div class="detalle-item"><span class="detalle-label">Nombre</span><span class="detalle-valor">${cita.nombre}</span></div>
-                <div class="detalle-item"><span class="detalle-label">Teléfono</span><span class="detalle-valor">${cita.telefono}</span></div>
+                <div class="detalle-item"><span class="detalle-label">Nombre</span><span class="detalle-valor">${cita.name}</span></div>
+                <div class="detalle-item"><span class="detalle-label">Teléfono</span><span class="detalle-valor">${cita.telephone}</span></div>
             </div>
         </div>
         <div class="detalle-acciones">
-            <a href="https://wa.me/57${cita.telefono}?text=${waTxt}" target="_blank" class="btn-wa btn-detalle-wa">
+            <a href="https://wa.me/57${cita.telephone}?text=${waTxt}" target="_blank" class="btn-wa btn-detalle-wa">
                 📱 Contactar por WhatsApp
             </a>
-            <button class="btn-del btn-detalle-del" onclick="if(confirm('¿Cancelar esta reserva?')){eliminarCita(${cita.citaId});cerrarDetalleCita();}">
+            <button class="btn-del btn-detalle-del" onclick="eliminarCita('${cita.reservationId}')">
                 ✕ Cancelar reserva
             </button>
         </div>`;
@@ -350,35 +383,39 @@ function onDragOver(event) {
   slot.classList.add('drop-target');
 }
 
-function onDrop(event, nuevaHora) {
+async function onDrop(event, nuevaHora) {
   event.preventDefault();
   document.querySelectorAll('.agenda-slot,.agenda-empty-slot').forEach(el => el.classList.remove('drop-target'));
 
   if (!dragCitaId) return;
 
-  const citas = getCitas();
-  const citaIdx = citas.findIndex(c => c.citaId === dragCitaId);
+  const citas = await getCitas();
+  const citaIdx = citas.findIndex(c => String(c.reservationId) === String(dragCitaId));
   if (citaIdx === -1) return;
 
   const cita = citas[citaIdx];
   const fecha = document.getElementById('agendaFecha').value || getHoy();
 
-  const conflicto = citas.find(c => c.fecha === fecha && c.hora === nuevaHora && c.espacio === cita.espacio && c.citaId !== dragCitaId);
+  const conflicto = citas.find(c =>
+    c.date === fecha &&
+    c.hour === nuevaHora &&
+    c.space === cita.space &&
+    String(c.reservationId) !== String(dragCitaId)
+  );
   if (conflicto) {
-    mostrarToastError(`⚠ ${ESPACIOS[cita.espacio].nombre} ya tiene una reserva a las ${HORAS_DISPLAY[nuevaHora]}`);
+    mostrarToastError(`⚠ ${ESPACIOS[cita.space].nombre} ya tiene una reserva a las ${HORAS_DISPLAY[nuevaHora]}`);
     dragCitaId = null;
     return;
   }
 
-  citas[citaIdx] = { ...cita, hora: nuevaHora };
-  setCitas(citas);
+  citas[citaIdx] = { ...cita, hour: nuevaHora };
   fetch(urlGoogle, {
     method: 'POST',
     mode: 'no-cors',
-    body: JSON.stringify({ citaId: String(dragCitaId), hora: nuevaHora, accion: 'mover_cita' })
+    body: JSON.stringify({ reservationId: String(dragCitaId), hour: nuevaHora, accion: 'mover_cita' })
   }).catch(console.error);
   dragCitaId = null;
-  renderAgenda();
+  await renderAgenda();
 }
 
 function mostrarToastError(msg) {

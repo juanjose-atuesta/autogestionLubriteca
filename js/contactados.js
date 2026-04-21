@@ -17,16 +17,6 @@ function toggleContactado(id) {
         headers: { "Content-Type": "application/json" },
       }).then(res => res.json())
         .then(data => {
-          console.log("Respuesta al togglear contacto:", data);
-          const estadoDesdeBackend = data.wasContacted;
-          const nuevoEstado = estadoDesdeBackend === undefined
-            ? !estadoActual
-            : normalizarBooleanContactado(estadoDesdeBackend);
-
-          if (idxCliente !== -1) {
-            clientes[idxCliente] = { ...clientes[idxCliente], wasContacted: nuevoEstado };
-            setClientes(clientes);
-          }
 
           return fetch(API_BACKEND_URL + "customers/listCustomersContacted")
             .then(res => res.json())
