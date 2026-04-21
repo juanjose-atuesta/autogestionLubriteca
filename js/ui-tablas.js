@@ -25,7 +25,7 @@ function buildBadge(fechaStr, eliminado = false) {
 }
 
 // ═══════════ CONSTRUIR FILA ═══════════
-function construirFila(c) {
+function construirFila(c, citas = []) {
   const nombre = String(c.name || '');
   const telefono = String(c.telephone || '');
   const placa = String(c.plate || '').toUpperCase().trim();
@@ -46,8 +46,7 @@ function construirFila(c) {
     : `Hola%20${encodeURIComponent(nombre)},%20tu%20servicio%20de%20${encodeURIComponent(categoria)}%20est%C3%A1%20vencido.%20%C2%A1Cont%C3%A1ctanos!`;
 
 
-  /*OJO, ESTO TENEMOS QUE RESOLVERLO DESPUES */
-  const citasCliente = getCitas().filter(ct => String(ct.placa).toUpperCase() === placa && ct.fecha >= hoy);
+  const citasCliente = citas.filter(ct => String(ct.plate).toUpperCase() === placa && ct.date >= hoy);
   const tieneReserva = citasCliente.length > 0;
   const nombreSafe = nombre.replace(/'/g, "\\'").replace(/"/g, '&quot;');
   const categoriaSafe = categoria.replace(/'/g, "\\'").replace(/"/g, '&quot;');
@@ -81,16 +80,16 @@ function construirFila(c) {
 
 
 // ═══════════ ALERTAS ═══════════
-function mostrarAlertas() {
+async function mostrarAlertas() {
   const tbody = document.getElementById('listaAlertas'), empty = document.getElementById('emptyAlertas'), hoy = getHoy();
-  getClientes().then(clientes => {
+  Promise.all([getClientes(), getCitas()]).then(([clientes, citas]) => {
     const al = clientes.filter(c => { const f = String(c.nextContact).trim(); return f === hoy || f < hoy; })
       .sort((a, b) => { const fa = String(a.nextContact).trim(), fb = String(b.nextContact).trim(); if (fa === hoy && fb !== hoy) return -1; if (fb === hoy && fa !== hoy) return 1; return fb.localeCompare(fa); });
     tbody.innerHTML = '';
     if (!al.length) { empty.style.display = 'block'; document.getElementById('tablaAlertas').style.display = 'none'; }
     else {
       empty.style.display = 'none'; document.getElementById('tablaAlertas').style.display = ''; al.forEach(c => {
-        tbody.appendChild(construirFila(c))
+        tbody.appendChild(construirFila(c, citas))
         //console.log(c)
       });
     }
@@ -100,9 +99,9 @@ function mostrarAlertas() {
 }
 
 // ═══════════ BASE DE DATOS ═══════════
-function mostrarGeneral(filtro = '') {
+async function mostrarGeneral(filtro = '') {
   const tbody = document.getElementById('listaGeneral'), empty = document.getElementById('emptyGeneral'), hoy = getHoy();
-  getClientes().then(todos => {
+  Promise.all([getClientes(), getCitas()]).then(([todos, citas]) => {
     let cl = todos;
     if (filtro.trim()) {
       const f = filtro.trim().toUpperCase();
@@ -124,7 +123,7 @@ function mostrarGeneral(filtro = '') {
         <div class="db-stats-total">${todos.length} registros</div>`;
     tbody.innerHTML = '';
     if (!cl.length) { empty.style.display = 'block'; document.getElementById('tablaGeneral').style.display = 'none'; }
-    else { empty.style.display = 'none'; document.getElementById('tablaGeneral').style.display = ''; cl.forEach(c => tbody.appendChild(construirFila(c))); }
+    else { empty.style.display = 'none'; document.getElementById('tablaGeneral').style.display = ''; cl.forEach(c => tbody.appendChild(construirFila(c, citas))); }
   }).catch(console.error);
 }
 function filtrarGeneral() { mostrarGeneral(document.getElementById('buscadorGeneral').value); }

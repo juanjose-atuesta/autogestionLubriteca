@@ -52,13 +52,14 @@ function seleccionarEspacio(espacio) {
   mostrarHorasDisponibles();
 }
 
-function mostrarHorasDisponibles() {
+async function mostrarHorasDisponibles() {
   const date = document.getElementById('reservarFecha').value;
   const space = reservarEspacioActual;
   if (!date || !space) return;
+  const citas = await getCitas();
 
   const ocupadas = new Set(
-    getCitas()
+    citas
       .filter(c => c.date === date && c.space === space)
       .map(c => c.hour)
   );
@@ -102,7 +103,7 @@ function seleccionarHora(hora) {
 }
 
 // 🔧 CORREGIDO: confirmarReserva con citaId string y fetch mode:'cors'
-function confirmarReserva() {
+async function confirmarReserva() {
   const date = document.getElementById('reservarFecha').value;
   const hour = document.getElementById('reservarHora').value;
   const space = document.getElementById('reservarEspacio').value;
@@ -114,10 +115,11 @@ function confirmarReserva() {
   const customerId = document.getElementById('reservarClienteId').value;
 
   if (!date || !hour || !space) { alert('Completa todos los pasos antes de confirmar.'); return; }
-  setCitas().then(() => {
-    const conflicto = getCitas().find(c => c.date === date && c.hour === hour && c.space === space);
+  try {
+    const citas = await getCitas();
+    const conflicto = citas.find(c => c.date === date && c.hour === hour && c.space === space);
     if (conflicto) {
-      alert(`⚠ Ya existe una reserva en ese horario para ${ESPACIOS[space].name}. Selecciona otra hora o espacio.`);
+      alert(`⚠ Ya existe una reserva en ese horario para ${ESPACIOS[space].nombre}. Selecciona otra hora o espacio.`);
       return;
     }
 
@@ -125,28 +127,24 @@ function confirmarReserva() {
       reservationId: String(Date.now()),  // 🔧 CORREGIDO: string en lugar de número
       date, hour, space, notes, plate, name, telephone, service, customerId
     };
-    /* que horror 
-      const citas = getCitas();
-      citas.push(nuevaCita);
-      setCitas(citas);
-      */
 
     // guardamos la cita en la DB 
-    fetch(API_BACKEND_URL + "reservations/saveReservation", {
+    const response = await fetch(API_BACKEND_URL + "reservations/saveReservation", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...nuevaCita })
-    }).then(res => { console.log("ggs") })
-      .catch(console.error);
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
 
     cerrarModalReservar();
-    actualizarBadgeAgenda();
+    await actualizarBadgeAgenda();
     mostrarAlertas();
     if (document.getElementById('tab-database').classList.contains('active'))
       mostrarGeneral(document.getElementById('buscadorGeneral').value);
-    if (document.getElementById('tab-agenda').classList.contains('active')) renderAgenda();
-
-  })
+    if (document.getElementById('tab-agenda').classList.contains('active')) await renderAgenda();
+  } catch (error) {
+    console.error(error);
+  }
 
   // 🔧 Forzar sincronización inmediata para reflejar en la nube
   //sincronizarSoloCitas();
@@ -157,34 +155,34 @@ function cerrarModalReservar() { document.getElementById('modalReservar').classL
 // ═══════════════════════════════════════════
 // AGENDA — RENDER PRINCIPAL
 // ═══════════════════════════════════════════
-function actualizarBadgeAgenda() {
-
+async function actualizarBadgeAgenda() {
+  const citas = await getCitas();
   const hoy = getHoy();
-  const total = getCitas().filter(c => c.date === hoy).length;
+  const total = citas.filter(c => c.date === hoy).length;
   document.getElementById('nav-badge-agenda').textContent = total;
 }
 
-function irHoyAgenda() {
+async function irHoyAgenda() {
   document.getElementById('agendaFecha').value = getHoy();
-  renderAgenda();
+  await renderAgenda();
 }
 
-function cambiarDiaAgenda(delta) {
+async function cambiarDiaAgenda(delta) {
   const input = document.getElementById('agendaFecha');
   const fecha = input.value || getHoy();
   const [y, m, d] = fecha.split('-').map(Number);
   input.value = new Date(y, m - 1, d + delta).toLocaleDateString('en-CA');
-  renderAgenda();
+  await renderAgenda();
 }
 
-function setFiltroAgenda(filtro) {
+async function setFiltroAgenda(filtro) {
   filtroAgendaActual = filtro;
   document.querySelectorAll('.agenda-filtro-btn').forEach(b => b.classList.remove('activo'));
   document.getElementById('filtro-' + filtro).classList.add('activo');
-  renderAgenda();
+  await renderAgenda();
 }
 
-function renderAgenda() {
+async function renderAgenda() {
   const fecha = document.getElementById('agendaFecha').value || getHoy();
   const label = document.getElementById('agendaFechaLabel');
   const contenido = document.getElementById('agendaContenido');
@@ -192,10 +190,10 @@ function renderAgenda() {
   const horaActual = new Date().toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit', hour12: false }).substring(0, 5);
 
   label.textContent = formatearFechaLarga(fecha);
-  setCitas().then(() => {
+  const citas = await getCitas();
 
-    let citasDelDia = getCitas().filter(c => c.date === fecha);
-    if (filtroAgendaActual !== 'todos') citasDelDia = citasDelDia.filter(c => c.space === filtroAgendaActual);
+  let citasDelDia = citas.filter(c => c.date === fecha);
+  if (filtroAgendaActual !== 'todos') citasDelDia = citasDelDia.filter(c => c.space === filtroAgendaActual);
 
     const totalCitas = citasDelDia.length;
     const espaciosOcupados = new Set(citasDelDia.map(c => c.space)).size;
@@ -225,18 +223,18 @@ function renderAgenda() {
           html += `
                 <div class="agenda-cita-chip ${esp.clase || ''}"
                     draggable="true"
-                    data-citaid="${cita.reservartionId}"
-                    ondragstart="onDragStart(event,${cita.reservationId})"
+                    data-citaid="${cita.reservationId}"
+                    ondragstart="onDragStart(event,'${cita.reservationId}')"
                     ondragend="onDragEnd(event)">
-                    <span class="cita-espacio-tag ${esp.tag || ''}">${esp.icono || ''} ${esp.name || cita.space}</span>
+                    <span class="cita-espacio-tag ${esp.tag || ''}">${esp.icono || ''} ${esp.nombre || cita.space}</span>
                     <span class="cita-placa">${cita.plate}</span>
                     <div class="cita-info">
                         ${cita.name}
                         ${cita.notes ? `<small>📝 ${cita.notes}</small>` : ''}
                     </div>
                     <div class="cita-acciones">
-                        <button class="btn-ver-cita" onclick="verDetalleCita(${cita.reservationId})" title="Ver detalle">👁</button>
-                        <button class="btn-del-cita-chip" onclick="eliminarCita(${cita.reservationId})">✕</button>
+                        <button class="btn-ver-cita" onclick="verDetalleCita('${cita.reservationId}')" title="Ver detalle">👁</button>
+                        <button class="btn-del-cita-chip" onclick="eliminarCita('${cita.reservationId}')">✕</button>
                     </div>
                 </div>`;
         });
@@ -250,9 +248,8 @@ function renderAgenda() {
       html += `</div></div>`;
     });
 
-    contenido.innerHTML = html;
-    actualizarBadgeAgenda();
-  })
+  contenido.innerHTML = html;
+  await actualizarBadgeAgenda();
 }
 
 function siguienteHora(hora) {
@@ -278,8 +275,9 @@ function eliminarCita(citaId) {
   renderAgenda();
 }
 
-function verDetalleCita(citaId) {
-  const cita = getCitas().find(c => c.reservationId === citaId);
+async function verDetalleCita(citaId) {
+  const citas = await getCitas();
+  const cita = citas.find(c => String(c.reservationId) === String(citaId));
   if (!cita) return;
 
   const esp = ESPACIOS[cita.space] || {};
@@ -307,9 +305,9 @@ function verDetalleCita(citaId) {
             <div class="detalle-grid">
                 <div class="detalle-item"><span class="detalle-label">Placa</span><span class="detalle-valor detalle-placa">${cita.plate}</span></div>
                 <div class="detalle-item"><span class="detalle-label">Servicio</span><span class="detalle-valor">${cita.service}</span></div>
-                <div class="detalle-item"><span class="detalle-label">Fecha</span><span class="detalle-valor">${cita.fecha}</span></div>
+                <div class="detalle-item"><span class="detalle-label">Fecha</span><span class="detalle-valor">${cita.date}</span></div>
                 <div class="detalle-item"><span class="detalle-label">Hora</span><span class="detalle-valor">${HORAS_DISPLAY[cita.hour]}</span></div>
-                ${cita.notas ? `<div class="detalle-item detalle-item-full"><span class="detalle-label">Notas</span><span class="detalle-valor">📝 ${cita.notes}</span></div>` : ''}
+                ${cita.notes ? `<div class="detalle-item detalle-item-full"><span class="detalle-label">Notas</span><span class="detalle-valor">📝 ${cita.notes}</span></div>` : ''}
             </div>
         </div>
         <div class="detalle-seccion">
@@ -320,10 +318,10 @@ function verDetalleCita(citaId) {
             </div>
         </div>
         <div class="detalle-acciones">
-            <a href="https://wa.me/57${cita.telefono}?text=${waTxt}" target="_blank" class="btn-wa btn-detalle-wa">
+            <a href="https://wa.me/57${cita.telephone}?text=${waTxt}" target="_blank" class="btn-wa btn-detalle-wa">
                 📱 Contactar por WhatsApp
             </a>
-            <button class="btn-del btn-detalle-del" onclick="if(confirm('¿Cancelar esta reserva?')){eliminarCita(${cita.reservationId});cerrarDetalleCita();}">
+            <button class="btn-del btn-detalle-del" onclick="if(confirm('¿Cancelar esta reserva?')){eliminarCita('${cita.reservationId}');cerrarDetalleCita();}">
                 ✕ Cancelar reserva
             </button>
         </div>`;
@@ -357,35 +355,39 @@ function onDragOver(event) {
   slot.classList.add('drop-target');
 }
 
-function onDrop(event, nuevaHora) {
+async function onDrop(event, nuevaHora) {
   event.preventDefault();
   document.querySelectorAll('.agenda-slot,.agenda-empty-slot').forEach(el => el.classList.remove('drop-target'));
 
   if (!dragCitaId) return;
 
-  const citas = getCitas();
-  const citaIdx = citas.findIndex(c => c.citaId === dragCitaId);
+  const citas = await getCitas();
+  const citaIdx = citas.findIndex(c => String(c.reservationId) === String(dragCitaId));
   if (citaIdx === -1) return;
 
   const cita = citas[citaIdx];
   const fecha = document.getElementById('agendaFecha').value || getHoy();
 
-  const conflicto = citas.find(c => c.fecha === fecha && c.hora === nuevaHora && c.espacio === cita.espacio && c.citaId !== dragCitaId);
+  const conflicto = citas.find(c =>
+    c.date === fecha &&
+    c.hour === nuevaHora &&
+    c.space === cita.space &&
+    String(c.reservationId) !== String(dragCitaId)
+  );
   if (conflicto) {
-    mostrarToastError(`⚠ ${ESPACIOS[cita.espacio].nombre} ya tiene una reserva a las ${HORAS_DISPLAY[nuevaHora]}`);
+    mostrarToastError(`⚠ ${ESPACIOS[cita.space].nombre} ya tiene una reserva a las ${HORAS_DISPLAY[nuevaHora]}`);
     dragCitaId = null;
     return;
   }
 
-  citas[citaIdx] = { ...cita, hora: nuevaHora };
-  setCitas();
+  citas[citaIdx] = { ...cita, hour: nuevaHora };
   fetch(urlGoogle, {
     method: 'POST',
     mode: 'no-cors',
-    body: JSON.stringify({ citaId: String(dragCitaId), hora: nuevaHora, accion: 'mover_cita' })
+    body: JSON.stringify({ reservationId: String(dragCitaId), hour: nuevaHora, accion: 'mover_cita' })
   }).catch(console.error);
   dragCitaId = null;
-  renderAgenda();
+  await renderAgenda();
 }
 
 function mostrarToastError(msg) {
