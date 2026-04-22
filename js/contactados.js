@@ -66,6 +66,7 @@ function mostrarContactados(filtro = '') {
       else {
         empty.style.display = 'none'; document.getElementById('tablaContactados').style.display = '';
         log.forEach(r => {
+          const logId = String(r.id).replace(/'/g, "\\'");
           const tr = document.createElement('tr');
           tr.innerHTML = `<td>${r.name}<small>${r.telephone}</small></td>
     <td>${r.telephone}</td>
@@ -75,7 +76,7 @@ function mostrarContactados(filtro = '') {
     <td>${r.nextContact}</td>
     <td>${r.mileage} KM</td>
     <td><span class="fecha-contacto-badge">📞 ${r.nextContact}</span></td>
-    <td><button class="btn-del-contactado" onclick="eliminarLogContactado(${r.logId})">✕ Quitar</button></td>`;
+    <td><button class="btn-del-contactado" onclick="eliminarLogContactado('${logId}')" ${logId ? '' : 'disabled'}>✕ Quitar</button></td>`;
           tbody.appendChild(tr);
         });
       }
@@ -88,6 +89,28 @@ function mostrarContactados(filtro = '') {
 }
 //
 //OJO, ARREGLAR ESTA FUNCION, ES PARA ELIMINAR LOS CONTACTADOS DEL LOG, NO PARA QUITAR EL CONTACTADO DE LA BASE DE DATOS, SOLO QUITARLO DE LA LISTA DE CONTACTADOS QUE SE MUESTRA EN LA PESTAÑA DE CONTACTADOS, PARA ESO HAY UN BOTON EN CADA FILA QUE LLAMA A ESTA FUNCION CON EL ID DEL LOG DE CONTACTADOS, NO EL ID DEL CLIENTE, HAY QUE HACER UN FILTRO PARA QUITAR ESE LOG DE CONTACTADOS Y VOLVER A MOSTRAR LOS CONTACTADOS CON EL FILTRO ACTIVO SI LO HAY
-//function eliminarLogContactado(id) { setContactados(getContactados().filter(r => r.logId !== id)); actualizarBadgeContactados(); mostrarContactados(document.getElementById('buscadorContactados').value); }
+function eliminarLogContactado(id) {
+  id = String(id || '');
+  if (!id) {
+    console.error("No se recibió ID del log para eliminar contactado.");
+    return;
+  }
+  getContactados().then(contactados => {
+
+    fetch(API_BACKEND_URL + "historial/toggleWasContacted/" + id, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" }
+    }).then(
+      () => {
+
+        actualizarBadgeContactados();
+        mostrarContactados(document.getElementById('buscadorContactados').value);
+      }
+    )
+
+  }
+  )
+}
+
 function filtrarContactados() { mostrarContactados(document.getElementById('buscadorContactados').value); }
 function limpiarBuscadorContactados() { document.getElementById('buscadorContactados').value = ''; mostrarContactados(); document.getElementById('buscadorContactados').focus(); }
