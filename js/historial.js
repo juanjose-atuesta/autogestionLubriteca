@@ -29,6 +29,7 @@ function buscarHistorial() {
         const esE = c.eliminado === true, esH = !esE && String(c.nextContact).trim() === hoy, esV = !esE && String(c.nextContact).trim() < hoy;
         const dotC = esE ? '' : esH ? 'dot-hoy' : esV ? 'dot-vencido' : 'dot-actual';
         const cardC = esE ? 'card-eliminado' : esH ? 'card-hoy' : esV ? 'card-vencido' : 'card-actual';
+        const idSafe = String(c.id || '').replace(/'/g, "\\'");
         html += `<div class="historial-item"><div class="historial-linea"><div class="historial-dot ${dotC}"></div>${idx !== r.length - 1 ? '<div class="historial-connector"></div>' : ''}</div>
             <div class="historial-card ${cardC}">
                 <div class="historial-card-top"><div class="historial-nombre">${c.name}<small>${c.telephone}</small></div>${buildBadge(c.fechaFutura, esE)}</div>
@@ -39,7 +40,7 @@ function buscarHistorial() {
                     <div class="historial-info-item">🛣 <strong>${c.mileage} KM</strong></div>
                     ${esE ? '<div class="historial-info-item">🗑 <strong>Eliminado del sistema</strong></div>' : ''}
                 </div>
-                ${!esE ? `<button class="btn-reservar-historial" onclick="abrirModalReservar(${c.id || 'null'},'${c.plate}','${c.name.replace(/'/g, "\\'")}','${c.telephone}','${c.service.replace(/'/g, "\\'")}')">📅 Reservar cita</button>` : ''}
+                ${!esE ? `<button class="btn-reservar-historial" onclick="abrirModalReservar('${idSafe}','${c.plate}','${c.name.replace(/'/g, "\\'")}','${c.telephone}','${c.service.replace(/'/g, "\\'")}')">📅 Reservar cita</button>` : ''}
             </div></div>`;
       });
       html += `</div>`;

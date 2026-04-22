@@ -48,11 +48,12 @@ function construirFila(c, citas = []) {
 
   const citasCliente = citas.filter(ct => ct.customerId == id);
   const tieneReserva = citasCliente.length > 0;
+  const idSafe = String(id).replace(/'/g, "\\'");
   const nombreSafe = nombre.replace(/'/g, "\\'").replace(/"/g, '&quot;');
   const categoriaSafe = categoria.replace(/'/g, "\\'").replace(/"/g, '&quot;');
   const btnReservar = tieneReserva
-    ? `<button class="btn-reservar-cita btn-reservado" onclick="abrirModalReservar(${id},'${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">✅ Reservado</button>`
-    : `<button class="btn-reservar-cita" onclick="abrirModalReservar('${id}','${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">📅 Reservar</button>`;
+    ? `<button class="btn-reservar-cita btn-reservado" onclick="abrirModalReservar('${idSafe}','${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">✅ Reservado</button>`
+    : `<button class="btn-reservar-cita" onclick="abrirModalReservar('${idSafe}','${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">📅 Reservar</button>`;
 
   const tr = document.createElement('tr');
   if (cl) tr.classList.add(cl);
