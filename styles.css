@@ -129,6 +129,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--text);
 .nav-badge { background:var(--danger);color:white;font-size:0.65rem;font-weight:700;min-width:18px;height:18px;border-radius:9px;padding:0 5px;display:flex;align-items:center;justify-content:center; }
 .nav-badge-green { background:var(--contactado-color);color:white;font-size:0.65rem;font-weight:700;min-width:18px;height:18px;border-radius:9px;padding:0 5px;display:flex;align-items:center;justify-content:center; }
 .nav-badge-agenda { background:var(--agenda-color);color:white;font-size:0.65rem;font-weight:700;min-width:18px;height:18px;border-radius:9px;padding:0 5px;display:flex;align-items:center;justify-content:center; }
+.nav-badge-citas { background:var(--warning);color:#1f2937;font-size:0.65rem;font-weight:700;min-width:18px;height:18px;border-radius:9px;padding:0 5px;display:flex;align-items:center;justify-content:center; }
 .sidebar-footer { padding:16px 24px;border-top:1px solid rgba(255,255,255,0.06);color:rgba(255,255,255,0.2);font-size:0.68rem;text-align:center;font-family:var(--font-display);letter-spacing:1px; }
 
 /* ═══════════ MAIN / TABS ═══════════ */

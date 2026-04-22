@@ -79,6 +79,7 @@ function sincronizarConSheets() {
       mostrarAlertas();
       actualizarBadgeContactados();
       actualizarBadgeAgenda();
+      actualizarBadgeCitasProgramadas();
       if (document.getElementById('tab-database').classList.contains('active'))
         mostrarGeneral(document.getElementById('buscadorGeneral').value);
       if (document.getElementById('tab-contactados').classList.contains('active'))
@@ -87,6 +88,8 @@ function sincronizarConSheets() {
         buscarHistorial();
       if (document.getElementById('tab-agenda').classList.contains('active'))
         renderAgenda();
+      if (document.getElementById('tab-citas-programadas').classList.contains('active'))
+        renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
       console.log('✓ ' + clientesSheets.length + ' clientes sincronizados desde Sheets');
     })
     .catch(err => {
@@ -149,4 +152,3 @@ async function sincronizarSoloCitas() {
   }
 }
  */
-

@@ -1,0 +1,455 @@
+DOCUMENTACION DE CAMBIOS — SECCION "CITAS PROGRAMADAS"
+Proyecto: AutoGestion (fronted)
+Fecha: 2026-04-21
+
+====================================================================
+1) OBJETIVO GENERAL DE LOS CAMBIOS
+====================================================================
+
+Se implementaron dos entregables principales:
+
+1. Nueva seccion en el navegador lateral llamada "Citas programadas".
+2. Nueva vista/tab para listar citas obtenidas desde getCitas() con:
+   - columnas solicitadas: nombre, telefono, placa, servicio, espacio, fecha, hora, notas
+   - filtro por: nombre, espacio, servicio, hora, fecha, placa
+   - boton de notas por fila (abre un cuadro con las notas)
+3. Badge (circulo) amarillo en el item lateral "Citas programadas" que muestra el total de citas.
+
+Adicionalmente, se conecto el refresco de esta vista/badge a los flujos que ya existian en la app
+(login, sync, crear/eliminar cita, refresco periodico), para que no se quede desactualizada.
+
+====================================================================
+2) ARCHIVOS TOCADOS
+====================================================================
+
+- index.html
+- styles.css
+- js/listaCitas.js (nuevo)
+- js/navigation.js
+- js/agenda.js
+- js/sync.js
+- js/actualizar.js
+- js/auth.js
+
+====================================================================
+3) EXPLICACION ARCHIVO POR ARCHIVO (QUE HICE Y POR QUE)
+====================================================================
+
+--------------------------------------------------------------------
+3.1) index.html
+--------------------------------------------------------------------
+QUE CAMBIE:
+- Se agrego la carga del nuevo script js/listaCitas.js.
+- Se agrego un nuevo item en el sidebar: "Citas programadas".
+- Se agrego el badge amarillo con id nav-badge-citas-programadas.
+- Se agrego un nuevo tab-view completo para renderizar la lista de citas:
+  buscador, estadisticas, tabla y empty state.
+
+POR QUE:
+- Sin cargar el script nuevo, las funciones de render/filtro no existen en runtime.
+- El item lateral permite navegar a la nueva seccion.
+- El badge lateral muestra rapidamente cuantas citas hay en total.
+- La vista/tab es el contenedor visual de toda la funcionalidad solicitada.
+
+CODIGO RELEVANTE AGREGADO:
+
+1) Carga del script:
+```html
+<script src="js/ui-tablas.js" defer></script>
+<script src="js/listaCitas.js" defer></script>
+<script src="js/contactados.js" defer></script>
+```
+
+2) Item lateral + badge:
+```html
+<li class="nav-item" id="nav-citas-programadas" onclick="seleccionarTab('citas-programadas')">
+  <span class="nav-icon">📅</span><span class="nav-label">Citas programadas</span>
+  <span class="nav-badge-citas" id="nav-badge-citas-programadas">0</span>
+</li>
+```
+
+3) Tab completo:
+```html
+<div id="tab-citas-programadas" class="tab-view" style="display:none">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">📅</span>
+      <div>
+        <h3>Citas programadas</h3>
+        <p>Listado completo de reservas agendadas</p>
+      </div>
+    </div>
+    <div class="search-bar">
+      <input type="text" id="buscadorCitasProgramadas" oninput="filtrarListaCitasProgramadas()"
+        placeholder="🔍 Buscar por nombre, espacio, servicio, hora, fecha o placa...">
+      <button onclick="limpiarBuscadorCitasProgramadas()" class="btn-clear">Limpiar</button>
+    </div>
+    <div class="db-stats" id="statsCitasProgramadas"></div>
+    <div class="table-wrap">
+      <table id="tablaCitasProgramadas">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Teléfono</th>
+            <th>Placa</th>
+            <th>Servicio</th>
+            <th>Espacio</th>
+            <th>Fecha cita</th>
+            <th>Hora</th>
+            <th>Notas</th>
+          </tr>
+        </thead>
+        <tbody id="listaCitasProgramadas"></tbody>
+      </table>
+      <div class="empty-state" id="emptyCitasProgramadas" style="display:none">
+        <div class="empty-icon">📅</div>
+        <p>No hay citas programadas.</p>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+--------------------------------------------------------------------
+3.2) styles.css
+--------------------------------------------------------------------
+QUE CAMBIE:
+- Se agrego clase .nav-badge-citas para el circulo amarillo del lateral.
+
+POR QUE:
+- Requerimiento explicito: badge/circulo amarillo mostrando cuantas citas hay.
+- Se uso el mismo patron visual de los badges existentes para mantener consistencia.
+
+CODIGO AGREGADO:
+```css
+.nav-badge-citas {
+  background:var(--warning);
+  color:#1f2937;
+  font-size:0.65rem;
+  font-weight:700;
+  min-width:18px;
+  height:18px;
+  border-radius:9px;
+  padding:0 5px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+```
+
+--------------------------------------------------------------------
+3.3) js/listaCitas.js (NUEVO)
+--------------------------------------------------------------------
+QUE CAMBIE:
+- Se creo un modulo nuevo para concentrar TODA la logica de la lista de citas programadas.
+- Incluye:
+  - normalizacion visual de espacios (carcamo, gato_hidraulico, gato_electrico)
+  - modal simple de notas via alert
+  - actualizacion de badge lateral de citas
+  - funcion principal de render con filtro + orden + stats + tabla
+  - funciones de UI de filtro/limpiar
+
+POR QUE:
+- Pediste que se pudiera renderizar pagina y funcionalidades desde una sola funcion en un archivo nuevo.
+- Se centralizo la logica en renderListaCitasProgramadas(filtro), y las funciones auxiliares solo apoyan ese flujo.
+
+CODIGO COMPLETO:
+```js
+function formatoEspacioCita(space) {
+  const valor = String(space || '').trim();
+  const etiquetas = {
+    carcamo: 'Cárcamo',
+    gato_hidraulico: 'Gato Hidráulico',
+    gato_electrico: 'Gato Eléctrico'
+  };
+  return etiquetas[valor] || valor;
+}
+
+function mostrarNotasCitaProgramada(notes) {
+  const textoNotas = String(notes || '').trim();
+  alert(textoNotas || 'Esta cita no tiene notas.');
+}
+
+async function actualizarBadgeCitasProgramadas() {
+  const badge = document.getElementById('nav-badge-citas-programadas');
+  if (!badge) return;
+  const citas = await getCitas();
+  badge.textContent = Array.isArray(citas) ? citas.length : 0;
+}
+
+async function renderListaCitasProgramadas(filtro = '') {
+  const tbody = document.getElementById('listaCitasProgramadas');
+  if (!tbody) return;
+
+  const empty = document.getElementById('emptyCitasProgramadas');
+  const tabla = document.getElementById('tablaCitasProgramadas');
+  const stats = document.getElementById('statsCitasProgramadas');
+
+  const todas = await getCitas();
+  const badge = document.getElementById('nav-badge-citas-programadas');
+  if (badge) badge.textContent = Array.isArray(todas) ? todas.length : 0;
+  const filtroNormalizado = String(filtro || '').trim().toUpperCase();
+
+  let citas = Array.isArray(todas) ? todas : [];
+  if (filtroNormalizado) {
+    citas = citas.filter(cita => {
+      const nombre = String(cita.name || '').toUpperCase();
+      const espacio = formatoEspacioCita(cita.space).toUpperCase();
+      const servicio = String(cita.service || '').toUpperCase();
+      const hora = String(cita.hour || '').toUpperCase();
+      const fecha = String(cita.date || '').toUpperCase();
+      const placa = String(cita.plate || '').toUpperCase();
+
+      return nombre.includes(filtroNormalizado) ||
+        espacio.includes(filtroNormalizado) ||
+        servicio.includes(filtroNormalizado) ||
+        hora.includes(filtroNormalizado) ||
+        fecha.includes(filtroNormalizado) ||
+        placa.includes(filtroNormalizado);
+    });
+  }
+
+  citas.sort((a, b) => `${String(a.date || '')} ${String(a.hour || '')}`.localeCompare(`${String(b.date || '')} ${String(b.hour || '')}`));
+
+  const totalConNotas = (Array.isArray(todas) ? todas : []).filter(c => String(c.notes || '').trim()).length;
+  stats.innerHTML = `
+    <div class="db-stat-item"><span class="db-dot" style="background:#3b82f6"></span>${citas.length} mostradas</div>
+    <div class="db-stat-item"><span class="db-dot" style="background:#14b8a6"></span>${totalConNotas} con notas</div>
+    <div class="db-stats-total">${(Array.isArray(todas) ? todas : []).length} citas</div>`;
+
+  tbody.innerHTML = '';
+  if (!citas.length) {
+    empty.style.display = 'block';
+    tabla.style.display = 'none';
+    return;
+  }
+
+  empty.style.display = 'none';
+  tabla.style.display = '';
+
+  citas.forEach(cita => {
+    const tr = document.createElement('tr');
+
+    const celdas = [
+      String(cita.name || ''),
+      String(cita.telephone || ''),
+      String(cita.plate || '').toUpperCase().trim(),
+      String(cita.service || ''),
+      formatoEspacioCita(cita.space),
+      String(cita.date || ''),
+      String(cita.hour || '')
+    ];
+
+    celdas.forEach(valor => {
+      const td = document.createElement('td');
+      td.textContent = valor;
+      tr.appendChild(td);
+    });
+
+    const tdNotas = document.createElement('td');
+    const btnNotas = document.createElement('button');
+    btnNotas.className = 'btn-edit';
+    btnNotas.textContent = '📝 Notas';
+    btnNotas.onclick = () => mostrarNotasCitaProgramada(cita.notes);
+    tdNotas.appendChild(btnNotas);
+    tr.appendChild(tdNotas);
+
+    tbody.appendChild(tr);
+  });
+}
+
+function filtrarListaCitasProgramadas() {
+  renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
+}
+
+function limpiarBuscadorCitasProgramadas() {
+  const buscador = document.getElementById('buscadorCitasProgramadas');
+  buscador.value = '';
+  renderListaCitasProgramadas();
+  buscador.focus();
+}
+```
+
+--------------------------------------------------------------------
+3.4) js/navigation.js
+--------------------------------------------------------------------
+QUE CAMBIE:
+- Se agrego la etiqueta de titulo de tab para "citas-programadas".
+- Se agrego la llamada a renderListaCitasProgramadas() al entrar en ese tab.
+
+POR QUE:
+- El indicador superior de titulo necesita conocer la nueva pestaña.
+- Navegar a la pestaña debe cargar inmediatamente su contenido.
+
+CODIGO AGREGADO:
+```js
+const t = {
+  principal: 'Panel Principal',
+  database: 'Base de Datos',
+  historial: 'Historial por Placa',
+  contactados: 'Contactados',
+  agenda: 'Agenda',
+  'citas-programadas': 'Citas programadas'
+};
+
+if (tab === 'citas-programadas') renderListaCitasProgramadas();
+```
+
+--------------------------------------------------------------------
+3.5) js/agenda.js
+--------------------------------------------------------------------
+QUE CAMBIE:
+- Al confirmar una nueva reserva:
+  - se actualiza badge de citas programadas
+  - si el tab de citas programadas esta activo, se vuelve a renderizar con su filtro actual
+- Al confirmar eliminacion de cita:
+  - mismo comportamiento de refresco y badge
+
+POR QUE:
+- Crear/eliminar cita cambia el total y el contenido de la lista.
+- Sin esto, podias ver datos viejos hasta otro refresco global.
+
+CODIGO AGREGADO:
+```js
+await actualizarBadgeCitasProgramadas();
+if (document.getElementById('tab-citas-programadas').classList.contains('active'))
+  renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
+```
+
+--------------------------------------------------------------------
+3.6) js/sync.js
+--------------------------------------------------------------------
+QUE CAMBIE:
+- Dentro de sincronizarConSheets():
+  - se actualiza el badge de citas programadas
+  - si el tab de citas programadas esta activo, se vuelve a renderizar
+
+POR QUE:
+- La sincronizacion puede traer cambios remotos de datos.
+- Es importante que la vista y el badge reflejen el estado actualizado tras sync.
+
+CODIGO AGREGADO:
+```js
+actualizarBadgeCitasProgramadas();
+if (document.getElementById('tab-citas-programadas').classList.contains('active'))
+  renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
+```
+
+--------------------------------------------------------------------
+3.7) js/actualizar.js
+--------------------------------------------------------------------
+QUE CAMBIE:
+- En el ciclo de actualizar():
+  - si el tab de citas esta activo, rerender con el texto actual del buscador
+  - se actualiza el badge de citas programadas
+
+POR QUE:
+- Este archivo ya centraliza refrescos periodicos.
+- Se integra la nueva seccion al mismo ritmo de actualizacion del sistema.
+
+CODIGO AGREGADO:
+```js
+if (document.getElementById('tab-citas-programadas').classList.contains('active'))
+  renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
+actualizarBadgeCitasProgramadas();
+```
+
+--------------------------------------------------------------------
+3.8) js/auth.js
+--------------------------------------------------------------------
+QUE CAMBIE:
+- En mostrarApp(), despues de login exitoso, se llama actualizarBadgeCitasProgramadas().
+
+POR QUE:
+- Al entrar al sistema, el usuario debe ver desde el inicio el contador correcto en el menu lateral.
+
+CODIGO AGREGADO:
+```js
+actualizarBadgeCitasProgramadas();
+```
+
+====================================================================
+4) APARTADO ESPECIAL — COMO IMPLEMENTE LA LISTA DE CITAS
+====================================================================
+
+La implementacion se hizo con una arquitectura simple y directa:
+
+1) Fuente de datos unica:
+   - Se usa getCitas() (asincrona) como fuente de verdad.
+   - No se cachea localmente en esta capa para evitar inconsistencia visual.
+
+2) Funcion principal de UI:
+   - renderListaCitasProgramadas(filtro = '').
+   - Esta funcion:
+     a) trae datos (await getCitas()),
+     b) normaliza filtro,
+     c) aplica filtro multi-campo,
+     d) ordena por fecha/hora,
+     e) actualiza stats,
+     f) actualiza badge lateral,
+     g) pinta filas/empty state.
+
+3) Filtro multi-criterio:
+   - Se filtra por OR entre:
+     name, space(formateado), service, hour, date, plate.
+   - Se usa mayuscula para comparacion case-insensitive.
+
+4) Formato del espacio:
+   - El backend puede enviar carcamo/gato_hidraulico/gato_electrico.
+   - Para UI legible se mapea a:
+     Cárcamo, Gato Hidráulico, Gato Eléctrico.
+
+5) Notas como boton:
+   - En cada fila, en vez de texto plano, se crea boton "📝 Notas".
+   - Click -> mostrarNotasCitaProgramada(notes) -> alert con contenido.
+   - Si no hay notas, muestra mensaje de ausencia.
+
+6) Integracion de navegacion:
+   - seleccionarTab('citas-programadas') dispara render inmediato.
+   - Esto evita que el usuario entre a una vista vacia esperando refresh.
+
+7) Consistencia por eventos:
+   - Login: actualiza badge.
+   - Sync: actualiza badge + rerender si tab activo.
+   - Crear/eliminar cita: actualiza badge + rerender si tab activo.
+   - Timer global: mantiene data viva si tab activo.
+
+8) Consistencia visual:
+   - Se reutilizo estructura de Base de Datos:
+     card-header, search-bar, db-stats, table-wrap, empty-state.
+   - Se agrego badge lateral con patron de badges existentes.
+
+====================================================================
+5) RAZONES DE DISENO Y DECISIONES IMPORTANTES
+====================================================================
+
+- Se separo en archivo nuevo (js/listaCitas.js):
+  para evitar mezclar responsabilidades con agenda.js/ui-tablas.js y facilitar mantenimiento.
+
+- Se uso una funcion principal de render:
+  simplifica la trazabilidad; cualquier cambio de UI de citas pasa por el mismo punto.
+
+- Se actualiza badge desde render y desde eventos globales:
+  doble seguridad para evitar desincronizacion del contador.
+
+- Se mantiene el filtro al refrescar estando en tab activo:
+  mejor UX (no borra lo que el usuario esta buscando).
+
+- Se uso alert para notas:
+  cumple el requerimiento de "saque un cuadrito" con implementacion minima y robusta.
+  Si luego quieres, se puede migrar a modal custom del sistema para una UX mas elegante.
+
+====================================================================
+6) RESUMEN FINAL TECNICO
+====================================================================
+
+La funcionalidad de "Citas programadas" quedo integrada end-to-end:
+- Navegacion lateral
+- Vista completa de datos
+- Filtro dinamico
+- Boton de notas por fila
+- Badge amarillo con total de citas
+- Refresco en todos los puntos donde cambian o se sincronizan citas
+
+Con esto, la seccion queda operativa y coherente con el resto de la aplicacion.
+

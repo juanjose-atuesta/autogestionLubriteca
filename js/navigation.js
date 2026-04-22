@@ -16,10 +16,18 @@ function seleccionarTab(tab) {
   const v = document.getElementById('tab-' + tab); v.style.display = 'block'; v.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('nav-' + tab).classList.add('active');
-  const t = { principal: 'Panel Principal', database: 'Base de Datos', historial: 'Historial por Placa', contactados: 'Contactados', agenda: 'Agenda' };
+  const t = {
+    principal: 'Panel Principal',
+    database: 'Base de Datos',
+    historial: 'Historial por Placa',
+    contactados: 'Contactados',
+    agenda: 'Agenda',
+    'citas-programadas': 'Citas programadas'
+  };
   document.getElementById('tab-indicator').textContent = t[tab];
   if (tab === 'database') mostrarGeneral();
   if (tab === 'contactados') mostrarContactados();
+  if (tab === 'citas-programadas') renderListaCitasProgramadas();
   if (tab === 'agenda') {
     irHoyAgenda();
     /*

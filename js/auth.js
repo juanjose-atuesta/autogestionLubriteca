@@ -40,6 +40,7 @@ function mostrarApp() {
   revisarCitasDeHoy();
   actualizarBadgeContactados();
   actualizarBadgeAgenda();
+  actualizarBadgeCitasProgramadas();
 
   sincronizarConSheets();
 }
@@ -57,4 +58,3 @@ function togglePassword() {
   const i = document.getElementById('loginPass');
   i.type = i.type === 'password' ? 'text' : 'password';
 }
-

@@ -140,9 +140,12 @@ async function confirmarReserva() {
 
     cerrarModalReservar();
     await actualizarBadgeAgenda();
+    await actualizarBadgeCitasProgramadas();
     mostrarAlertas();
     if (document.getElementById('tab-database').classList.contains('active'))
       mostrarGeneral(document.getElementById('buscadorGeneral').value);
+    if (document.getElementById('tab-citas-programadas').classList.contains('active'))
+      renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
     if (document.getElementById('tab-agenda').classList.contains('active')) await renderAgenda();
   } catch (error) {
     console.error(error);
@@ -294,9 +297,12 @@ async function confirmarEliminarCita() {
     cerrarModalEliminarCita();
     cerrarDetalleCita();
     await actualizarBadgeAgenda();
+    await actualizarBadgeCitasProgramadas();
     mostrarAlertas();
     if (document.getElementById('tab-database').classList.contains('active'))
       mostrarGeneral(document.getElementById('buscadorGeneral').value);
+    if (document.getElementById('tab-citas-programadas').classList.contains('active'))
+      renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
     await renderAgenda();
   } catch (error) {
     console.error(error);
