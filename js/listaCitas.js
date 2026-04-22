@@ -13,6 +13,53 @@ function mostrarNotasCitaProgramada(notes) {
   alert(textoNotas || 'Esta cita no tiene notas.');
 }
 
+async function editarCitaProgramada(citaId) {
+  const id = String(citaId || '').trim();
+  if (!id) return;
+
+  const citas = await getCitas();
+  const cita = (Array.isArray(citas) ? citas : []).find(c => String(c.reservationId) === id);
+  if (!cita) return;
+
+  const notaActual = String(cita.notes || '').trim();
+  const nuevaNota = prompt('Edita las notas de la cita:', notaActual);
+  if (nuevaNota === null) return;
+
+  const notaFinal = String(nuevaNota).trim();
+  if (notaFinal === notaActual) return;
+
+  try {
+    const response = await fetch(API_BACKEND_URL + "reservations/saveReservation", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        reservationId: String(cita.reservationId),
+        date: String(cita.date || ''),
+        hour: String(cita.hour || ''),
+        space: String(cita.space || ''),
+        notes: notaFinal,
+        plate: String(cita.plate || ''),
+        name: String(cita.name || ''),
+        telephone: String(cita.telephone || ''),
+        service: String(cita.service || ''),
+        customerId: String(cita.customerId || '')
+      })
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+
+    await actualizarBadgeAgenda();
+    await actualizarBadgeCitasProgramadas();
+    mostrarAlertas();
+    if (document.getElementById('tab-database').classList.contains('active'))
+      mostrarGeneral(document.getElementById('buscadorGeneral').value);
+    if (document.getElementById('tab-citas-programadas').classList.contains('active'))
+      renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
+    if (document.getElementById('tab-agenda').classList.contains('active')) await renderAgenda();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 async function actualizarBadgeCitasProgramadas() {
   const badge = document.getElementById('nav-badge-citas-programadas');
   if (!badge) return;
@@ -89,13 +136,16 @@ async function renderListaCitasProgramadas(filtro = '') {
       tr.appendChild(td);
     });
 
-    const tdNotas = document.createElement('td');
-    const btnNotas = document.createElement('button');
-    btnNotas.className = 'btn-edit';
-    btnNotas.textContent = '📝 Notas';
-    btnNotas.onclick = () => mostrarNotasCitaProgramada(cita.notes);
-    tdNotas.appendChild(btnNotas);
-    tr.appendChild(tdNotas);
+    const reservationId = String(cita.reservationId || '').trim();
+    const reservationIdSafe = reservationId.replace(/'/g, "\\'");
+    const tdAcciones = document.createElement('td');
+    tdAcciones.innerHTML = `
+      <div class="citas-programadas-acciones">
+        <button class="btn-ver-cita" onclick="mostrarNotasCitaProgramada(${JSON.stringify(String(cita.notes || ''))})">👁 Ver notas</button>
+        <button class="btn-edit" onclick="editarCitaProgramada('${reservationIdSafe}')" ${reservationId ? '' : 'disabled'}>✎ Editar</button>
+        <button class="btn-del" onclick="eliminarCita('${reservationIdSafe}')" ${reservationId ? '' : 'disabled'}>✕ Eliminar</button>
+      </div>`;
+    tr.appendChild(tdAcciones);
 
     tbody.appendChild(tr);
   });
