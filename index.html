@@ -424,6 +424,64 @@
     </div>
   </div>
 
+  <!-- MODAL NOTAS CITA -->
+  <div class="modal-overlay" id="modalNotasCita">
+    <div class="modal">
+      <div class="modal-icon modal-icon-primary">📝</div>
+      <h3>Notas</h3>
+      <p id="modalNotasCitaTexto" class="modal-notas-text">NO hay notas para esta cita</p>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="cerrarModalNotasCita()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR CITA -->
+  <div class="modal-overlay" id="modalEditarReserva">
+    <div class="modal modal-wide">
+      <div class="modal-icon modal-icon-agenda">◷</div>
+      <h3>Editar cita</h3>
+      <form id="formEditarReserva" class="form-grid form-grid-modal" onsubmit="event.preventDefault(); guardarEdicionReserva();">
+        <input type="hidden" id="editReservaId">
+        <input type="hidden" id="editReservaCustomerId">
+        <div class="field"><label>Nombre</label><input type="text" id="editReservaNombre" required></div>
+        <div class="field"><label>Teléfono</label><input type="tel" id="editReservaTelefono" required></div>
+        <div class="field"><label>Placa</label><input type="text" id="editReservaPlaca" style="text-transform:uppercase" required></div>
+        <div class="field">
+          <label>Tipo de servicio</label>
+          <select id="editReservaServicio" required>
+            <option value="Cambio de Aceite">🛢️ Cambio de Aceite</option>
+            <option value="Revisión de Frenos">🛑 Revisión de Frenos</option>
+            <option value="Mantenimiento General">🔧 Mantenimiento General</option>
+            <option value="Sistema Eléctrico">⚡ Sistema Eléctrico</option>
+            <option value="Otros">⚙️ Otros</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Espacio</label>
+          <select id="editReservaEspacio" required>
+            <option value="carcamo">🔩 Cárcamo</option>
+            <option value="gato_hidraulico">🔧 Gato Hidráulico</option>
+            <option value="gato_electrico">⚡ Gato Eléctrico</option>
+          </select>
+        </div>
+        <div class="field"><label>Fecha de cita</label><input type="date" id="editReservaFecha" required></div>
+        <div class="field">
+          <label>Hora</label>
+          <select id="editReservaHora" required></select>
+        </div>
+        <div class="field" style="grid-column:1/-1;">
+          <label>Notas</label>
+          <input type="text" id="editReservaNotas" placeholder="Ej: Traer factura anterior, revisar frenos...">
+        </div>
+      </form>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="cerrarModalEditarReserva()">Cancelar</button>
+        <button type="button" class="btn-modal-confirm btn-modal-agenda" onclick="guardarEdicionReserva()">💾 Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL EDITAR -->
   <div class="modal-overlay" id="modalEditar">
     <div class="modal modal-wide">

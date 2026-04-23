@@ -226,7 +226,7 @@ td strong { font-family:var(--font-display);font-weight:700;font-size:0.82rem; }
 .btn-del:hover { background:#dc2626;color:white;border-color:#dc2626; }
 .btn-del-contactado { display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;padding:5px 10px;border-radius:6px;font-size:0.72rem;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all 0.2s;white-space:nowrap; }
 .btn-del-contactado:hover { background:#dc2626;color:white; }
-.citas-programadas-acciones { display:flex;align-items:center;gap:6px;flex-wrap:wrap; }
+.citas-programadas-acciones { display:flex;flex-direction:column;align-items:stretch;gap:6px; }
 .fecha-contacto-badge { display:inline-flex;align-items:center;gap:5px;background:var(--contactado-soft);color:var(--contactado-color);border:1px solid #6ee7b7;padding:4px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;font-family:var(--font-display);white-space:nowrap; }
 .btn-reservar-cita { display:inline-flex;align-items:center;justify-content:center;gap:4px;background:var(--agenda-soft);color:var(--agenda-color);border:1px solid var(--agenda-border);padding:6px 12px;border-radius:6px;font-size:0.72rem;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all 0.2s;white-space:nowrap; }
 .btn-reservar-cita:hover { background:var(--agenda-color);color:white;border-color:var(--agenda-color); }
@@ -482,6 +482,7 @@ td strong { font-family:var(--font-display);font-weight:700;font-size:0.82rem; }
 .modal-icon-agenda  { background:var(--agenda-soft);color:var(--agenda-color); }
 .modal h3 { font-family:var(--font-display);font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:8px; }
 .modal > p { font-size:0.85rem;color:var(--text-muted);margin-bottom:24px;line-height:1.5; }
+.modal-notas-text { text-align:center;font-size:0.9rem;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 12px; }
 .form-grid-modal { padding:0;margin-bottom:16px;text-align:left; }
 .modal-actions { display:flex;gap:10px;justify-content:center;margin-top:8px; }
 .modal-wide .modal-actions { justify-content:flex-end; }

@@ -8,9 +8,39 @@ function formatoEspacioCita(space) {
   return etiquetas[valor] || valor;
 }
 
-function mostrarNotasCitaProgramada(notes) {
-  const textoNotas = String(notes || '').trim();
-  alert(textoNotas || 'Esta cita no tiene notas.');
+function cerrarModalNotasCita() {
+  document.getElementById('modalNotasCita').classList.remove('active');
+}
+
+async function abrirModalNotasCita(citaId) {
+  const id = String(citaId || '').trim();
+  if (!id) return;
+
+  const citas = await getCitas();
+  const cita = (Array.isArray(citas) ? citas : []).find(c => String(c.reservationId) === id);
+  if (!cita) return;
+
+  const textoNotas = String(cita.notes || '').trim();
+  document.getElementById('modalNotasCitaTexto').textContent = textoNotas || 'NO hay notas para esta cita';
+  document.getElementById('modalNotasCita').classList.add('active');
+}
+
+function cerrarModalEditarReserva() {
+  document.getElementById('modalEditarReserva').classList.remove('active');
+}
+
+function cargarOpcionesHoraEditarReserva(horaSeleccionada = '') {
+  const selectHora = document.getElementById('editReservaHora');
+  if (!selectHora) return;
+
+  selectHora.innerHTML = '';
+  HORAS.forEach(h => {
+    const option = document.createElement('option');
+    option.value = h;
+    option.textContent = HORAS_DISPLAY[h] || h;
+    selectHora.appendChild(option);
+  });
+  selectHora.value = String(horaSeleccionada || HORAS[0] || '');
 }
 
 async function editarCitaProgramada(citaId) {
@@ -21,32 +51,70 @@ async function editarCitaProgramada(citaId) {
   const cita = (Array.isArray(citas) ? citas : []).find(c => String(c.reservationId) === id);
   if (!cita) return;
 
-  const notaActual = String(cita.notes || '').trim();
-  const nuevaNota = prompt('Edita las notas de la cita:', notaActual);
-  if (nuevaNota === null) return;
+  cargarOpcionesHoraEditarReserva(cita.hour);
+  document.getElementById('editReservaId').value = String(cita.reservationId || '');
+  document.getElementById('editReservaCustomerId').value = String(cita.customerId || '');
+  document.getElementById('editReservaNombre').value = String(cita.name || '');
+  document.getElementById('editReservaTelefono').value = String(cita.telephone || '');
+  document.getElementById('editReservaPlaca').value = String(cita.plate || '').toUpperCase().trim();
+  const selectServicio = document.getElementById('editReservaServicio');
+  const servicioActual = String(cita.service || '').trim();
+  const existeServicio = Array.from(selectServicio.options).some(o => o.value === servicioActual);
+  if (!existeServicio && servicioActual) {
+    const opcionActual = document.createElement('option');
+    opcionActual.value = servicioActual;
+    opcionActual.textContent = servicioActual;
+    selectServicio.appendChild(opcionActual);
+  }
+  selectServicio.value = servicioActual || 'Otros';
+  document.getElementById('editReservaEspacio').value = String(cita.space || 'carcamo');
+  document.getElementById('editReservaFecha').value = String(cita.date || '');
+  document.getElementById('editReservaHora').value = String(cita.hour || '');
+  document.getElementById('editReservaNotas').value = String(cita.notes || '');
+  document.getElementById('modalEditarReserva').classList.add('active');
+}
 
-  const notaFinal = String(nuevaNota).trim();
-  if (notaFinal === notaActual) return;
+async function guardarEdicionReserva() {
+  const reservationId = String(document.getElementById('editReservaId').value || '').trim();
+  if (!reservationId) return;
+
+  const payload = {
+    name: String(document.getElementById('editReservaNombre').value || '').trim(),
+    telephone: String(document.getElementById('editReservaTelefono').value || '').trim(),
+    plate: String(document.getElementById('editReservaPlaca').value || '').toUpperCase().trim(),
+    service: String(document.getElementById('editReservaServicio').value || '').trim(),
+    space: String(document.getElementById('editReservaEspacio').value || '').trim(),
+    date: String(document.getElementById('editReservaFecha').value || '').trim(),
+    hour: String(document.getElementById('editReservaHora').value || '').trim(),
+    notes: String(document.getElementById('editReservaNotas').value || '').trim()
+  };
+
+  if (!payload.name || !payload.telephone || !payload.plate || !payload.service || !payload.space || !payload.date || !payload.hour) {
+    alert('Completa todos los campos obligatorios para guardar los cambios.');
+    return;
+  }
+
+  const citas = await getCitas();
+  const conflicto = (Array.isArray(citas) ? citas : []).find(c =>
+    String(c.reservationId) !== reservationId &&
+    String(c.date) === payload.date &&
+    String(c.hour) === payload.hour &&
+    String(c.space) === payload.space
+  );
+  if (conflicto) {
+    alert(`⚠ Ya existe una reserva en ese horario para ${formatoEspacioCita(payload.space)}.`);
+    return;
+  }
 
   try {
-    const response = await fetch(API_BACKEND_URL + "reservations/saveReservation", {
-      method: 'POST',
+    const response = await fetch(API_BACKEND_URL + "reservations/editReservation/" + reservationId, {
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        reservationId: String(cita.reservationId),
-        date: String(cita.date || ''),
-        hour: String(cita.hour || ''),
-        space: String(cita.space || ''),
-        notes: notaFinal,
-        plate: String(cita.plate || ''),
-        name: String(cita.name || ''),
-        telephone: String(cita.telephone || ''),
-        service: String(cita.service || ''),
-        customerId: String(cita.customerId || '')
-      })
+      body: JSON.stringify(payload)
     });
-    if (!response.ok) throw new Error('HTTP ' + response.status);
+    if (!response.status) throw new Error('HTTP ' + response.status);
 
+    cerrarModalEditarReserva();
     await actualizarBadgeAgenda();
     await actualizarBadgeCitasProgramadas();
     mostrarAlertas();
@@ -141,7 +209,7 @@ async function renderListaCitasProgramadas(filtro = '') {
     const tdAcciones = document.createElement('td');
     tdAcciones.innerHTML = `
       <div class="citas-programadas-acciones">
-        <button class="btn-ver-cita" onclick="mostrarNotasCitaProgramada(${JSON.stringify(String(cita.notes || ''))})">👁 Ver notas</button>
+        <button class="btn-ver-cita" onclick="abrirModalNotasCita('${reservationIdSafe}')" ${reservationId ? '' : 'disabled'}>👁 Ver notas</button>
         <button class="btn-edit" onclick="editarCitaProgramada('${reservationIdSafe}')" ${reservationId ? '' : 'disabled'}>✎ Editar</button>
         <button class="btn-del" onclick="eliminarCita('${reservationIdSafe}')" ${reservationId ? '' : 'disabled'}>✕ Eliminar</button>
       </div>`;
