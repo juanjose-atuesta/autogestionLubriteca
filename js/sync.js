@@ -78,12 +78,15 @@ function sincronizarConSheets() {
       actualizarStats();
       mostrarAlertas();
       actualizarBadgeContactados();
+      actualizarBadgeUsuarios();
       actualizarBadgeAgenda();
       actualizarBadgeCitasProgramadas();
       if (document.getElementById('tab-database').classList.contains('active'))
         mostrarGeneral(document.getElementById('buscadorGeneral').value);
       if (document.getElementById('tab-contactados').classList.contains('active'))
         mostrarContactados();
+      if (document.getElementById('tab-usuarios').classList.contains('active'))
+        mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
       if (document.getElementById('tab-historial').classList.contains('active'))
         buscarHistorial();
       if (document.getElementById('tab-agenda').classList.contains('active'))

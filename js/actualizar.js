@@ -5,6 +5,9 @@ function actualizar() {
   buscarHistorial();
   actualizarBadgeContactados();
   mostrarContactados();
+  actualizarBadgeUsuarios();
+  if (document.getElementById('tab-usuarios').classList.contains('active'))
+    mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
   renderAgenda();
   if (document.getElementById('tab-citas-programadas').classList.contains('active'))
     renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);

@@ -35,7 +35,7 @@ document.getElementById('clienteForm').addEventListener('submit', e => {
     .then(data => {
       //console.log(data.status);
       //console.log("se logro");
-      fetch("http://192.168.80.25:3000/api/historial/saveToHistorialDB", {
+      fetch(API_BACKEND_URL + "historial/saveToHistorialDB", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(c)

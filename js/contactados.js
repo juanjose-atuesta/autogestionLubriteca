@@ -12,7 +12,7 @@ function toggleContactado(id) {
       const idxCliente = clientes.findIndex(c => String(c.id) === clienteId);
       const estadoActual = idxCliente !== -1 ? normalizarBooleanContactado(clientes[idxCliente].wasContacted) : false;
 
-      return fetch(API_BACKEND_URL + "customers/toogleWasContacted/" + id, {
+      return fetch(API_BACKEND_URL + "customers/toogleWasContacted/" + clienteId, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
       }).then(res => res.json())

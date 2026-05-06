@@ -21,12 +21,14 @@ function seleccionarTab(tab) {
     database: 'Base de Datos',
     historial: 'Historial por Placa',
     contactados: 'Contactados',
+    usuarios: 'Usuarios',
     agenda: 'Agenda',
     'citas-programadas': 'Citas programadas'
   };
   document.getElementById('tab-indicator').textContent = t[tab];
   if (tab === 'database') mostrarGeneral();
   if (tab === 'contactados') mostrarContactados();
+  if (tab === 'usuarios') mostrarUsuarios();
   if (tab === 'citas-programadas') renderListaCitasProgramadas();
   if (tab === 'agenda') {
     irHoyAgenda();
@@ -48,5 +50,5 @@ setInterval(() => {
 }, 30000);
 */
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { cerrarModalEliminar(); cerrarModalEditar(); cerrarModalReservar(); cerrarDetalleCita(); cerrarModalEliminarCita(); }
+  if (e.key === 'Escape') { cerrarModalEliminar(); cerrarModalEditar(); cerrarModalReservar(); cerrarDetalleCita(); cerrarModalEliminarCita(); cerrarModalUsuariosRecomendados(); }
 });

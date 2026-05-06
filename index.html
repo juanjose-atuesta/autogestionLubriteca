@@ -19,6 +19,8 @@
   <script src="js/ui-tablas.js" defer></script>
   <script src="js/listaCitas.js" defer></script>
   <script src="js/contactados.js" defer></script>
+  <script src="js/usuarios-api.js" defer></script>
+  <script src="js/usuarios.js" defer></script>
   <script src="js/historial.js" defer></script>
   <script src="js/notifications.js" defer></script>
 
@@ -120,6 +122,10 @@
         <li class="nav-item" id="nav-contactados" onclick="seleccionarTab('contactados')">
           <span class="nav-icon">✓</span><span class="nav-label">Contactados</span>
           <span class="nav-badge-green" id="nav-badge-contactados">0</span>
+        </li>
+        <li class="nav-item" id="nav-usuarios" onclick="seleccionarTab('usuarios')">
+          <span class="nav-icon">👥</span><span class="nav-label">Usuarios</span>
+          <span class="nav-badge-usuarios" id="nav-badge-usuarios">0</span>
         </li>
         <li class="nav-item" id="nav-agenda" onclick="seleccionarTab('agenda')">
           <span class="nav-icon">◷</span><span class="nav-label">Agenda</span>
@@ -312,6 +318,65 @@
         </div>
       </div>
 
+      <!-- USUARIOS -->
+      <div id="tab-usuarios" class="tab-view" style="display:none">
+        <div class="card">
+          <div class="card-header card-header-usuarios"><span class="card-icon card-icon-usuarios">+</span>
+            <div>
+              <h3>Registrar Usuario</h3>
+              <p>Agrega un nuevo usuario al sistema</p>
+            </div>
+          </div>
+          <form id="usuarioForm" class="form-grid" onsubmit="registrarUsuarioDesdeFormulario(event)">
+            <div class="field"><label>Nombre completo</label><input type="text" id="usuarioNombre" placeholder="Ej: Juan Pérez"
+                required></div>
+            <div class="field"><label>Cédula</label><input type="text" id="usuarioCedula" placeholder="Ej: 1001234567"
+                required></div>
+            <div class="field"><label>Teléfono</label><input type="tel" id="usuarioTelefono" placeholder="Ej: 3001234567"
+                required></div>
+            <div class="field"><label>Fecha de ingreso</label><input type="date" id="usuarioFechaIngreso" required></div>
+            <div class="field field-submit">
+              <button type="submit" class="btn-save">💾 Guardar Usuario</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header card-header-usuarios"><span class="card-icon card-icon-usuarios">👥</span>
+            <div>
+              <h3>Usuarios Registrados</h3>
+              <p>Listado de usuarios y su red de recomendados</p>
+            </div>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="buscadorUsuarios" oninput="filtrarUsuarios()"
+              placeholder="🔍 Buscar por nombre, C.C, teléfono o fecha de registro...">
+            <button onclick="limpiarBuscadorUsuarios()" class="btn-clear">Limpiar</button>
+          </div>
+          <div class="table-wrap">
+            <table id="tablaUsuarios">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>C.C</th>
+                  <th>Teléfono</th>
+                  <th>Fecha de registro</th>
+                  <th>Puntos Acumulados</th>
+                  <th>Usuarios Recomendados</th>
+                  <th>Agregar Usuario Recomendado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="listaUsuarios"></tbody>
+            </table>
+            <div class="empty-state" id="emptyUsuarios" style="display:none">
+              <div class="empty-icon">👥</div>
+              <p>No hay usuarios registrados para mostrar.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- AGENDA -->
       <div id="tab-agenda" class="tab-view" style="display:none">
         <div class="card">
@@ -432,6 +497,52 @@
       <p id="modalNotasCitaTexto" class="modal-notas-text">NO hay notas para esta cita</p>
       <div class="modal-actions">
         <button class="btn-modal-cancel" onclick="cerrarModalNotasCita()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL USUARIOS RECOMENDADOS -->
+  <div class="modal-overlay" id="modalUsuariosRecomendados">
+    <div class="modal modal-wide">
+      <div class="modal-icon modal-icon-primary">👥</div>
+      <h3 id="usuariosRecomendadosTitulo">Usuarios recomendados</h3>
+      <div class="table-wrap">
+        <table id="tablaUsuariosRecomendadosModal">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>C.C</th>
+              <th>Fecha de registro</th>
+            </tr>
+          </thead>
+          <tbody id="listaUsuariosRecomendadosModal"></tbody>
+        </table>
+        <div class="empty-state" id="emptyUsuariosRecomendadosModal" style="display:none">
+          <div class="empty-icon">👥</div>
+          <p>Este usuario no tiene recomendados asociados.</p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="cerrarModalUsuariosRecomendados()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR USUARIO -->
+  <div class="modal-overlay" id="modalEditarUsuario">
+    <div class="modal modal-wide">
+      <div class="modal-icon modal-icon-primary">✎</div>
+      <h3>Editar usuario</h3>
+      <form id="formEditarUsuario" class="form-grid form-grid-modal" onsubmit="event.preventDefault(); guardarEdicionUsuarioRegistrado();">
+        <input type="hidden" id="editUsuarioOriginalId">
+        <div class="field"><label>Nombre completo</label><input type="text" id="editUsuarioNombre" required></div>
+        <div class="field"><label>Cédula</label><input type="text" id="editUsuarioCedula" required></div>
+        <div class="field"><label>Teléfono</label><input type="tel" id="editUsuarioTelefono" required></div>
+        <div class="field"><label>Fecha de registro</label><input type="date" id="editUsuarioFechaRegistro" required></div>
+      </form>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="cerrarModalEditarUsuario()">Cancelar</button>
+        <button type="button" class="btn-modal-confirm" onclick="guardarEdicionUsuarioRegistrado()">💾 Guardar cambios</button>
       </div>
     </div>
   </div>

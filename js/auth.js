@@ -39,6 +39,7 @@ function mostrarApp() {
   mostrarAlertas();
   revisarCitasDeHoy();
   actualizarBadgeContactados();
+  actualizarBadgeUsuarios();
   actualizarBadgeAgenda();
   actualizarBadgeCitasProgramadas();
 
