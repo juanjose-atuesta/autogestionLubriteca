@@ -1,4 +1,5 @@
 let cacheUsuariosRegistrados = [];
+let usuarioIdPendienteEliminar = null;
 
 function waMsgAutorizacionUsuario(nombre) {
   return encodeURIComponent(`Estimado/a ${nombre},
@@ -63,6 +64,8 @@ function formatearRegistrationDayParaInputDate(valorFecha) {
 
 async function registrarUsuarioDesdeFormulario(evento) {
   if (evento) evento.preventDefault();
+  const autorizado = await confirmarAutorizacionDatos();
+  if (!autorizado) return;
 
   const nombreInput = document.getElementById('usuarioNombre');
   const cedulaInput = document.getElementById('usuarioCedula');
@@ -396,8 +399,31 @@ async function eliminarUsuarioRegistradoDesdeBoton(boton) {
   const usuarioId = obtenerIdUsuarioDesdeClick(boton);
   if (!usuarioId) return;
 
-  const confirma = confirm('¿Seguro que quieres eliminar este usuario?');
-  if (!confirma) return;
+  const usuarioActual = cacheUsuariosRegistrados.find(u => String(u.id) === usuarioId);
+  const nombreUsuario = String(usuarioActual?.name || 'este usuario').trim();
+  usuarioIdPendienteEliminar = usuarioId;
+
+  const texto = document.getElementById('modalEliminarUsuarioTexto');
+  const botonConfirmar = document.getElementById('btnConfirmarEliminarUsuario');
+  const modal = document.getElementById('modalEliminarUsuario');
+  if (!texto || !botonConfirmar || !modal) return;
+
+  texto.textContent = `¿Eliminar a "${nombreUsuario}" (C.C ${usuarioId})? Esta acción no se puede deshacer.`;
+  botonConfirmar.onclick = confirmarEliminarUsuarioRegistrado;
+  modal.classList.add('active');
+}
+
+function cerrarModalEliminarUsuario() {
+  const modal = document.getElementById('modalEliminarUsuario');
+  if (modal) modal.classList.remove('active');
+  usuarioIdPendienteEliminar = null;
+}
+
+async function confirmarEliminarUsuarioRegistrado() {
+  if (!usuarioIdPendienteEliminar) return;
+  const usuarioId = usuarioIdPendienteEliminar;
+  cerrarModalEliminarUsuario();
+
   await eliminarUsuarioRegistrado(usuarioId);
   mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
 }

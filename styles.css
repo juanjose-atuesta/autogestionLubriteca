@@ -505,6 +505,10 @@ td strong { font-family:var(--font-display);font-weight:700;font-size:0.82rem; }
 .btn-modal-cancel:hover { background:var(--border-dark);color:var(--text); }
 .btn-modal-confirm { padding:10px 22px;background:var(--danger);color:white;border:none;border-radius:var(--radius-sm);font-family:var(--font-display);font-size:0.85rem;font-weight:700;cursor:pointer;transition:all 0.2s; }
 .btn-modal-confirm:hover { background:#b91c1c;transform:translateY(-1px); }
+.btn-modal-no { background:var(--danger); }
+.btn-modal-no:hover { background:#b91c1c; }
+.btn-modal-si { background:#16a34a; }
+.btn-modal-si:hover { background:#15803d; transform:translateY(-1px); }
 #modalEditar .btn-modal-confirm { background:var(--primary); }
 #modalEditar .btn-modal-confirm:hover { background:var(--primary-mid); }
 #modalEditarUsuario .btn-modal-confirm { background:var(--primary); }

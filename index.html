@@ -491,6 +491,32 @@
     </div>
   </div>
 
+  <!-- MODAL ELIMINAR USUARIO -->
+  <div class="modal-overlay" id="modalEliminarUsuario">
+    <div class="modal">
+      <div class="modal-icon modal-icon-danger">✕</div>
+      <h3>¿Eliminar usuario?</h3>
+      <p id="modalEliminarUsuarioTexto">Esta acción eliminará el usuario seleccionado.</p>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="cerrarModalEliminarUsuario()">Cancelar</button>
+        <button class="btn-modal-confirm" id="btnConfirmarEliminarUsuario">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONFIRMACIÓN TRATAMIENTO DE DATOS -->
+  <div class="modal-overlay" id="modalAutorizacionDatos">
+    <div class="modal">
+      <div class="modal-icon modal-icon-primary">🔒</div>
+      <h3>Confirmación de autorización</h3>
+      <p>¿El usuario ya autorizó el tratamiento de sus datos?</p>
+      <div class="modal-actions">
+        <button class="btn-modal-confirm btn-modal-no" id="btnAutorizacionNo">No</button>
+        <button class="btn-modal-confirm btn-modal-si" id="btnAutorizacionSi">Sí</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL NOTAS CITA -->
   <div class="modal-overlay" id="modalNotasCita">
     <div class="modal">

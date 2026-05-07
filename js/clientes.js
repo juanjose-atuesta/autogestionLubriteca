@@ -13,8 +13,11 @@ function migrarClientesAHistorial() {
 }
 */
 // ═══════════ GUARDAR CLIENTE ═══════════
-document.getElementById('clienteForm').addEventListener('submit', e => {
+document.getElementById('clienteForm').addEventListener('submit', async e => {
   e.preventDefault();
+  const autorizado = await confirmarAutorizacionDatos();
+  if (!autorizado) return;
+
   const c = {
     id: Date.now(),
     name: document.getElementById('nombre').value.toUpperCase(),

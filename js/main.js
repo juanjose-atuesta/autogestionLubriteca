@@ -24,6 +24,35 @@ function enviarAutorizacion() {
   window.open(`https://wa.me/57${telefono}?text=${waMsgAutorizacion(nombre)}`, '_blank');
 }
 
+let resolverAutorizacionDatos = null;
+function responderModalAutorizacionDatos(autorizado) {
+  const modal = document.getElementById('modalAutorizacionDatos');
+  if (modal) modal.classList.remove('active');
+  const resolver = resolverAutorizacionDatos;
+  resolverAutorizacionDatos = null;
+  if (resolver) resolver(Boolean(autorizado));
+}
+
+function cerrarModalAutorizacionDatos() {
+  responderModalAutorizacionDatos(false);
+}
+
+function confirmarAutorizacionDatos() {
+  const modal = document.getElementById('modalAutorizacionDatos');
+  const btnSi = document.getElementById('btnAutorizacionSi');
+  const btnNo = document.getElementById('btnAutorizacionNo');
+  if (!modal || !btnSi || !btnNo) return Promise.resolve(false);
+
+  if (resolverAutorizacionDatos) responderModalAutorizacionDatos(false);
+  modal.classList.add('active');
+
+  return new Promise(resolve => {
+    resolverAutorizacionDatos = resolve;
+    btnSi.onclick = () => responderModalAutorizacionDatos(true);
+    btnNo.onclick = () => responderModalAutorizacionDatos(false);
+  });
+}
+
 function mostrarToast() { const t = document.getElementById('toastGuardado'); t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3000); }
 
 
