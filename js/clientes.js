@@ -77,7 +77,7 @@ function eliminarCliente(id) {
   }).catch(console.error);
 }
 function formatoParaInput(fecha) {
-  // Convierte "dd-mm-aaaa" a "aaaa-mm-dd"
+  // Convierte "aaaa-mm-dd" a "aaaa-mm-dd"
   const anio = fecha.slice(0, 4);
   const mes = fecha.slice(5, 7);
   const dia = fecha.slice(8, 10);

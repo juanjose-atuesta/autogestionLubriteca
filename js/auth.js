@@ -15,17 +15,26 @@ function intentarLogin(e) {
   btn.disabled = true; txtBtn.style.display = 'none'; loader.style.display = 'inline-block';
   error.classList.remove('visible');
   setTimeout(() => {
-    const valido = USUARIOS.some(u => u.usuario === usuario && u.clave === clave);
-    if (valido) {
-      sessionStorage.setItem('ag_sesion', 'ok');
-      document.getElementById('loginScreen').classList.add('saliendo');
-      setTimeout(() => mostrarApp(), 400);
-    } else {
-      error.classList.add('visible');
-      btn.disabled = false; txtBtn.style.display = 'inline'; loader.style.display = 'none';
-      document.getElementById('loginPass').value = '';
-      document.getElementById('loginPass').focus();
-    }
+    try {
+      fetch(API_BACKEND_URL + 'login/validateLogin')
+        .then(res => res.json())
+        .then(data => {
+          if (data.status = true) {
+
+            sessionStorage.setItem('ag_sesion', 'ok');
+            document.getElementById('loginScreen').classList.add('saliendo');
+            setTimeout(() => mostrarApp(), 400);
+            console.log('Login exitoso');
+          } else {
+
+            error.classList.add('visible');
+            btn.disabled = false; txtBtn.style.display = 'inline'; loader.style.display = 'none';
+            document.getElementById('loginPass').value = '';
+            document.getElementById('loginPass').focus();
+          }
+
+        })
+    } catch (error) { console.error('Error al validar login:', error); }
   }, 600);
 }
 

@@ -1,25 +1,39 @@
 
 // ═══════════ HISTORIAL ═══════════
 function buscarHistorial() {
-  /*
-  fetch("http://192.168.80.25:3000/api/historial/historialDBList")
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === 'success') {
-        setHistorialDB(data.historialDBList);
-      }
-      console.log("Se actualizo la lista de historial:", data);
-    })
-    .catch(console.error);
-  */
-  //Ojo, cambiamos donde esta el getClientes por getHistorialDB de forma momentanea, pues como tal aun no hacemos un historial en el backend
   getHistorialDB().then(regs => {
-    const placa = document.getElementById('buscadorPlaca').value.toUpperCase().trim();
+    const busqueda = document.getElementById('buscadorPlaca').value.trim();
     const res = document.getElementById('historialResultado');
-    if (placa.length < 3) { res.innerHTML = `<div class="empty-state"><div class="empty-icon">◎</div><p>Ingresa una placa para ver su historial completo.</p></div>`; return; }
 
-    let regsFiltered = regs.filter(c => c.plate.toUpperCase().includes(placa)).sort((a, b) => String(a.entryDate).localeCompare(String(b.nextContact)));//filter no edita, toca guardarlo en algo
-    if (!regsFiltered.length) { res.innerHTML = `<div class="empty-state"><div class="empty-icon">○</div><p>No se encontraron registros para "<strong>${placa}</strong>".</p></div>`; return; }
+    if (busqueda.length < 2) {
+      res.innerHTML = `<div class="empty-state"><div class="empty-icon">◎</div><p>Ingresa al menos 2 caracteres para buscar por placa, nombre, teléfono, servicio o fecha.</p></div>`;
+      return;
+    }
+
+    const busquedaUpper = busqueda.toUpperCase();
+
+    // Filtrar por múltiples campos
+    let regsFiltered = regs.filter(c => {
+      const plate = String(c.plate || '').toUpperCase();
+      const name = String(c.name || '').toUpperCase();
+      const telephone = String(c.telephone || '').toUpperCase();
+      const service = String(c.service || '').toUpperCase();
+      const entryDate = String(c.entryDate || '').toUpperCase();
+      const nextContact = String(c.nextContact || '').toUpperCase();
+
+      return plate.includes(busquedaUpper) ||
+        name.includes(busquedaUpper) ||
+        telephone.includes(busquedaUpper) ||
+        service.includes(busquedaUpper) ||
+        entryDate.includes(busquedaUpper) ||
+        nextContact.includes(busquedaUpper);
+    }).sort((a, b) => String(a.entryDate).localeCompare(String(b.nextContact)));
+
+    if (!regsFiltered.length) {
+      res.innerHTML = `<div class="empty-state"><div class="empty-icon">○</div><p>No se encontraron registros para "<strong>${busqueda}</strong>".</p></div>`;
+      return;
+    }
+
     const hoy = getHoy(), pu = [...new Set(regsFiltered.map(c => c.plate))];
     let html = '';
     pu.forEach(p => {
@@ -50,4 +64,13 @@ function buscarHistorial() {
   })
 
 }
-function limpiarHistorial() { document.getElementById('buscadorPlaca').value = ''; buscarHistorial(); document.getElementById('buscadorPlaca').focus(); }
+
+function limpiarHistorial() {
+  let hoy = new Date();
+  let dia = hoy.getDate();
+  let mes = hoy.getMonth() + 1;
+  let anio = hoy.getFullYear();
+  document.getElementById('buscadorPlaca').value = `${anio}-${mes.toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+  buscarHistorial();
+  document.getElementById('buscadorPlaca').focus();
+}
