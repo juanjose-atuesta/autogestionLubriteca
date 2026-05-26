@@ -417,17 +417,17 @@ async function confirmarEliminarUsuarioRegistrado() {
   mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
 }
 
-// Variables para el contexto del modal de seleccionar usuario a contactar
-let usuarioIdDelContextoAContactar = null;
+// Variables para el contexto del modal de seleccionar usuario a recomendar
+let usuarioIdDelContextoARecomendar = null;
 let usuariosDisponiblesCache = [];
 
 async function abrirModalSeleccionarUsuarioContactar(boton) {
   const usuarioId = obtenerIdUsuarioDesdeClick(boton);
   if (!usuarioId) return;
 
-  usuarioIdDelContextoAContactar = usuarioId;
+  usuarioIdDelContextoARecomendar = usuarioId;
 
-  let usuariosDisponibles = await obtenerUsuariosNoContactados();
+  let usuariosDisponibles = await obtenerUsuariosNoRecomendados();
   usuariosDisponibles = Array.isArray(usuariosDisponibles) ? usuariosDisponibles : [];
 
   const index = usuariosDisponibles.findIndex(u => String(u.id || '').trim() === usuarioId);
@@ -523,15 +523,21 @@ function filtrarUsuariosDisponibles() {
   });
 }
 
-async function confirmarContactarUsuario(usuarioIdContactar) {
-  if (!usuarioIdDelContextoAContactar) return;
+async function confirmarContactarUsuario(usuarioIdRecomendar) {
+  if (!usuarioIdDelContextoARecomendar) return;
 
+  const usuarioIdOrigen = usuarioIdDelContextoARecomendar;
   cerrarModalSeleccionarUsuarioContactar();
 
-  await contactarUsuario(usuarioIdContactar);
+  // Marcar al usuario recomendado como "recommended: true"
+  await marcarUsuarioComoRecomendado(usuarioIdRecomendar);
+
+  // Agregar el id del usuario recomendado al usuario que lo recomendó
+  await agregarUsuarioRecomendadoAlUsuario(usuarioIdOrigen, usuarioIdRecomendar);
+
   mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
 
-  usuarioIdDelContextoAContactar = null;
+  usuarioIdDelContextoARecomendar = null;
 }
 
 function cerrarModalSeleccionarUsuarioContactar() {
