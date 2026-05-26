@@ -100,3 +100,31 @@ async function eliminarUsuarioRegistrado(usuarioId) {
   }
 }
 
+async function obtenerUsuariosNoContactados() {
+  try {
+    const response = await fetch(API_BACKEND_URL + "users/usersNotContacted/");
+    const data = await response.json();
+    return data.users || data.userList || [];
+  } catch (error) {
+    console.error('Error obteniendo usuarios no contactados:', error);
+    return [];
+  }
+}
+
+async function contactarUsuario(usuarioId) {
+  const id = String(usuarioId || '').trim();
+  if (!id) return null;
+
+  try {
+    const response = await fetch(API_BACKEND_URL + "users/contactUser/" + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contacted: true })
+    });
+    return response.json();
+  } catch (error) {
+    console.error('Error contactando usuario:', error);
+    return null;
+  }
+}
+

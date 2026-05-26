@@ -559,6 +559,43 @@
   </div>
 
 
+  <!-- MODAL SELECCIONAR USUARIO A CONTACTAR -->
+  <div class="modal-overlay" id="modalSeleccionarUsuarioContactar">
+    <div class="modal modal-wide">
+      <div class="modal-icon modal-icon-primary">👥</div>
+      <h3>Seleccionar usuario a contactar</h3>
+      <div class="modal-search-bar">
+        <input 
+          type="text" 
+          id="filtroUsuariosDisponibles" 
+          placeholder="Buscar por nombre, cédula o teléfono..." 
+          onkeyup="filtrarUsuariosDisponibles()"
+          class="search-input"
+        >
+      </div>
+      <div class="table-wrap">
+        <table id="tablaUsuariosDisponiblesModal">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Cédula</th>
+              <th>Teléfono</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="listaUsuariosDisponiblesModal"></tbody>
+        </table>
+        <div class="empty-state" id="emptyUsuariosDisponiblesModal" style="display:none">
+          <div class="empty-icon">👥</div>
+          <p>No hay usuarios disponibles para contactar.</p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="cerrarModalSeleccionarUsuarioContactar()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL EDITAR USUARIO -->
   <div class="modal-overlay" id="modalEditarUsuario">
     <div class="modal modal-wide">

@@ -240,6 +240,11 @@ async function mostrarUsuarios(filtro = '') {
         </button>
       </td>
       <td>
+        <button class="btn-add-usuario" data-usuario-id="${idSafe}" onclick="abrirModalSeleccionarUsuarioContactar(this)" ${idSafe ? '' : 'disabled'}>
+          + Agregar
+        </button>
+      </td>
+      <td>
         <div class="citas-programadas-acciones">
           <button class="btn-edit" data-usuario-id="${idSafe}" onclick="editarUsuarioRegistradoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✎ Editar</button>
           <button class="btn-del" data-usuario-id="${idSafe}" onclick="eliminarUsuarioRegistradoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✕ Eliminar</button>
@@ -412,3 +417,124 @@ async function confirmarEliminarUsuarioRegistrado() {
   mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
 }
 
+// Variables para el contexto del modal de seleccionar usuario a contactar
+let usuarioIdDelContextoAContactar = null;
+let usuariosDisponiblesCache = [];
+
+async function abrirModalSeleccionarUsuarioContactar(boton) {
+  const usuarioId = obtenerIdUsuarioDesdeClick(boton);
+  if (!usuarioId) return;
+
+  usuarioIdDelContextoAContactar = usuarioId;
+
+  let usuariosDisponibles = await obtenerUsuariosNoContactados();
+  usuariosDisponibles = Array.isArray(usuariosDisponibles) ? usuariosDisponibles : [];
+
+  const index = usuariosDisponibles.findIndex(u => String(u.id || '').trim() === usuarioId);
+  if (index !== -1) {
+    usuariosDisponibles.splice(index, 1);
+  }
+
+  usuariosDisponiblesCache = usuariosDisponibles;
+  renderModalSeleccionarUsuarioContactar(usuariosDisponiblesCache);
+}
+
+function renderModalSeleccionarUsuarioContactar(usuarios = []) {
+  const modal = document.getElementById('modalSeleccionarUsuarioContactar');
+  const tbody = document.getElementById('listaUsuariosDisponiblesModal');
+  const tabla = document.getElementById('tablaUsuariosDisponiblesModal');
+  const empty = document.getElementById('emptyUsuariosDisponiblesModal');
+  const filtroInput = document.getElementById('filtroUsuariosDisponibles');
+
+  if (!modal || !tbody || !tabla || !empty || !filtroInput) return;
+
+  tbody.innerHTML = '';
+  filtroInput.value = '';
+
+  if (!usuarios.length) {
+    empty.style.display = 'block';
+    tabla.style.display = 'none';
+    modal.classList.add('active');
+    return;
+  }
+
+  empty.style.display = 'none';
+  tabla.style.display = '';
+
+  usuarios.forEach(usuario => {
+    const usuarioId = String(usuario.id || '').trim();
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${usuario.name || '-'}</td>
+      <td>${usuarioId || '-'}</td>
+      <td>${usuario.telephone || '-'}</td>
+      <td>
+        <button class="btn-add-action" onclick="confirmarContactarUsuario('${usuarioId.replace(/'/g, "\\'")}')">
+          Agregar
+        </button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  modal.classList.add('active');
+}
+
+function filtrarUsuariosDisponibles() {
+  const filtro = String(document.getElementById('filtroUsuariosDisponibles')?.value || '').trim().toUpperCase();
+
+  let usuariosFiltrados = usuariosDisponiblesCache;
+  if (filtro) {
+    usuariosFiltrados = usuariosDisponiblesCache.filter(u =>
+      String(u.name || '').toUpperCase().includes(filtro) ||
+      String(u.id || '').toUpperCase().includes(filtro) ||
+      String(u.telephone || '').toUpperCase().includes(filtro)
+    );
+  }
+
+  const tbody = document.getElementById('listaUsuariosDisponiblesModal');
+  const tabla = document.getElementById('tablaUsuariosDisponiblesModal');
+  const empty = document.getElementById('emptyUsuariosDisponiblesModal');
+
+  if (!tbody || !tabla || !empty) return;
+
+  tbody.innerHTML = '';
+  if (!usuariosFiltrados.length) {
+    empty.style.display = 'block';
+    tabla.style.display = 'none';
+    return;
+  }
+
+  empty.style.display = 'none';
+  tabla.style.display = '';
+
+  usuariosFiltrados.forEach(usuario => {
+    const usuarioId = String(usuario.id || '').trim();
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${usuario.name || '-'}</td>
+      <td>${usuarioId || '-'}</td>
+      <td>${usuario.telephone || '-'}</td>
+      <td>
+        <button class="btn-add-action" onclick="confirmarContactarUsuario('${usuarioId.replace(/'/g, "\\'")}')">
+          Agregar
+        </button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+async function confirmarContactarUsuario(usuarioIdContactar) {
+  if (!usuarioIdDelContextoAContactar) return;
+
+  cerrarModalSeleccionarUsuarioContactar();
+
+  await contactarUsuario(usuarioIdContactar);
+  mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
+
+  usuarioIdDelContextoAContactar = null;
+}
+
+function cerrarModalSeleccionarUsuarioContactar() {
+  const modal = document.getElementById('modalSeleccionarUsuarioContactar');
+  if (modal) modal.classList.remove('active');
+}
