@@ -240,11 +240,6 @@ async function mostrarUsuarios(filtro = '') {
         </button>
       </td>
       <td>
-        <button class="btn-add-recomendado" data-usuario-id="${idSafe}" onclick="agregarUsuarioRecomendadoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>
-          + Agregar
-        </button>
-      </td>
-      <td>
         <div class="citas-programadas-acciones">
           <button class="btn-edit" data-usuario-id="${idSafe}" onclick="editarUsuarioRegistradoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✎ Editar</button>
           <button class="btn-del" data-usuario-id="${idSafe}" onclick="eliminarUsuarioRegistradoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✕ Eliminar</button>
@@ -330,17 +325,6 @@ function cerrarModalUsuariosRecomendados() {
   if (modal) modal.classList.remove('active');
 }
 
-async function agregarUsuarioRecomendadoDesdeBoton(boton) {
-  const usuarioId = obtenerIdUsuarioDesdeClick(boton);
-  if (!usuarioId) return;
-
-  const recommendedUserId = prompt('Ingresa la C.C (id) del usuario recomendado:');
-  if (recommendedUserId === null) return;
-  if (!String(recommendedUserId).trim()) return;
-
-  await agregarUsuarioRecomendadoUsuario(usuarioId, recommendedUserId);
-  mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
-}
 
 function cerrarModalEditarUsuario() {
   const modal = document.getElementById('modalEditarUsuario');
@@ -427,3 +411,4 @@ async function confirmarEliminarUsuarioRegistrado() {
   await eliminarUsuarioRegistrado(usuarioId);
   mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
 }
+

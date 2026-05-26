@@ -516,6 +516,47 @@ td strong { font-family:var(--font-display);font-weight:700;font-size:0.82rem; }
 .btn-modal-agenda { background:var(--agenda-color) !important; }
 .btn-modal-agenda:hover { background:#6d28d9 !important; }
 
+/* ═══════════ MODAL AGREGAR RECOMENDADO ═══════════ */
+.modal-search-bar { margin-bottom:16px; }
+.modal-search-bar .search-input { 
+  width:100%; 
+  padding:10px 12px; 
+  border:1px solid var(--border); 
+  border-radius:var(--radius-sm); 
+  font-family:var(--font-body); 
+  font-size:0.9rem; 
+  color:var(--text);
+  transition:border-color 0.2s;
+}
+.modal-search-bar .search-input:focus { 
+  outline:none; 
+  border-color:var(--primary); 
+  box-shadow:0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+.btn-add-action { 
+  display:inline-flex; 
+  align-items:center; 
+  justify-content:center; 
+  gap:4px; 
+  background:var(--success); 
+  color:white; 
+  border:1px solid var(--success); 
+  padding:6px 12px; 
+  border-radius:6px; 
+  font-size:0.75rem; 
+  font-weight:700; 
+  cursor:pointer; 
+  font-family:var(--font-body); 
+  transition:all 0.2s;
+  white-space:nowrap;
+}
+.btn-add-action:hover { 
+  background:#059669; 
+  border-color:#059669; 
+  transform:translateY(-1px);
+  box-shadow:0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
 /* ═══════════ BADGE RESERVADO ═══════════ */
 .badge-reservado {
     display: inline-flex; align-items: center; gap: 4px;

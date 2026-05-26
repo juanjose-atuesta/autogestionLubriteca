@@ -65,23 +65,6 @@ async function obtenerUsuariosRecomendadosUsuario(usuarioId) {
   }
 }
 
-async function agregarUsuarioRecomendadoUsuario(usuarioId, recommendedUserId) {
-  const id = String(usuarioId || '').trim();
-  const recommendedId = String(recommendedUserId || '').trim();
-  if (!id || !recommendedId) return null;
-
-  try {
-    const response = await fetch(API_BACKEND_URL + "users/addRecommendedUser/" + id, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recommendedUserId: recommendedId })
-    });
-    return response.json();
-  } catch (error) {
-    console.error('Error agregando usuario recomendado:', error);
-    return null;
-  }
-}
 
 async function editarUsuarioRegistrado(usuarioId, payload) {
   console.log((payload));
@@ -116,3 +99,4 @@ async function eliminarUsuarioRegistrado(usuarioId) {
     return null;
   }
 }
+
