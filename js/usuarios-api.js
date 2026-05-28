@@ -65,7 +65,21 @@ async function obtenerUsuariosRecomendadosUsuario(usuarioId) {
   }
 }
 
+async function obtenerUsuarioQueMeRecomendo(usuarioId) {
+  const id = String(usuarioId || '').trim();
+  if (!id) return [];
+  try {
+    const response = await fetch(API_BACKEND_URL + "users/getRecommendedMe/" + id);
+    const data = await response.json();
+    console.log(data.recommendedMe);
+    return data.recommendedMe;
+  } catch (error) {
+    console.error('Error obteniendo recomendados del usuario:', error);
+    return [];
+  }
 
+
+}
 async function editarUsuarioRegistrado(usuarioId, payload) {
   console.log((payload));
   const id = String(usuarioId || '').trim();
@@ -143,3 +157,23 @@ async function agregarUsuarioRecomendadoAlUsuario(usuarioId, usuarioRecomendadoI
     return null;
   }
 }
+
+
+async function agregarUsuarioQueMeRecomendo(usuarioId, usuarioRecomendadoId) {
+  const id = String(usuarioId || '').trim();
+  const recommendedId = String(usuarioRecomendadoId || '').trim();
+  if (!id || !recommendedId) return null;
+
+  try {
+    const response2 = await fetch(API_BACKEND_URL + "users/addRecommendedMe/" + recommendedId, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recommendedMe: id })
+    })
+
+  } catch (error) {
+    console.error('Error agregando usuario recomendado:', error);
+    return null;
+  }
+}
+

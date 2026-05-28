@@ -428,12 +428,19 @@ async function abrirModalSeleccionarUsuarioContactar(boton) {
   usuarioIdDelContextoARecomendar = usuarioId;
 
   let usuariosDisponibles = await obtenerUsuariosNoRecomendados();
+  //let usuarioQueMeRecomendo = obtenerUsuarioQueMeRecomendo(usuarioId);
   usuariosDisponibles = Array.isArray(usuariosDisponibles) ? usuariosDisponibles : [];
 
-  const index = usuariosDisponibles.findIndex(u => String(u.id || '').trim() === usuarioId);
-  if (index !== -1) {
+  const index = usuariosDisponibles.findIndex(u => u.id == usuarioId);
+  if (index) {
     usuariosDisponibles.splice(index, 1);
   }
+  //const index2 = usuariosDisponibles.findIndex(u => String(u.recommendedMe || '').trim() === String(usuarioQueMeRecomendo || '').trim();
+  //if (index2 !== -1) {
+  //  usuariosDisponibles.splice(index2, 1);
+  // }
+
+
 
   usuariosDisponiblesCache = usuariosDisponibles;
   renderModalSeleccionarUsuarioContactar(usuariosDisponiblesCache);
@@ -534,7 +541,7 @@ async function confirmarContactarUsuario(usuarioIdRecomendar) {
 
   // Agregar el id del usuario recomendado al usuario que lo recomendó
   await agregarUsuarioRecomendadoAlUsuario(usuarioIdOrigen, usuarioIdRecomendar);
-
+  await agregarUsuarioQueMeRecomendo(usuarioIdOrigen, usuarioIdRecomendar);
   mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
 
   usuarioIdDelContextoARecomendar = null;

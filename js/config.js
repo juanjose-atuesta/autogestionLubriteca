@@ -1,5 +1,5 @@
 
-const API_BACKEND_URL = "http://10.84.27.164:3000/api/";
+const API_BACKEND_URL = "http://192.168.80.15:3000/api/";
 const FORMULARIO_AUTORIZACION_DATOS_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfmTcLUYap9F79nBopRGssdYx6pMTDFILFJKedTbbfK6HqPFA/viewform?usp=sharing&ouid=115359686355008826821";
 localStorage.clear();
 
