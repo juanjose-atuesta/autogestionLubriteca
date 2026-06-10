@@ -16,7 +16,11 @@ function intentarLogin(e) {
   error.classList.remove('visible');
   setTimeout(() => {
     try {
-      fetch(API_BACKEND_URL + 'login/validateLogin')
+      fetch(API_BACKEND_URL + 'login/validateLogin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario, clave })
+      })
         .then(res => res.json())
         .then(data => {
           if (data.status = true) {

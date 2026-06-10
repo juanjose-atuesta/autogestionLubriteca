@@ -235,19 +235,19 @@ async function mostrarUsuarios(filtro = '') {
         </div>
       </td>
       <td>
-        <button class="btn-ver-recomendados" data-usuario-id="${idSafe}" onclick="verUsuariosRecomendadosDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>
-          VER (${(usuario.recommendedUsers || []).length})
-        </button>
-      </td>
-      <td>
-        <button class="btn-add-usuario" data-usuario-id="${idSafe}" onclick="abrirModalSeleccionarUsuarioContactar(this)" ${idSafe ? '' : 'disabled'}>
-          + Agregar
-        </button>
-      </td>
-      <td>
-        <div class="citas-programadas-acciones">
-          <button class="btn-edit" data-usuario-id="${idSafe}" onclick="editarUsuarioRegistradoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✎ Editar</button>
-          <button class="btn-del" data-usuario-id="${idSafe}" onclick="eliminarUsuarioRegistradoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✕ Eliminar</button>
+        <div class="usuarios-acciones">
+          <div class="usuarios-acciones-edicion">
+            <button class="btn-edit" data-usuario-id="${idSafe}" onclick="editarUsuarioRegistradoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✎ Editar</button>
+            <button class="btn-del" data-usuario-id="${idSafe}" onclick="eliminarUsuarioRegistradoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✕ Eliminar</button>
+          </div>
+          <div class="usuarios-acciones-principales">
+            <button class="btn-add-usuario" data-usuario-id="${idSafe}" onclick="abrirModalSeleccionarUsuarioContactar(this)" ${idSafe ? '' : 'disabled'}>
+              + Agregar
+            </button>
+            <button class="btn-ver-recomendados" data-usuario-id="${idSafe}" onclick="verUsuariosRecomendadosDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>
+              👁 Ver (${(usuario.recommendedUsers || []).length})
+            </button>
+          </div>
         </div>
       </td>`;
     tbody.appendChild(tr);
@@ -424,23 +424,25 @@ let usuariosDisponiblesCache = [];
 async function abrirModalSeleccionarUsuarioContactar(boton) {
   const usuarioId = obtenerIdUsuarioDesdeClick(boton);
   if (!usuarioId) return;
-
   usuarioIdDelContextoARecomendar = usuarioId;
 
   let usuariosDisponibles = await obtenerUsuariosNoRecomendados();
-  //let usuarioQueMeRecomendo = obtenerUsuarioQueMeRecomendo(usuarioId);
   usuariosDisponibles = Array.isArray(usuariosDisponibles) ? usuariosDisponibles : [];
 
+  // Eliminar el usuario que clickeó el botón
   const index = usuariosDisponibles.findIndex(u => u.id == usuarioId);
-  if (index) {
+  if (index !== -1) {
     usuariosDisponibles.splice(index, 1);
   }
-  //const index2 = usuariosDisponibles.findIndex(u => String(u.recommendedMe || '').trim() === String(usuarioQueMeRecomendo || '').trim();
-  //if (index2 !== -1) {
-  //  usuariosDisponibles.splice(index2, 1);
-  // }
 
-
+  // Obtener quién recomendó a este usuario y eliminarlo también
+  const recommendedMe = await obtenerUsuarioQueMeRecomendo(usuarioId);
+  if (recommendedMe) {
+    const indexRecomendador = usuariosDisponibles.findIndex(u => String(u.id).trim() === String(recommendedMe).trim());
+    if (indexRecomendador !== -1) {
+      usuariosDisponibles.splice(indexRecomendador, 1);
+    }
+  }
 
   usuariosDisponiblesCache = usuariosDisponibles;
   renderModalSeleccionarUsuarioContactar(usuariosDisponiblesCache);

@@ -240,8 +240,11 @@ td strong { font-family:var(--font-display);font-weight:700;font-size:0.82rem; }
 .btn-puntos-menos:hover { background:#dc2626;color:white;border-color:#dc2626; }
 .btn-ver-recomendados { display:inline-flex;align-items:center;justify-content:center;gap:4px;background:#ecfeff;color:#0f766e;border:1px solid #99f6e4;padding:5px 10px;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:all 0.2s;white-space:nowrap; }
 .btn-ver-recomendados:hover { background:#0f766e;color:white;border-color:#0f766e; }
-.btn-add-recomendado { display:inline-flex;align-items:center;justify-content:center;gap:4px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:5px 10px;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:all 0.2s;white-space:nowrap; }
-.btn-add-recomendado:hover { background:#1d4ed8;color:white;border-color:#1d4ed8; }
+.btn-add-usuario { display:inline-flex;align-items:center;justify-content:center;gap:4px;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;padding:5px 10px;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:all 0.2s;white-space:nowrap; }
+.btn-add-usuario:hover { background:#f59e0b;color:white;border-color:#f59e0b; }
+.usuarios-acciones { display:flex;flex-direction:column;gap:6px;align-items:flex-start; }
+.usuarios-acciones-edicion { display:flex;gap:6px;flex-wrap:wrap;align-items:center; }
+.usuarios-acciones-principales { display:flex;gap:6px;flex-wrap:wrap;align-items:center; }
 .fecha-contacto-badge { display:inline-flex;align-items:center;gap:5px;background:var(--contactado-soft);color:var(--contactado-color);border:1px solid #6ee7b7;padding:4px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;font-family:var(--font-display);white-space:nowrap; }
 .btn-reservar-cita { display:inline-flex;align-items:center;justify-content:center;gap:4px;background:var(--agenda-soft);color:var(--agenda-color);border:1px solid var(--agenda-border);padding:6px 12px;border-radius:6px;font-size:0.72rem;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all 0.2s;white-space:nowrap; }
 .btn-reservar-cita:hover { background:var(--agenda-color);color:white;border-color:var(--agenda-color); }
