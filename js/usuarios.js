@@ -1,5 +1,7 @@
 let cacheUsuariosRegistrados = [];
 let usuarioIdPendienteEliminar = null;
+let compraUsuarioIdPendiente = null;
+let compraTipoPendiente = null;
 
 function waMsgAutorizacionUsuario(nombre) {
   return encodeURIComponent(`Estimado/a ${nombre},
@@ -70,12 +72,14 @@ async function registrarUsuarioDesdeFormulario(evento) {
   const nombreInput = document.getElementById('usuarioNombre');
   const cedulaInput = document.getElementById('usuarioCedula');
   const telefonoInput = document.getElementById('usuarioTelefono');
+  const correoInput = document.getElementById('usuarioCorreo');
   const fechaIngresoInput = document.getElementById('usuarioFechaIngreso');
-  if (!nombreInput || !cedulaInput || !telefonoInput || !fechaIngresoInput) return;
+  if (!nombreInput || !cedulaInput || !telefonoInput || !correoInput || !fechaIngresoInput) return;
 
   const name = String(nombreInput.value || '').trim();
   const id = String(cedulaInput.value).trim();
   const telephone = String(telefonoInput.value).trim();
+  const emial = String(correoInput.value || '').trim();
   const registrationDay = formatearRegistrationDayComoTexto(fechaIngresoInput.value);
   if (!name || !id || !telephone || !registrationDay) return;
 
@@ -83,7 +87,8 @@ async function registrarUsuarioDesdeFormulario(evento) {
     name: name.toUpperCase(),
     id,
     telephone,
-    registrationDay
+    registrationDay,
+    emial
   });
 
   const form = document.getElementById('usuarioForm');
@@ -95,8 +100,8 @@ function normalizarUsuarioRegistrado(usuario = {}) {
   const id = String(usuario.id || '').trim();
   const name = String(usuario.name || '').trim();
   const telephone = String(usuario.telephone || '').trim();
+  const emial = String(usuario.emial || usuario.email || '').trim();
   const registrationDay = formatearRegistrationDayComoTexto(usuario.registrationDay);
-  const acommulatedPoints = Number(usuario.acommulatedPoints ?? 0);
   const recommendedUsers = Array.isArray(usuario.recommendedUsers)
     ? usuario.recommendedUsers
     : [];
@@ -105,8 +110,8 @@ function normalizarUsuarioRegistrado(usuario = {}) {
     id,
     name,
     telephone,
+    emial,
     registrationDay,
-    acommulatedPoints: Number.isFinite(acommulatedPoints) ? acommulatedPoints : 0,
     recommendedUsers
   };
 }
@@ -225,15 +230,8 @@ async function mostrarUsuarios(filtro = '') {
       <td>${usuario.id || '-'}</td>
       <td>${usuario.telephone || '-'}</td>
       <td>${usuario.registrationDay || '-'}</td>
-      <td>
-        <div class="usuarios-puntos-wrap">
-          <span class="usuarios-puntos-valor">${usuario.acommulatedPoints}</span>
-          <div class="usuarios-puntos-acciones">
-            <button class="btn-puntos btn-puntos-mas" data-usuario-id="${idSafe}" onclick="sumarPuntosUsuarioDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>+</button>
-            <button class="btn-puntos btn-puntos-menos" data-usuario-id="${idSafe}" onclick="restarPuntosUsuarioDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>-</button>
-          </div>
-        </div>
-      </td>
+      <td><button class="btn-compra btn-compra-alta" data-usuario-id="${idSafe}" onclick="abrirModalCompraUsuario(this, 'alta')" ${idSafe ? '' : 'disabled'}>Agregar compra alta</button></td>
+      <td><button class="btn-compra btn-compra-frecuente" data-usuario-id="${idSafe}" onclick="abrirModalCompraUsuario(this, 'frecuente')" ${idSafe ? '' : 'disabled'}>Agregar compra frecuente</button></td>
       <td>
         <div class="usuarios-acciones">
           <div class="usuarios-acciones-edicion">
@@ -279,6 +277,62 @@ async function restarPuntosUsuarioDesdeBoton(boton) {
   if (!usuarioId) return;
   await actualizarPuntosUsuario(usuarioId, -1);
   mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
+}
+
+function cerrarModalCompraUsuario() {
+  const modal = document.getElementById('modalCompraUsuario');
+  const input = document.getElementById('modalCompraUsuarioInput');
+  if (modal) modal.classList.remove('active');
+  if (input) input.value = '';
+  compraUsuarioIdPendiente = null;
+  compraTipoPendiente = null;
+}
+
+function abrirModalCompraUsuario(boton, tipo) {
+  const usuarioId = obtenerIdUsuarioDesdeClick(boton);
+  if (!usuarioId) return;
+
+  const modal = document.getElementById('modalCompraUsuario');
+  const titulo = document.getElementById('modalCompraUsuarioTitulo');
+  const mensaje = document.getElementById('modalCompraUsuarioMensaje');
+  const input = document.getElementById('modalCompraUsuarioInput');
+  if (!modal || !titulo || !mensaje || !input) return;
+
+  const tipoNormalizado = String(tipo || '').trim();
+  compraUsuarioIdPendiente = usuarioId;
+  compraTipoPendiente = tipoNormalizado;
+
+  if (tipoNormalizado === 'alta') {
+    titulo.textContent = 'Agregar compra alta';
+    mensaje.textContent = 'agregue el identificador de la factura de la compra alta asociada';
+    input.placeholder = 'Ej: FAC-12345';
+    input.type = 'text';
+  } else {
+    titulo.textContent = 'Agregar compra frecuente';
+    mensaje.textContent = 'dijite el producto que el cliente ha comprado de forma frecuente.';
+    input.placeholder = 'Ej: Filtro de aceite';
+    input.type = 'text';
+  }
+
+  input.value = '';
+  modal.classList.add('active');
+  setTimeout(() => input.focus(), 0);
+}
+
+async function guardarCompraUsuarioRegistrado() {
+  const usuarioId = String(compraUsuarioIdPendiente || '').trim();
+  const tipo = String(compraTipoPendiente || '').trim();
+  const input = document.getElementById('modalCompraUsuarioInput');
+  const valor = String(input?.value || '').trim();
+  if (!usuarioId || !tipo || !valor) return;
+
+  if (tipo === 'alta') {
+    await agregarCompraAltaUsuario(usuarioId, valor);
+  } else if (tipo === 'frecuente') {
+    await agregarCompraFrecuenteUsuario(usuarioId, valor);
+  }
+
+  cerrarModalCompraUsuario();
 }
 
 async function verUsuariosRecomendadosDesdeBoton(boton) {
@@ -342,13 +396,15 @@ function abrirModalEditarUsuario(usuario) {
   const inputNombre = document.getElementById('editUsuarioNombre');
   const inputCedula = document.getElementById('editUsuarioCedula');
   const inputTelefono = document.getElementById('editUsuarioTelefono');
+  const inputCorreo = document.getElementById('editUsuarioCorreo');
   const inputFecha = document.getElementById('editUsuarioFechaRegistro');
-  if (!modal || !inputOriginalId || !inputNombre || !inputCedula || !inputTelefono || !inputFecha) return;
+  if (!modal || !inputOriginalId || !inputNombre || !inputCedula || !inputTelefono || !inputCorreo || !inputFecha) return;
 
   inputOriginalId.value = String(usuario?.id || '').trim();
   inputNombre.value = String(usuario?.name || '').trim();
   inputCedula.value = String(usuario?.id || '').trim();
   inputTelefono.value = String(usuario?.telephone || '').trim();
+  inputCorreo.value = String(usuario?.emial || usuario?.email || '').trim();
   inputFecha.value = formatearRegistrationDayParaInputDate(usuario?.registrationDay);
   modal.classList.add('active');
 }
@@ -360,6 +416,7 @@ async function guardarEdicionUsuarioRegistrado() {
   const name = String(document.getElementById('editUsuarioNombre')?.value || '').trim();
   const idNew = String(document.getElementById('editUsuarioCedula')?.value || '').trim();
   const telephone = String(document.getElementById('editUsuarioTelefono')?.value || '').trim();
+  const emial = String(document.getElementById('editUsuarioCorreo')?.value || '').trim();
   const registrationInput = String(document.getElementById('editUsuarioFechaRegistro')?.value || '').trim();
   if (!name || !idNew || !telephone || !registrationInput) return;
 
@@ -367,7 +424,8 @@ async function guardarEdicionUsuarioRegistrado() {
     name: name.toUpperCase(),
     idNew,
     registrationDay: formatearRegistrationDayComoTexto(registrationInput),
-    telephone
+    telephone,
+    emial
 
   });
 

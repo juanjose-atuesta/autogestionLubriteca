@@ -170,7 +170,7 @@ main { margin-top:var(--topbar-h);padding:28px 24px 40px;max-width:1280px;margin
 .field { display:flex;flex-direction:column;gap:7px; }
 .field label { font-size:0.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px; }
 .field-submit { display:flex;align-items:flex-end; }
-input[type="text"],input[type="tel"],input[type="number"],input[type="date"],select { padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:0.88rem;color:var(--text);background:var(--surface);transition:border-color 0.2s,box-shadow 0.2s;width:100%;outline:none; }
+input[type="text"],input[type="tel"],input[type="number"],input[type="date"],input[type="email"],select { padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:0.88rem;color:var(--text);background:var(--surface);transition:border-color 0.2s,box-shadow 0.2s;width:100%;outline:none; }
 input:focus,select:focus { border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,0.1); }
 .btn-save { width:100%;padding:11px 20px;background:var(--primary-dark);color:white;border:none;border-radius:var(--radius-sm);font-family:var(--font-display);font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px; }
 .btn-save:hover { background:var(--primary-mid);transform:translateY(-1px);box-shadow:0 4px 16px rgba(37,99,235,0.3); }
@@ -238,6 +238,11 @@ td strong { font-family:var(--font-display);font-weight:700;font-size:0.82rem; }
 .btn-puntos-mas:hover { background:#2563eb;color:white;border-color:#2563eb; }
 .btn-puntos-menos { background:#fee2e2;color:#991b1b;border:1px solid #fca5a5; }
 .btn-puntos-menos:hover { background:#dc2626;color:white;border-color:#dc2626; }
+.btn-compra { width:100%;min-width:150px;padding:6px 10px;border-radius:6px;border:1px solid transparent;font-family:var(--font-body);font-size:0.72rem;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap; }
+.btn-compra-alta { background:#dbeafe;color:#1e40af;border-color:#93c5fd; }
+.btn-compra-alta:hover { background:#1e40af;color:white;border-color:#1e40af; }
+.btn-compra-frecuente { background:#dcfce7;color:#166534;border-color:#86efac; }
+.btn-compra-frecuente:hover { background:#16a34a;color:white;border-color:#16a34a; }
 .btn-ver-recomendados { display:inline-flex;align-items:center;justify-content:center;gap:4px;background:#ecfeff;color:#0f766e;border:1px solid #99f6e4;padding:5px 10px;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:all 0.2s;white-space:nowrap; }
 .btn-ver-recomendados:hover { background:#0f766e;color:white;border-color:#0f766e; }
 .btn-add-usuario { display:inline-flex;align-items:center;justify-content:center;gap:4px;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;padding:5px 10px;border-radius:6px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:all 0.2s;white-space:nowrap; }

@@ -50,6 +50,42 @@ async function actualizarPuntosUsuario(usuarioId, delta) {
   }
 }
 
+async function agregarCompraAltaUsuario(usuarioId, idBill) {
+  const id = String(usuarioId || '').trim();
+  const factura = String(idBill || '').trim();
+  if (!id || !factura) return null;
+
+  try {
+    const response = await fetch(API_BACKEND_URL + "users/addHighBuy/" + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idBill: factura })
+    });
+    return response.json();
+  } catch (error) {
+    console.error('Error agregando compra alta al usuario:', error);
+    return null;
+  }
+}
+
+async function agregarCompraFrecuenteUsuario(usuarioId, service) {
+  const id = String(usuarioId || '').trim();
+  const producto = String(service || '').trim();
+  if (!id || !producto) return null;
+
+  try {
+    const response = await fetch(API_BACKEND_URL + "users/addFrecuentBuy/" + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ service: producto })
+    });
+    return response.json();
+  } catch (error) {
+    console.error('Error agregando compra frecuente al usuario:', error);
+    return null;
+  }
+}
+
 async function obtenerUsuariosRecomendadosUsuario(usuarioId) {
   const id = String(usuarioId || '').trim();
   if (!id) return [];
@@ -176,4 +212,3 @@ async function agregarUsuarioQueMeRecomendo(usuarioId, usuarioRecomendadoId) {
     return null;
   }
 }
-

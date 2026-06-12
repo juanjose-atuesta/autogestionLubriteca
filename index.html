@@ -336,6 +336,7 @@
                 required></div>
             <div class="field"><label>Teléfono</label><input type="tel" id="usuarioTelefono" placeholder="Ej: 3001234567"
                 required></div>
+            <div class="field"><label>Correo</label><input type="email" id="usuarioCorreo" placeholder="Ej: usuario@correo.com"></div>
             <div class="field"><label>Fecha de ingreso</label><input type="date" id="usuarioFechaIngreso" required></div>
             <div class="field field-submit">
               <button type="submit" class="btn-save">💾 Guardar Usuario</button>
@@ -365,7 +366,8 @@
                   <th>C.C</th>
                   <th>Teléfono</th>
                   <th>Fecha de registro</th>
-                  <th>Puntos Acumulados</th>
+                  <th>Compra alta</th>
+                  <th>Compra frecuente</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -604,11 +606,31 @@
         <div class="field"><label>Nombre completo</label><input type="text" id="editUsuarioNombre" required></div>
         <div class="field"><label>Cédula</label><input type="text" id="editUsuarioCedula" required></div>
         <div class="field"><label>Teléfono</label><input type="tel" id="editUsuarioTelefono" required></div>
+        <div class="field"><label>Correo</label><input type="email" id="editUsuarioCorreo"></div>
         <div class="field"><label>Fecha de registro</label><input type="date" id="editUsuarioFechaRegistro" required></div>
       </form>
       <div class="modal-actions">
         <button class="btn-modal-cancel" onclick="cerrarModalEditarUsuario()">Cancelar</button>
         <button type="button" class="btn-modal-confirm" onclick="guardarEdicionUsuarioRegistrado()">💾 Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL COMPRA USUARIO -->
+  <div class="modal-overlay" id="modalCompraUsuario">
+    <div class="modal modal-wide">
+      <div class="modal-icon modal-icon-primary">🛒</div>
+      <h3 id="modalCompraUsuarioTitulo">Agregar compra</h3>
+      <p id="modalCompraUsuarioMensaje" style="margin:0 24px 12px;color:var(--text-muted);font-size:0.9rem;line-height:1.4;"></p>
+      <div class="form-grid form-grid-modal">
+        <div class="field" style="grid-column:1/-1;">
+          <label>Valor</label>
+          <input type="text" id="modalCompraUsuarioInput">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="cerrarModalCompraUsuario()">Cancelar</button>
+        <button type="button" class="btn-modal-confirm" onclick="guardarCompraUsuarioRegistrado()">Guardar</button>
       </div>
     </div>
   </div>
