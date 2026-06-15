@@ -50,5 +50,5 @@ setInterval(() => {
 }, 30000);
 */
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { cerrarModalEliminar(); cerrarModalEditar(); cerrarModalReservar(); cerrarDetalleCita(); cerrarModalEliminarCita(); cerrarModalEliminarUsuario(); cerrarModalUsuariosRecomendados(); cerrarModalAutorizacionDatos(); }
+  if (e.key === 'Escape') { cerrarModalEliminar(); cerrarModalEditar(); cerrarModalReservar(); cerrarDetalleCita(); cerrarModalEliminarCita(); cerrarModalEliminarUsuario(); cerrarModalUsuariosRecomendados(); cerrarModalAutorizacionDatos(); cerrarModalBuscarUsuario(); }
 });

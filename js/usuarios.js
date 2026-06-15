@@ -93,6 +93,7 @@ async function registrarUsuarioDesdeFormulario(evento) {
 
   const form = document.getElementById('usuarioForm');
   if (form) form.reset();
+  setFechaHoyEnInput('usuarioFechaIngreso');
   mostrarUsuarios(document.getElementById('buscadorUsuarios')?.value || '');
 }
 

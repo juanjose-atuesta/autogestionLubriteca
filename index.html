@@ -145,11 +145,14 @@
       <div id="tab-principal" class="tab-view active">
         <div class="stats-grid" id="statsGrid"></div>
         <div class="card">
-          <div class="card-header">
+          <div class="card-header card-header-principal">
             <span class="card-icon">+</span>
-            <div>
-              <h3>Registrar Cliente</h3>
-              <p>Agrega un nuevo vehículo al sistema</p>
+            <div class="card-header-content">
+              <div>
+                <h3>Registrar Cliente</h3>
+                <p>Agrega un nuevo vehículo al sistema</p>
+              </div>
+              <button type="button" class="btn-search-user" onclick="abrirPanelBuscarUsuario()">🔎 Buscar usuario</button>
             </div>
           </div>
           <form id="clienteForm" class="form-grid">
@@ -174,10 +177,8 @@
             <div class="field"><label>Próximo Contacto</label><input type="date" id="fechaFutura" required></div>
             <div class="field"><label>Kilometraje</label><input type="text" id="kilometraje" placeholder="Ej: 45000"
                 required></div>
-            <div class="field field-submit" style="flex-direction:column;gap:8px;">
-              <button type="submit" class="btn-save" id="btnGuardar">💾 Guardar Cliente</button>
-              <button type="button" class="btn-wa btn-wa-auth btn-auth-form" onclick="enviarAutorizacion()">🔒
-                Autorización datos personales</button>
+            <div class="field field-submit" style="flex-direction:column;gap:8px;align-items:center;">
+              <button type="submit" class="btn-save" id="btnGuardar" style="width:auto;min-width:220px;">💾 Guardar Cliente</button>
             </div>
           </form>
           <div class="toast" id="toastGuardado">✅ Cliente guardado correctamente</div>
@@ -519,6 +520,44 @@
     </div>
   </div>
 
+  <!-- MODAL BUSCAR USUARIO -->
+  <div class="modal-overlay" id="modalBuscarUsuario">
+    <div class="modal modal-wide">
+      <div class="modal-icon modal-icon-primary">👥</div>
+      <h3>Buscar usuario</h3>
+      <p>Selecciona un usuario registrado para completar nombre, teléfono y cédula.</p>
+      <div class="modal-search-bar">
+        <input
+          type="text"
+          id="buscadorUsuariosBusqueda"
+          placeholder="Buscar por nombre, teléfono o cédula..."
+          onkeyup="filtrarUsuariosBusqueda()"
+          class="search-input"
+        >
+      </div>
+      <div class="table-wrap">
+        <table id="tablaUsuariosBusqueda">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Cédula</th>
+              <th>Teléfono</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="listaUsuariosBusqueda"></tbody>
+        </table>
+        <div class="empty-state" id="emptyUsuariosBusqueda" style="display:none">
+          <div class="empty-icon">👥</div>
+          <p>No hay usuarios registrados.</p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="cerrarModalBuscarUsuario()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL NOTAS CITA -->
   <div class="modal-overlay" id="modalNotasCita">
     <div class="modal">
@@ -565,10 +604,10 @@
       <div class="modal-icon modal-icon-primary">👥</div>
       <h3>Seleccionar usuario a recomendar</h3>
       <div class="modal-search-bar">
-        <input 
-          type="text" 
-          id="filtroUsuariosDisponibles" 
-          placeholder="Buscar por nombre, cédula o teléfono..." 
+        <input
+          type="text"
+          id="filtroUsuariosDisponibles"
+          placeholder="Buscar por nombre, cédula o teléfono..."
           onkeyup="filtrarUsuariosDisponibles()"
           class="search-input"
         >

@@ -15,8 +15,6 @@ function migrarClientesAHistorial() {
 // ═══════════ GUARDAR CLIENTE ═══════════
 document.getElementById('clienteForm').addEventListener('submit', async e => {
   e.preventDefault();
-  const autorizado = await confirmarAutorizacionDatos();
-  if (!autorizado) return;
 
   const c = {
     id: Date.now(),
@@ -47,7 +45,8 @@ document.getElementById('clienteForm').addEventListener('submit', async e => {
 
           mostrarToast(); actualizarStats(); mostrarAlertas(); revisarCitasDeHoy();
           document.getElementById('clienteForm').reset();
-        })
+            setFechaHoyEnInput('fechaActual');
+          })
     })
     .catch(console.error);
 });
@@ -71,7 +70,7 @@ function eliminarCliente(id) {
 
           // cerrarModalEliminar();
         })
-      //No se para que es esto, pero no lo borro por si las moscas 
+      //No se para que es esto, pero no lo borro por si las moscas
       //setCitas(getCitas().filter(ct => String(ct.placa).toUpperCase() !== String(c.placa).toUpperCase()));
     }
   }).catch(console.error);
@@ -157,11 +156,11 @@ function guardarEdicion(idAux) {
       const idx = cl.findIndex(x => x.id === id);
       console.log(idx);
       if (idx === -1) return;
-  
+
       const fAnt = cl[idx].fechaFutura;
       const fNueva = document.getElementById('editFechaFutura').value;
       const placaAnterior = cl[idx].placa;
-  
+
       const act = {
         ...cl[idx],
         name: document.getElementById('editNombre').value.trim(),
@@ -172,12 +171,12 @@ function guardarEdicion(idAux) {
         nextContact: fNueva,
         mileage: document.getElementById('editKm').value
       };
-  
+
       // if (fAnt !== fNueva) setIdsContactados(getIdsContactados().filter(x => x !== id));
-  
+
       //const h = getHistorialDB(), hIdx = h.findLastIndex(x => x.id === id);
       //if (hIdx !== -1) { h[hIdx] = { ...h[hIdx], ...act, eliminado: false }; setHistorialDB(h); }
-  
+
       fetch(API_BACKEND_URL + "customers/editCustomer", {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -186,10 +185,105 @@ function guardarEdicion(idAux) {
         .then(response => response.json())
         .then(data => { console.log(data.status); console.log("se logro editar"); })
         .catch(console.error);
-  
+
       cl[idx] = act; setClientes(cl);
     */
   cerrarModalEditar(); actualizarStats(); mostrarAlertas();
   if (document.getElementById('tab-database').classList.contains('active'))
     mostrarGeneral(document.getElementById('buscadorGeneral').value);
+}
+
+let cacheUsuariosBusqueda = [];
+
+function normalizarUsuarioBusqueda(usuario = {}) {
+  return {
+    name: String(usuario.name || '').trim(),
+    telephone: String(usuario.telephone || '').trim(),
+    id: String(usuario.id || '').trim()
+  };
+}
+
+function cerrarModalBuscarUsuario() {
+  const modal = document.getElementById('modalBuscarUsuario');
+  if (modal) modal.classList.remove('active');
+}
+
+function rellenarFormularioClienteDesdeUsuario(usuario = {}) {
+  const nombreInput = document.getElementById('nombre');
+  const telefonoInput = document.getElementById('telefono');
+  if (!nombreInput || !telefonoInput) return;
+
+  nombreInput.value = String(usuario.name || '').trim();
+  telefonoInput.value = String(usuario.telephone || '').trim();
+  cerrarModalBuscarUsuario();
+  nombreInput.focus();
+}
+
+function renderUsuariosBusqueda(filtro = '') {
+  const tbody = document.getElementById('listaUsuariosBusqueda');
+  const empty = document.getElementById('emptyUsuariosBusqueda');
+  const tabla = document.getElementById('tablaUsuariosBusqueda');
+  if (!tbody || !empty || !tabla) return;
+
+  const textoFiltro = String(filtro || '').trim().toUpperCase();
+  const usuarios = (Array.isArray(cacheUsuariosBusqueda) ? cacheUsuariosBusqueda : []).filter(usuario => {
+    if (!textoFiltro) return true;
+    return (
+      String(usuario.name || '').toUpperCase().includes(textoFiltro) ||
+      String(usuario.telephone || '').toUpperCase().includes(textoFiltro) ||
+      String(usuario.id || '').toUpperCase().includes(textoFiltro)
+    );
+  });
+
+  tbody.innerHTML = '';
+
+  if (!usuarios.length) {
+    tabla.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  tabla.style.display = '';
+
+  usuarios.forEach(usuario => {
+    const tr = document.createElement('tr');
+
+    const tdNombre = document.createElement('td');
+    tdNombre.textContent = usuario.name || '-';
+
+    const tdCedula = document.createElement('td');
+    tdCedula.textContent = usuario.id || '-';
+
+    const tdTelefono = document.createElement('td');
+    tdTelefono.textContent = usuario.telephone || '-';
+
+    const tdAccion = document.createElement('td');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn-add-action';
+    button.textContent = 'Agregar';
+    button.addEventListener('click', () => rellenarFormularioClienteDesdeUsuario(usuario));
+    tdAccion.appendChild(button);
+
+    tr.append(tdNombre, tdCedula, tdTelefono, tdAccion);
+    tbody.appendChild(tr);
+  });
+}
+
+async function cargarUsuariosBusqueda() {
+  const datos = await getUsuariosRegistrados();
+  cacheUsuariosBusqueda = Array.isArray(datos) ? datos.map(normalizarUsuarioBusqueda) : [];
+  renderUsuariosBusqueda(document.getElementById('buscadorUsuariosBusqueda')?.value || '');
+}
+
+async function abrirPanelBuscarUsuario() {
+  const modal = document.getElementById('modalBuscarUsuario');
+  if (!modal) return;
+  modal.classList.add('active');
+  await cargarUsuariosBusqueda();
+}
+
+function filtrarUsuariosBusqueda() {
+  renderUsuariosBusqueda(document.getElementById('buscadorUsuariosBusqueda')?.value || '');
 }

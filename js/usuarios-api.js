@@ -12,7 +12,7 @@ async function getUsuariosRegistrados() {
   try {
     const response = await fetch(API_BACKEND_URL + "users/usersList");
     const data = await response.json();
-    return data.users || data.userList || [];
+    return data.users;
   } catch (error) {
     console.error('Error fetching usuarios registrados:', error);
     return [];

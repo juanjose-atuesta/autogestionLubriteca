@@ -1,5 +1,9 @@
 
 function getHoy() { return new Date().toLocaleDateString('en-CA'); }
+function setFechaHoyEnInput(inputId) {
+  const input = document.getElementById(inputId);
+  if (input && !input.value) input.value = getHoy();
+}
 function diasRestantes(fechaStr) {
   return Math.ceil((new Date(String(fechaStr).trim()) - new Date(getHoy())) / 86400000);
 }
