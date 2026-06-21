@@ -23,6 +23,8 @@
   <script src="js/usuarios.js" defer></script>
   <script src="js/historial.js" defer></script>
   <script src="js/notifications.js" defer></script>
+  <script src="js/pedidosAPI.js" defer></script>
+  <script src="js/pedidos.js" defer></script>
 
   <script src="js/agenda.js" defer></script>
   <script src="js/clientes.js" defer></script>
@@ -134,6 +136,10 @@
         <li class="nav-item" id="nav-citas-programadas" onclick="seleccionarTab('citas-programadas')">
           <span class="nav-icon">📅</span><span class="nav-label">Citas programadas</span>
           <span class="nav-badge-citas" id="nav-badge-citas-programadas">0</span>
+        </li>
+        <li class="nav-item" id="nav-pedidos" onclick="seleccionarTab('pedidos')">
+          <span class="nav-icon">🧾</span><span class="nav-label">Pedidos</span>
+          <span class="nav-badge" id="nav-badge-pedidos">0</span>
         </li>
       </ul>
       <div class="sidebar-footer">v3.4 · AutoGestión</div>
@@ -460,6 +466,143 @@
             <div class="empty-state" id="emptyCitasProgramadas" style="display:none">
               <div class="empty-icon">📅</div>
               <p>No hay citas programadas.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PEDIDOS -->
+      <div id="tab-pedidos" class="tab-view" style="display:none">
+
+        <div class="card">
+          <div class="card-header card-header-usuarios">
+            <span class="card-icon card-icon-usuarios">🧾</span>
+            <div>
+              <h3>Registrar Pedido</h3>
+              <p>Orden de servicio — filtros, aceite y repuestos</p>
+            </div>
+          </div>
+
+          <form id="formPedido" class="form-pedido">
+
+            <!-- Datos generales -->
+            <div class="form-grid">
+              <div class="field"><label>Marca del vehículo</label><input type="text" id="pedidoVehicleMake" placeholder="Ej: Mazda" required></div>
+              <div class="field"><label>N° Orden</label><input type="text" id="pedidoOrden" placeholder="Ej: 4" required></div>
+              <div class="field"><label>Cliente</label><input type="text" id="pedidoCliente" placeholder="Ej: Juan Pérez" required></div>
+              <div class="field"><label>EL</label><input type="text" id="pedidoEL" placeholder="Ej: EL-01"></div>
+              <div class="field"><label>Cédula</label><input type="text" id="pedidoCedula" placeholder="Ej: 1001234567" required></div>
+              <div class="field"><label>Placa</label><input type="text" id="pedidoPlaca" placeholder="Ej: ABC123" required style="text-transform:uppercase"></div>
+              <div class="field"><label>Teléfono</label><input type="tel" id="pedidoTelefono" placeholder="Ej: 3001234567" required></div>
+              <div class="field"><label>Kilometraje</label><input type="text" id="pedidoKilometraje" placeholder="Ej: 45000"></div>
+              <div class="field"><label>Correo</label><input type="email" id="pedidoCorreo" placeholder="Ej: usuario@correo.com"></div>
+            </div>
+
+            <!-- Items del pedido -->
+            <div class="pedido-items-wrap">
+              <h4 class="pedido-items-titulo">Items del pedido</h4>
+
+              <table class="tabla-pedido-items">
+                <thead>
+                  <tr>
+                    <th>Cant.</th>
+                    <th>Referencia</th>
+                    <th>Vlr. Unitario</th>
+                    <th>Total</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="fila-grupo-label"><td colspan="5">F. ACEITE</td></tr>
+                  <tr data-grupo="oil">
+                    <td><input type="number" min="0" step="1" class="input-cantidad-pedido" placeholder="0"></td>
+                    <td><input type="text" class="input-referencia-pedido" placeholder="Referencia"></td>
+                    <td><input type="number" min="0" step="any" class="input-precio-pedido" placeholder="0"></td>
+                    <td class="td-total-fila-pedido" data-valor="0">$0</td>
+                    <td></td>
+                  </tr>
+
+                  <tr class="fila-grupo-label"><td colspan="5">F. AIRE</td></tr>
+                  <tr data-grupo="FAire">
+                    <td><input type="number" min="0" step="1" class="input-cantidad-pedido" placeholder="0"></td>
+                    <td><input type="text" class="input-referencia-pedido" placeholder="Referencia"></td>
+                    <td><input type="number" min="0" step="any" class="input-precio-pedido" placeholder="0"></td>
+                    <td class="td-total-fila-pedido" data-valor="0">$0</td>
+                    <td></td>
+                  </tr>
+
+                  <tr class="fila-grupo-label"><td colspan="5">F. COMBUSTIBLE</td></tr>
+                  <tr data-grupo="FComb">
+                    <td><input type="number" min="0" step="1" class="input-cantidad-pedido" placeholder="0"></td>
+                    <td><input type="text" class="input-referencia-pedido" placeholder="Referencia"></td>
+                    <td><input type="number" min="0" step="any" class="input-precio-pedido" placeholder="0"></td>
+                    <td class="td-total-fila-pedido" data-valor="0">$0</td>
+                    <td></td>
+                  </tr>
+
+                  <tr class="fila-grupo-label"><td colspan="5">F.A.A</td></tr>
+                  <tr data-grupo="FAA">
+                    <td><input type="number" min="0" step="1" class="input-cantidad-pedido" placeholder="0"></td>
+                    <td><input type="text" class="input-referencia-pedido" placeholder="Referencia"></td>
+                    <td><input type="number" min="0" step="any" class="input-precio-pedido" placeholder="0"></td>
+                    <td class="td-total-fila-pedido" data-valor="0">$0</td>
+                    <td></td>
+                  </tr>
+
+                  <tr class="fila-grupo-label">
+                    <td colspan="5">
+                      OTROS
+                      <button type="button" id="btnAgregarFilaOtrosPedido" class="btn-add-fila-pedido">+ Agregar fila</button>
+                    </td>
+                  </tr>
+                </tbody>
+                <tbody id="tbodyOtrosPedido"></tbody>
+              </table>
+
+              <div class="pedido-total-general">
+                <span>TOTAL DEL PEDIDO</span>
+                <span id="pedidoTotalGeneral">$0</span>
+              </div>
+            </div>
+
+            <div class="field field-submit" style="flex-direction:column;gap:8px;align-items:center;padding:0 24px 24px;">
+              <button type="submit" class="btn-save" id="btnGuardarPedido" style="width:auto;min-width:220px;">💾 Guardar Pedido</button>
+              <button type="button" class="btn-clear" onclick="cancelarEdicionPedido()">Cancelar edición / Limpiar</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header card-header-usuarios">
+            <span class="card-icon card-icon-usuarios">🧾</span>
+            <div>
+              <h3>Pedidos Registrados</h3>
+              <p>Listado de órdenes de servicio</p>
+            </div>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="buscadorPedidos" oninput="filtrarPedidos()"
+              placeholder="🔍 Buscar por cliente, cédula, placa, orden o marca...">
+            <button onclick="limpiarBuscadorPedidos()" class="btn-clear">Limpiar</button>
+          </div>
+          <div class="table-wrap">
+            <table id="tablaPedidos">
+              <thead>
+                <tr>
+                  <th>Orden</th>
+                  <th>Vehículo</th>
+                  <th>Cliente</th>
+                  <th>Placa</th>
+                  <th>Teléfono</th>
+                  <th>Total</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="listaPedidos"></tbody>
+            </table>
+            <div class="empty-state" id="emptyPedidos" style="display:none">
+              <div class="empty-icon">🧾</div>
+              <p>No hay pedidos registrados para mostrar.</p>
             </div>
           </div>
         </div>
@@ -832,6 +975,18 @@
       <div id="detalleCitaContenido"></div>
       <div class="modal-actions" style="margin-top:0;">
         <button class="btn-modal-cancel" onclick="cerrarDetalleCita()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+  <!-- MODAL ELIMINAR PEDIDO -->
+  <div class="modal-overlay" id="modalEliminarPedido">
+    <div class="modal">
+      <div class="modal-icon modal-icon-danger">✕</div>
+      <h3>¿Eliminar pedido?</h3>
+      <p id="modalEliminarPedidoTexto">Esta acción eliminará el pedido seleccionado.</p>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="cerrarModalEliminarPedido()">Cancelar</button>
+        <button class="btn-modal-confirm" id="btnConfirmarEliminarPedido">Sí, eliminar</button>
       </div>
     </div>
   </div>

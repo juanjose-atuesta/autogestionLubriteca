@@ -636,3 +636,137 @@ td strong { font-family:var(--font-display);font-weight:700;font-size:0.82rem; }
     .espacios-grid { grid-template-columns:1fr; }
     .horas-grid { gap:6px; }
 }
+
+/* ═══════════════════════════════════════════
+   PEDIDOS — agregar al final de styles.css
+   ═══════════════════════════════════════════ */
+
+.pedido-items-wrap { padding: 0 24px 8px; }
+
+.pedido-items-titulo {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 4px 0 10px;
+}
+
+.tabla-pedido-items {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.tabla-pedido-items thead th {
+  background: #fafbfc;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
+}
+
+.tabla-pedido-items td {
+  padding: 6px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.fila-grupo-label td {
+  background: #eff6ff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #1e3a8a;
+  letter-spacing: 0.5px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tabla-pedido-items input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 8px;
+  font-size: 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: var(--font-body);
+  touch-action: manipulation;
+}
+.tabla-pedido-items input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+}
+
+.td-total-fila-pedido {
+  font-weight: 700;
+  text-align: right;
+  padding-right: 10px !important;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.btn-add-fila-pedido {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+.btn-add-fila-pedido:hover { background: var(--primary-mid); }
+
+.btn-del-fila-pedido {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.btn-del-fila-pedido:hover { background: #dc2626; color: white; border-color: #dc2626; }
+
+.pedido-total-general {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--primary-dark);
+  color: white;
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  margin-top: 14px;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+/* Responsive: en pantallas chicas la tabla de items hace scroll horizontal
+   para que los inputs no se aplasten (útil en tablet en modo retrato) */
+@media (max-width: 720px) {
+  .tabla-pedido-items {
+    display: block;
+    overflow-x: auto;
+  }
+  .tabla-pedido-items thead,
+  .tabla-pedido-items tbody {
+    display: table;
+    width: 100%;
+    min-width: 560px;
+  }
+  .fila-grupo-label td { white-space: nowrap; }
+}
