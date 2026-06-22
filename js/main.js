@@ -7,7 +7,11 @@ let filtroAgendaActual = 'todos';
 let dragCitaId = null;
 
 // ═══════════ INIT ═══════════
-document.addEventListener('DOMContentLoaded', () => { verificarSesion(); });
+document.addEventListener('DOMContentLoaded', () => {
+  verificarSesion();
+  setFechaHoyEnInput('fechaActual');
+  setFechaHoyEnInput('usuarioFechaIngreso');
+});
 
 
 
