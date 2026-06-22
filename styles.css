@@ -779,6 +779,10 @@ td strong { font-family:var(--font-display);font-weight:700;font-size:0.82rem; }
    ESTADÍSTICAS — agregar al final de styles.css
    ═══════════════════════════════════════════ */
 
+/* ═══════════════════════════════════════════
+   ESTADÍSTICAS — agregar al final de styles.css
+   ═══════════════════════════════════════════ */
+
 /* ── Tabla de ranking ── */
 .stats-posicion {
   font-family: var(--font-display);
@@ -796,14 +800,10 @@ td strong { font-family:var(--font-display);font-weight:700;font-size:0.82rem; }
 
 /* ── Gráficas ── */
 .stats-graficas-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 20px;
   margin-top: 8px;
-}
-
-@media (max-width: 860px) {
-  .stats-graficas-grid { grid-template-columns: 1fr; }
 }
 
 .stats-grafica-wrap {

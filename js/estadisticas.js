@@ -20,39 +20,41 @@ function actualizarBadgeEstadisticas(n) {
 // Devuelve HTML string con una gráfica SVG responsiva
 
 function generarGraficaBarras(datos, titulo, colorBarra) {
-  if (!datos.length) return `<div class="stats-grafica-vacia">Sin datos</div>`;
+  if (!datos.length) return '<div class="stats-grafica-vacia">Sin datos</div>';
 
-  const max = Math.max(...datos.map(d => d.valor), 1);
-  const altoFila = 36;
-  const paddingIzq = 140;
-  const paddingDer = 60;
-  const alto = datos.length * altoFila + 20;
+  var ANCHO_TOTAL = 600;
+  var PADDING_IZQ = 140;
+  var PADDING_DER = 70;
+  var ANCHO_BARRAS = ANCHO_TOTAL - PADDING_IZQ - PADDING_DER;
 
-  const barras = datos.map((d, i) => {
-    const y = i * altoFila + 10;
-    const pct = d.valor / max;
-    // ancho real se calcula en CSS con viewBox relativo
-    const anchoBar = pct * 100; // porcentaje del ancho disponible
+  var max = Math.max.apply(null, datos.map(function (d) { return d.valor; }).concat([1]));
+  var altoFila = 36;
+  var alto = datos.length * altoFila + 24;
 
-    return `
-      <g class="stats-barra-grupo">
-        <text x="${paddingIzq - 8}" y="${y + altoFila / 2 + 5}" text-anchor="end"
-              class="stats-barra-label">${escaparHtmlStats(d.label.length > 16 ? d.label.slice(0, 15) + '…' : d.label)}</text>
-        <rect x="${paddingIzq}" y="${y + 4}" width="${anchoBar}%" height="${altoFila - 12}"
-              rx="4" fill="${colorBarra}" class="stats-barra-rect" data-val="${d.valor}"/>
-        <text x="${paddingIzq + anchoBar + 2}%" y="${y + altoFila / 2 + 5}"
-              class="stats-barra-valor">${d.valor} pts</text>
-      </g>`;
+  var barras = datos.map(function (d, i) {
+    var y = i * altoFila + 10;
+    var anchoBar = Math.max((d.valor / max) * ANCHO_BARRAS, d.valor > 0 ? 4 : 0);
+    var nombre = escaparHtmlStats(d.label.length > 17 ? d.label.slice(0, 16) + '\u2026' : d.label);
+    // Si la barra es larga (>60% del espacio), poner el valor dentro con texto blanco
+    var barraLarga = anchoBar > ANCHO_BARRAS * 0.6;
+    var xValor = barraLarga
+      ? PADDING_IZQ + anchoBar - 6   // dentro de la barra, pegado al borde derecho
+      : PADDING_IZQ + anchoBar + 6;  // fuera de la barra, a la derecha
+    var anchorValor = barraLarga ? 'end' : 'start';
+    var colorValor = barraLarga ? '#ffffff' : 'var(--text-muted, #64748b)';
+    return '<g>'
+      + '<text x="' + (PADDING_IZQ - 8) + '" y="' + (y + altoFila / 2 + 5) + '" text-anchor="end" class="stats-barra-label">' + nombre + '</text>'
+      + '<rect x="' + PADDING_IZQ + '" y="' + (y + 4) + '" width="' + anchoBar + '" height="' + (altoFila - 12) + '" rx="4" fill="' + colorBarra + '" class="stats-barra-rect"/>'
+      + '<text x="' + xValor + '" y="' + (y + altoFila / 2 + 5) + '" text-anchor="' + anchorValor + '" fill="' + colorValor + '" class="stats-barra-valor">' + d.valor + ' pts</text>'
+      + '</g>';
   }).join('');
 
-  return `
-    <div class="stats-grafica-wrap">
-      <div class="stats-grafica-titulo">${escaparHtmlStats(titulo)}</div>
-      <svg viewBox="0 0 600 ${alto}" xmlns="http://www.w3.org/2000/svg"
-           class="stats-grafica-svg" preserveAspectRatio="xMidYMid meet">
-        ${barras}
-      </svg>
-    </div>`;
+  return '<div class="stats-grafica-wrap">'
+    + '<div class="stats-grafica-titulo">' + escaparHtmlStats(titulo) + '</div>'
+    + '<svg viewBox="0 0 ' + ANCHO_TOTAL + ' ' + alto + '" xmlns="http://www.w3.org/2000/svg" class="stats-grafica-svg" preserveAspectRatio="xMidYMid meet">'
+    + barras
+    + '</svg>'
+    + '</div>';
 }
 
 // ── Renderizar sección de estadísticas ────────────────────────────────────────

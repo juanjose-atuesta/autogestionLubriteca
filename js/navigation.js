@@ -34,6 +34,8 @@ function seleccionarTab(tab) {
   if (tab === 'citas-programadas') renderListaCitasProgramadas();
   if (tab === 'pedidos-registrados') mostrarPedidos();
   if (tab === 'pedidos') limpiarFormularioPedido();
+  if (tab === 'estadisticas') mostrarEstadisticas();
+  if (tab === 'pedidos-registrados') mostrarPedidos();
   if (tab === 'agenda') {
     irHoyAgenda();
     /*
