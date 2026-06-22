@@ -194,21 +194,33 @@ function guardarEdicion(idAux) {
 }
 
 let cacheUsuariosBusqueda = [];
+let contextoBusquedaUsuario = 'principal';
 
 function normalizarUsuarioBusqueda(usuario = {}) {
   return {
     name: String(usuario.name || '').trim(),
     telephone: String(usuario.telephone || '').trim(),
-    id: String(usuario.id || '').trim()
+    id: String(usuario.id || '').trim(),
+    email: String(usuario.email || usuario.emial || '').trim()
   };
 }
 
 function cerrarModalBuscarUsuario() {
   const modal = document.getElementById('modalBuscarUsuario');
   if (modal) modal.classList.remove('active');
+  contextoBusquedaUsuario = 'principal';
 }
 
 function rellenarFormularioClienteDesdeUsuario(usuario = {}) {
+  if (contextoBusquedaUsuario === 'pedidos') {
+    if (typeof rellenarFormularioPedidoDesdeUsuario === 'function') {
+      rellenarFormularioPedidoDesdeUsuario(usuario);
+    }
+    cerrarModalBuscarUsuario();
+    contextoBusquedaUsuario = 'principal';
+    return;
+  }
+
   const nombreInput = document.getElementById('nombre');
   const telefonoInput = document.getElementById('telefono');
   if (!nombreInput || !telefonoInput) return;
@@ -231,7 +243,8 @@ function renderUsuariosBusqueda(filtro = '') {
     return (
       String(usuario.name || '').toUpperCase().includes(textoFiltro) ||
       String(usuario.telephone || '').toUpperCase().includes(textoFiltro) ||
-      String(usuario.id || '').toUpperCase().includes(textoFiltro)
+      String(usuario.id || '').toUpperCase().includes(textoFiltro) ||
+      String(usuario.email || '').toUpperCase().includes(textoFiltro)
     );
   });
 
@@ -258,6 +271,9 @@ function renderUsuariosBusqueda(filtro = '') {
     const tdTelefono = document.createElement('td');
     tdTelefono.textContent = usuario.telephone || '-';
 
+    const tdCorreo = document.createElement('td');
+    tdCorreo.textContent = usuario.email || '-';
+
     const tdAccion = document.createElement('td');
     const button = document.createElement('button');
     button.type = 'button';
@@ -266,7 +282,7 @@ function renderUsuariosBusqueda(filtro = '') {
     button.addEventListener('click', () => rellenarFormularioClienteDesdeUsuario(usuario));
     tdAccion.appendChild(button);
 
-    tr.append(tdNombre, tdCedula, tdTelefono, tdAccion);
+    tr.append(tdNombre, tdCedula, tdTelefono, tdCorreo, tdAccion);
     tbody.appendChild(tr);
   });
 }
@@ -277,9 +293,10 @@ async function cargarUsuariosBusqueda() {
   renderUsuariosBusqueda(document.getElementById('buscadorUsuariosBusqueda')?.value || '');
 }
 
-async function abrirPanelBuscarUsuario() {
+async function abrirPanelBuscarUsuario(contexto = 'principal') {
   const modal = document.getElementById('modalBuscarUsuario');
   if (!modal) return;
+  contextoBusquedaUsuario = String(contexto || 'principal').trim() || 'principal';
   modal.classList.add('active');
   await cargarUsuariosBusqueda();
 }

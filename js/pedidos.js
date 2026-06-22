@@ -1,7 +1,5 @@
 // ═══════════ PEDIDOS — ESTADO ═══════════
-let cachePedidosRegistrados = [];
 let pedidoIdEnEdicion = null; // _id de Mongo del pedido que se está editando, null si es nuevo
-let pedidoIdPendienteEliminar = null;
 let contadorFilaOtrosPedido = 0;
 
 // Grupos fijos del formulario (coinciden con el formato del recibo físico)
@@ -183,6 +181,25 @@ function cargarPedidoEnFormulario(pedido) {
   document.getElementById('pedidoVehicleMake')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function rellenarFormularioPedidoDesdeUsuario(usuario = {}) {
+  const nombre = String(usuario.name || '').trim();
+  const cedula = String(usuario.id || '').trim();
+  const telefono = String(usuario.telephone || '').trim();
+  const correo = String(usuario.email || usuario.emial || '').trim();
+
+  const inputCliente = document.getElementById('pedidoCliente');
+  const inputCedula = document.getElementById('pedidoCedula');
+  const inputTelefono = document.getElementById('pedidoTelefono');
+  const inputCorreo = document.getElementById('pedidoCorreo');
+
+  if (inputCliente) inputCliente.value = nombre;
+  if (inputCedula) inputCedula.value = cedula;
+  if (inputTelefono) inputTelefono.value = telefono;
+  if (inputCorreo) inputCorreo.value = correo;
+
+  inputCliente?.focus();
+}
+
 // ═══════════ GUARDAR (crear o editar) ═══════════
 
 async function guardarPedidoDesdeFormulario(evento) {
@@ -206,135 +223,6 @@ async function guardarPedidoDesdeFormulario(evento) {
 
 function cancelarEdicionPedido() {
   limpiarFormularioPedido();
-}
-
-// ═══════════ LISTADO + BUSCADOR ═══════════
-
-async function actualizarBadgePedidos() {
-  const badge = document.getElementById('nav-badge-pedidos');
-  if (!badge) return;
-  badge.textContent = Array.isArray(cachePedidosRegistrados) ? cachePedidosRegistrados.length : 0;
-}
-
-async function mostrarPedidos(filtro = '') {
-  const tbody = document.getElementById('listaPedidos');
-  if (!tbody) return;
-
-  const empty = document.getElementById('emptyPedidos');
-  const tabla = document.getElementById('tablaPedidos');
-
-  const data = await getPedidosRegistrados();
-  const todos = Array.isArray(data) ? data : [];
-  cachePedidosRegistrados = todos;
-
-  const textoFiltro = String(filtro || '').trim().toUpperCase();
-  let pedidos = todos;
-  if (textoFiltro) {
-    pedidos = todos.filter(p =>
-      String(p.name || '').toUpperCase().includes(textoFiltro) ||
-      String(p.id || '').toUpperCase().includes(textoFiltro) ||
-      String(p.plate || '').toUpperCase().includes(textoFiltro) ||
-      String(p.orden || '').toUpperCase().includes(textoFiltro) ||
-      String(p.vehicleMake || '').toUpperCase().includes(textoFiltro)
-    );
-  }
-
-  pedidos = [...pedidos].reverse();
-
-  tbody.innerHTML = '';
-  if (!pedidos.length) {
-    empty.style.display = 'block';
-    tabla.style.display = 'none';
-    actualizarBadgePedidos();
-    return;
-  }
-
-  empty.style.display = 'none';
-  tabla.style.display = '';
-
-  pedidos.forEach(pedido => {
-    const idSafe = String(pedido._id || '').replace(/'/g, "\\'");
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${pedido.orden || '-'}</td>
-      <td>${pedido.vehicleMake || '-'}</td>
-      <td>${pedido.name || '-'}</td>
-      <td>${pedido.plate || '-'}</td>
-      <td>${pedido.telephone || '-'}</td>
-      <td>${formatearMonedaPedido(pedido.precioTotal)}</td>
-      <td>
-        <button class="btn-edit" data-pedido-id="${idSafe}" onclick="editarPedidoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✎ Editar</button>
-        <button class="btn-del" data-pedido-id="${idSafe}" onclick="eliminarPedidoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✕ Eliminar</button>
-      </td>`;
-    tbody.appendChild(tr);
-  });
-
-  actualizarBadgePedidos();
-}
-
-function filtrarPedidos() {
-  mostrarPedidos(document.getElementById('buscadorPedidos').value);
-}
-
-function limpiarBuscadorPedidos() {
-  const buscador = document.getElementById('buscadorPedidos');
-  buscador.value = '';
-  mostrarPedidos();
-  buscador.focus();
-}
-
-function obtenerIdPedidoDesdeClick(elemento) {
-  const id = String(
-    elemento?.dataset?.pedidoId ||
-    elemento?.closest?.('[data-pedido-id]')?.dataset?.pedidoId ||
-    ''
-  ).trim();
-  if (!id) console.error('No se pudo obtener el id del pedido desde el botón clickeado.');
-  return id;
-}
-
-async function editarPedidoDesdeBoton(boton) {
-  const pedidoId = obtenerIdPedidoDesdeClick(boton);
-  if (!pedidoId) return;
-
-  let pedido = cachePedidosRegistrados.find(p => String(p._id) === pedidoId);
-  if (!pedido) pedido = await getPedidoPorId(pedidoId);
-  if (!pedido) return;
-
-  cargarPedidoEnFormulario(pedido);
-}
-
-async function eliminarPedidoDesdeBoton(boton) {
-  const pedidoId = obtenerIdPedidoDesdeClick(boton);
-  if (!pedidoId) return;
-
-  const pedido = cachePedidosRegistrados.find(p => String(p._id) === pedidoId);
-  const referencia = pedido ? `Orden ${pedido.orden} — ${pedido.name}` : 'este pedido';
-  pedidoIdPendienteEliminar = pedidoId;
-
-  const texto = document.getElementById('modalEliminarPedidoTexto');
-  const botonConfirmar = document.getElementById('btnConfirmarEliminarPedido');
-  const modal = document.getElementById('modalEliminarPedido');
-  if (!texto || !botonConfirmar || !modal) return;
-
-  texto.textContent = `¿Eliminar ${referencia}? Esta acción no se puede deshacer.`;
-  botonConfirmar.onclick = confirmarEliminarPedido;
-  modal.classList.add('active');
-}
-
-function cerrarModalEliminarPedido() {
-  const modal = document.getElementById('modalEliminarPedido');
-  if (modal) modal.classList.remove('active');
-  pedidoIdPendienteEliminar = null;
-}
-
-async function confirmarEliminarPedido() {
-  if (!pedidoIdPendienteEliminar) return;
-  const pedidoId = pedidoIdPendienteEliminar;
-  cerrarModalEliminarPedido();
-
-  await eliminarPedidoRegistrado(pedidoId);
-  mostrarPedidos(document.getElementById('buscadorPedidos').value);
 }
 
 // ═══════════ INIT ═══════════

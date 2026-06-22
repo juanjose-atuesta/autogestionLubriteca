@@ -23,13 +23,17 @@ function seleccionarTab(tab) {
     contactados: 'Contactados',
     usuarios: 'Usuarios',
     agenda: 'Agenda',
-    'citas-programadas': 'Citas programadas'
+    'citas-programadas': 'Citas programadas',
+    pedidos: 'Registrar Pedido',
+    'pedidos-registrados': 'Pedidos Registrados'
   };
   document.getElementById('tab-indicator').textContent = t[tab];
   if (tab === 'database') mostrarGeneral();
   if (tab === 'contactados') mostrarContactados();
   if (tab === 'usuarios') mostrarUsuarios();
   if (tab === 'citas-programadas') renderListaCitasProgramadas();
+  if (tab === 'pedidos-registrados') mostrarPedidos();
+  if (tab === 'pedidos') limpiarFormularioPedido();
   if (tab === 'agenda') {
     irHoyAgenda();
     /*
@@ -50,5 +54,5 @@ setInterval(() => {
 }, 30000);
 */
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { cerrarModalEliminar(); cerrarModalEditar(); cerrarModalReservar(); cerrarDetalleCita(); cerrarModalEliminarCita(); cerrarModalEliminarUsuario(); cerrarModalUsuariosRecomendados(); cerrarModalAutorizacionDatos(); cerrarModalBuscarUsuario(); }
+  if (e.key === 'Escape') { cerrarModalEliminar(); cerrarModalEditar(); cerrarModalReservar(); cerrarDetalleCita(); cerrarModalEliminarCita(); cerrarModalEliminarUsuario(); cerrarModalUsuariosRecomendados(); cerrarModalAutorizacionDatos(); cerrarModalBuscarUsuario(); cerrarDetallePedido(); cerrarModalEditarPedido(); }
 });
