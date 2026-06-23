@@ -45,8 +45,16 @@ document.getElementById('clienteForm').addEventListener('submit', async e => {
 
           mostrarToast(); actualizarStats(); mostrarAlertas(); revisarCitasDeHoy();
           document.getElementById('clienteForm').reset();
-            setFechaHoyEnInput('fechaActual');
+          setFechaHoyEnInput('fechaActual');
+
+          fetch(API_BACKEND_URL + "eventos/changeValue", {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
           })
+
+        })
+
     })
     .catch(console.error);
 });
