@@ -247,32 +247,15 @@ function cerrarModalEditarPedido() {
   limpiarFormularioEditarPedido();
 }
 
-async function mostrarPedidos(filtro = '') {
-  const tbody = document.getElementById('listaPedidos');
-  if (!tbody) return;
+// true = modo "pedidos de hoy", false = búsqueda general
+let modoPedidosHoy = false;
 
+function renderizarFilasPedidos(pedidos) {
+  const tbody = document.getElementById('listaPedidos');
   const empty = document.getElementById('emptyPedidos');
   const tabla = document.getElementById('tablaPedidos');
+  if (!tbody) return;
 
-  const data = await getPedidosRegistrados();
-  const todos = Array.isArray(data) ? data : [];
-  cachePedidosRegistrados = todos;
-
-  const textoFiltro = String(filtro || '').trim().toUpperCase();
-  let pedidos = todos.filter(esPedidoDeHoy);
-  if (textoFiltro) {
-    pedidos = todos.filter(p =>
-      esPedidoDeHoy(p) && (
-        String(p.name || '').toUpperCase().includes(textoFiltro) ||
-        String(p.id || '').toUpperCase().includes(textoFiltro) ||
-        String(p.plate || '').toUpperCase().includes(textoFiltro) ||
-        String(p.orden || '').toUpperCase().includes(textoFiltro) ||
-        String(p.vehicleMake || '').toUpperCase().includes(textoFiltro)
-      )
-    );
-  }
-
-  pedidos = [...pedidos].reverse();
   tbody.innerHTML = '';
 
   if (!pedidos.length) {
@@ -286,7 +269,7 @@ async function mostrarPedidos(filtro = '') {
   if (tabla) tabla.style.display = '';
 
   pedidos.forEach(pedido => {
-    const idSafe = String(pedido._id || '').replace(/'/g, "\\'");
+    const idSafe = String(pedido._id || '').replace(/'/g, "\'");
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${pedido.orden || '-'}</td>
@@ -296,9 +279,9 @@ async function mostrarPedidos(filtro = '') {
       <td>${pedido.telephone || '-'}</td>
       <td>${formatearMonedaPedido(pedido.precioTotal)}</td>
       <td>
-        <button class="btn-view" data-pedido-id="${idSafe}" onclick="verDetallePedidoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>👁 Ver detalles</button>
-        <button class="btn-edit" data-pedido-id="${idSafe}" onclick="editarPedidoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✎ Editar</button>
-        <button class="btn-del" data-pedido-id="${idSafe}" onclick="eliminarPedidoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✕ Eliminar</button>
+        <button class="btn-view" data-pedido-id="${idSafe}" onclick="verDetallePedidoDesdeBoton(this)">👁 Ver detalles</button>
+        <button class="btn-edit" data-pedido-id="${idSafe}" onclick="editarPedidoDesdeBoton(this)">✎ Editar</button>
+        <button class="btn-del"  data-pedido-id="${idSafe}" onclick="eliminarPedidoDesdeBoton(this)">✕ Eliminar</button>
       </td>`;
     tbody.appendChild(tr);
   });
@@ -306,17 +289,75 @@ async function mostrarPedidos(filtro = '') {
   actualizarBadgePedidos(pedidos.length);
 }
 
-function filtrarPedidos() {
+async function mostrarPedidos(filtro) {
+  const textoFiltro = String(filtro || '').trim().toUpperCase();
+
+  // Sin filtro y sin modo hoy -> tabla vacía
+  if (!textoFiltro && !modoPedidosHoy) {
+    renderizarFilasPedidos([]);
+    return;
+  }
+
+  if (modoPedidosHoy) {
+    // Llama al endpoint dedicado de hoy en el backend
+    const data = await getPedidosDeHoyRegistrados();
+    const todos = Array.isArray(data) ? data : [];
+    cachePedidosRegistrados = todos;
+    const pedidos = textoFiltro
+      ? todos.filter(p =>
+        String(p.name || '').toUpperCase().includes(textoFiltro) ||
+        String(p.id || '').toUpperCase().includes(textoFiltro) ||
+        String(p.plate || '').toUpperCase().includes(textoFiltro) ||
+        String(p.orden || '').toUpperCase().includes(textoFiltro) ||
+        String(p.vehicleMake || '').toUpperCase().includes(textoFiltro))
+      : todos;
+    renderizarFilasPedidos([...pedidos].reverse());
+    return;
+  }
+
+  // Modo búsqueda general: trae todos y filtra
+  const data = await getPedidosRegistrados();
+  const todos = Array.isArray(data) ? data : [];
+  cachePedidosRegistrados = todos;
+  const pedidos = todos.filter(p =>
+    String(p.name || '').toUpperCase().includes(textoFiltro) ||
+    String(p.id || '').toUpperCase().includes(textoFiltro) ||
+    String(p.plate || '').toUpperCase().includes(textoFiltro) ||
+    String(p.orden || '').toUpperCase().includes(textoFiltro) ||
+    String(p.vehicleMake || '').toUpperCase().includes(textoFiltro));
+  renderizarFilasPedidos([...pedidos].reverse());
+}
+
+async function togglePedidosHoy() {
+  modoPedidosHoy = !modoPedidosHoy;
+  const btn = document.getElementById('btnPedidosHoy');
+  if (btn) btn.classList.toggle('activo', modoPedidosHoy);
+  if (modoPedidosHoy) {
+    const buscador = document.getElementById('buscadorPedidos');
+    if (buscador) buscador.value = '';
+  }
   mostrarPedidos(document.getElementById('buscadorPedidos')?.value || '');
+}
+
+function filtrarPedidos() {
+  const texto = document.getElementById('buscadorPedidos')?.value || '';
+  // Si escribe algo, desactivar modo hoy para buscar en todos
+  if (texto.trim() && modoPedidosHoy) {
+    modoPedidosHoy = false;
+    const btn = document.getElementById('btnPedidosHoy');
+    if (btn) btn.classList.remove('activo');
+  }
+  mostrarPedidos(texto);
 }
 
 function limpiarBuscadorPedidos() {
   const buscador = document.getElementById('buscadorPedidos');
   if (!buscador) return;
   buscador.value = '';
-  mostrarPedidos();
+  mostrarPedidos('');
   buscador.focus();
 }
+
 
 function formatearItemPedidoDetalle(item = []) {
   const [cantidad = '', referencia = '', precio = ''] = item;
@@ -522,5 +563,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnAgregarFilaEditar = document.getElementById('btnAgregarFilaOtrosPedidoEditar');
   if (btnAgregarFilaEditar) btnAgregarFilaEditar.addEventListener('click', agregarFilaOtrosPedidoEdicion);
 
-  mostrarPedidos(document.getElementById('buscadorPedidos')?.value || '');
+  // No cargar automáticamente — la tabla arranca vacía
+  // Los datos se cargan al buscar o al presionar "Pedidos de hoy"
+  const btnHoy = document.getElementById('btnPedidosHoy');
+  if (btnHoy) btnHoy.addEventListener('click', togglePedidosHoy);
 });
