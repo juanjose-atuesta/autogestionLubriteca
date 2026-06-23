@@ -1,7 +1,14 @@
 
 const API_BACKEND_URL = "http://192.168.80.11:3000/api/";
-const FORMULARIO_AUTORIZACION_DATOS_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfmTcLUYap9F79nBopRGssdYx6pMTDFILFJKedTbbfK6HqPFA/viewform?usp=sharing&ouid=115359686355008826821";
-localStorage.clear();
+const formulario_autorizacion_datos_url = "https://docs.google.com/forms/d/e/1faipqlsfmtcluyap9f79nboprgssdyx6pmtdfilfjkedtbbfk6hqpfa/viewform?usp=sharing&ouid=115359686355008826821";
+let currentValue = null;
+async function cargarValorInicial() {
+  const response = await fetch(API_BACKEND_URL + "eventos/getvalue");
+  const data = await response.json();
+  const objeto = data.valor;
+  currentValue = objeto.value;
+}
+
 
 // ═══════════ CREDENCIALES ═══════════
 const USUARIOS = [
