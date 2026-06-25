@@ -34,6 +34,7 @@ function iniciarSSE() {
     actualizarBadgeContactados();
     mostrarContactados();
     actualizarStats();
+    mostrarAlertas();
 
   });
 
