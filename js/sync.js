@@ -45,7 +45,9 @@ function iniciarSSE() {
   })
 
   source.addEventListener('cliente-eliminado', () => {
-    actualizar();
+    mostrarAlertas();
+    actualizarStats();
+
   });
 
 
