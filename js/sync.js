@@ -32,6 +32,9 @@ function iniciarSSE() {
   source.addEventListener('cliente-editado', () => {
 
     actualizarBadgeContactados();
+    mostrarContactados();
+    actualizarStats();
+
   });
 
 
