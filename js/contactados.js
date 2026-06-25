@@ -3,7 +3,6 @@
 async function actualizarBadgeContactados() {
   getContactados().then(contactados => {
     document.getElementById('nav-badge-contactados').textContent = contactados.length
-    console.log("me ejecute " + contactados.length);
 
   })
 }

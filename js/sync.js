@@ -37,11 +37,17 @@ function iniciarSSE() {
     mostrarAlertas();
 
   });
-
+  source.addEventListener('agregar-reserva', () => {
+    mostrarAlertas();
+    actualizarBadgeAgenda();
+    actualizarBadgeCitasProgramadas();
+    renderAgenda();
+  })
 
   source.addEventListener('cliente-eliminado', () => {
     actualizar();
   });
+
 
   source.onerror = () => {
     console.warn('SSE desconectado, reconectando...');
