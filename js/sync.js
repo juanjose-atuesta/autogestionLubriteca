@@ -24,7 +24,15 @@ function iniciarSSE() {
     console.log('SSE conectado');
   });
 
-  source.addEventListener('cliente-creado', () => mostrarGeneral());
+  source.addEventListener('cliente-creado', () => {
+    actualizar();
+    console.log("se hicieron actualizaciones");
+  });
+  source.addEventListener('cliente-editado', () => {
+    actualizar();
+    console.log("cliente editado");
+
+  });
   source.addEventListener('cliente-editado', () => mostrarGeneral());
   source.addEventListener('cliente-eliminado', () => mostrarGeneral());
 

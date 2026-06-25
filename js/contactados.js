@@ -1,6 +1,6 @@
 
 // ═══════════ CONTACTADO ═══════════
-function actualizarBadgeContactados() {
+async function actualizarBadgeContactados() {
   getContactados().then(contactados => {
     document.getElementById('nav-badge-contactados').textContent = contactados.length
   })
