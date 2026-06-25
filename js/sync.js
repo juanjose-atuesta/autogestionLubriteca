@@ -17,8 +17,29 @@ function mostrarCargando(visible) {
     setTimeout(() => { el.style.display = 'none'; }, 400);
   }
 }
+function iniciarSSE() {
+  const source = new EventSource(API_BACKEND_URL + 'eventos');
 
+  source.addEventListener('conectado', () => {
+    console.log('SSE conectado');
+  });
 
+  source.addEventListener('cliente-creado', () => mostrarGeneral());
+  source.addEventListener('cliente-editado', () => mostrarGeneral());
+  source.addEventListener('cliente-eliminado', () => mostrarGeneral());
+
+  source.onerror = () => {
+    console.warn('SSE desconectado, reconectando...');
+    source.close();
+    setTimeout(iniciarSSE, 3000);
+  };
+}
+
+// Llamar esto después del login
+document.addEventListener('DOMContentLoaded', () => {
+  iniciarSSE();
+});
+/*
 // ═══════════ SINCRONIZAR CON GOOGLE SHEETS (CORREGIDO) ═══════════
 function sincronizarConSheets() {
   mostrarCargando(true);
@@ -48,33 +69,7 @@ function sincronizarConSheets() {
           mileage: String(c.mileage)
         }));
 
-
-      /*
-            // 🔧 CORREGIDO: Sincronizar citas usando String para citaId y comparación correcta
-            if (Array.isArray(datos.citas)) {
-              const citasSheets = datos.citas.map(c => ({
-                citaId: String(c.citaId),   // Forzar string
-                placa: String(c.placa || '').toUpperCase().trim(),
-                nombre: String(c.nombre || ''),
-                telefono: String(c.telefono || ''),
-                categoria: String(c.categoria || ''),
-                fecha: String(c.fecha || ''),
-                hora: String(c.hora || ''),
-                espacio: String(c.espacio || ''),
-                notas: String(c.notas || '')
-              }));
-              const idsSheets = new Set(citasSheets.map(c => c.citaId));
-              const citasLocal = getCitas();
-              const ahora = Date.now();
-              // Conservar citas locales recientes (< 2 min) que Sheets aún no confirmó
-              const pendientes = citasLocal.filter(c =>
-                !idsSheets.has(String(c.citaId)) && (ahora - Number(c.citaId)) < 120000
-              );
-              setCitas([...citasSheets, ...pendientes]);
-              console.log('✓ ' + citasSheets.length + ' citas + ' + pendientes.length + ' pendientes locales');
-            }
-      */
-      //migrarClientesAHistorial();
+           //migrarClientesAHistorial();
       actualizarStats();
       mostrarAlertas();
       actualizarBadgeContactados();
@@ -102,6 +97,7 @@ function sincronizarConSheets() {
       mostrarCargando(false);
     });
 }
+*/
 
 
 // 🔧 CORREGIDO: sincronizarSoloCitas con manejo de string para citaId

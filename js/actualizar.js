@@ -1,5 +1,5 @@
 function actualizar() {
-  mostrarGeneral();
+  //mostrarGeneral();
   mostrarAlertas();
   actualizarStats();
   buscarHistorial();
@@ -15,7 +15,7 @@ function actualizar() {
   actualizarBadgeCitasProgramadas();
 }
 
-
+/*
 async function verificarCambios() {
   const response = await fetch(API_BACKEND_URL + "eventos/getvalue");
   const data = await response.json();
@@ -43,3 +43,5 @@ async function iniciar() {
 }
 
 iniciar();
+
+*/
