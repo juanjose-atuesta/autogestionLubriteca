@@ -26,15 +26,18 @@ function iniciarSSE() {
 
   source.addEventListener('cliente-creado', () => {
     actualizar();
-    console.log("se hicieron actualizaciones");
   });
-  source.addEventListener('cliente-editado', () => {
-    actualizar();
-    console.log("cliente editado");
 
+
+  source.addEventListener('cliente-editado', () => {
+
+    actualizarBadgeContactados();
   });
-  source.addEventListener('cliente-editado', () => mostrarGeneral());
-  source.addEventListener('cliente-eliminado', () => mostrarGeneral());
+
+
+  source.addEventListener('cliente-eliminado', () => {
+    actualizar();
+  });
 
   source.onerror = () => {
     console.warn('SSE desconectado, reconectando...');
@@ -47,7 +50,7 @@ function iniciarSSE() {
 document.addEventListener('DOMContentLoaded', () => {
   iniciarSSE();
 });
-/*
+
 // ═══════════ SINCRONIZAR CON GOOGLE SHEETS (CORREGIDO) ═══════════
 function sincronizarConSheets() {
   mostrarCargando(true);
@@ -77,7 +80,7 @@ function sincronizarConSheets() {
           mileage: String(c.mileage)
         }));
 
-           //migrarClientesAHistorial();
+      //migrarClientesAHistorial();
       actualizarStats();
       mostrarAlertas();
       actualizarBadgeContactados();
@@ -105,7 +108,7 @@ function sincronizarConSheets() {
       mostrarCargando(false);
     });
 }
-*/
+
 
 
 // 🔧 CORREGIDO: sincronizarSoloCitas con manejo de string para citaId
