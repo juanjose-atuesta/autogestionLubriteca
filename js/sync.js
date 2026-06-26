@@ -64,9 +64,10 @@ function iniciarSSE() {
 
   source.addEventListener('reserva-editada', () => {
     //        mostrarAlertas();
-    //  actualizarBadgeAgenda();
+    //actualizarBadgeAgenda();
     //actualizarBadgeCitasProgramadas();
     renderAgenda();
+    renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
 
   })
 
