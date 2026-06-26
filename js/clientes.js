@@ -69,7 +69,6 @@ function eliminarCliente(id) {
         headers: { 'Content-Type': 'application/json' }
       }).then(response => response.json())
         .then(data => {
-          console.log("Se borro un cliente" + data.status);
           actualizarStats(); mostrarAlertas(); actualizarBadgeAgenda();
           if (document.getElementById('tab-database').classList.contains('active'))
             mostrarGeneral(document.getElementById('buscadorGeneral').value);

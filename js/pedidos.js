@@ -239,3 +239,107 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fila) engancharCalculoFilaPedido(fila);
   });
 });
+
+
+// ═══════════ MODAL SELECCIONAR USUARIO PARA PEDIDO ═══════════
+let usuariosPedidoCache = [];
+
+async function abrirModalSeleccionarUsuarioPedido() {
+  const data = await getUsuariosRegistrados();
+  usuariosPedidoCache = Array.isArray(data) ? data : [];
+  renderModalUsuariosPedido(usuariosPedidoCache);
+}
+
+function renderModalUsuariosPedido(usuarios) {
+  const modal = document.getElementById('modalSeleccionarUsuarioPedido');
+  const tbody = document.getElementById('listaUsuariosModalPedido');
+  const tabla = document.getElementById('tablaUsuariosModalPedido');
+  const empty = document.getElementById('emptyUsuariosModalPedido');
+  const filtro = document.getElementById('filtroUsuariosModalPedido');
+  if (!modal || !tbody || !tabla || !empty || !filtro) return;
+
+  tbody.innerHTML = '';
+  filtro.value = '';
+
+  if (!usuarios.length) {
+    empty.style.display = 'block';
+    tabla.style.display = 'none';
+    modal.classList.add('active');
+    return;
+  }
+
+  empty.style.display = 'none';
+  tabla.style.display = '';
+
+  usuarios.forEach(u => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${u.name || '-'}</td>
+      <td>${u.id || '-'}</td>
+      <td>${u.telephone || '-'}</td>
+      <td>${u.email || u.emial || '-'}</td>
+      <td>
+        <button class="btn-add-action"
+          onclick="seleccionarUsuarioParaPedido('${String(u.id).replace(/'/g, "\\'")}')">
+          Usar
+        </button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  modal.classList.add('active');
+}
+
+function filtrarUsuariosModalPedido() {
+  const texto = String(document.getElementById('filtroUsuariosModalPedido')?.value || '')
+    .trim().toUpperCase();
+
+  const filtrados = texto
+    ? usuariosPedidoCache.filter(u =>
+      String(u.name || '').toUpperCase().includes(texto) ||
+      String(u.id || '').toUpperCase().includes(texto) ||
+      String(u.telephone || '').toUpperCase().includes(texto) ||
+      String(u.email || u.emial || '').toUpperCase().includes(texto))
+    : usuariosPedidoCache;
+
+  const tbody = document.getElementById('listaUsuariosModalPedido');
+  const tabla = document.getElementById('tablaUsuariosModalPedido');
+  const empty = document.getElementById('emptyUsuariosModalPedido');
+  if (!tbody || !tabla || !empty) return;
+
+  tbody.innerHTML = '';
+  if (!filtrados.length) {
+    empty.style.display = 'block';
+    tabla.style.display = 'none';
+    return;
+  }
+
+  empty.style.display = 'none';
+  tabla.style.display = '';
+  filtrados.forEach(u => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${u.name || '-'}</td>
+      <td>${u.id || '-'}</td>
+      <td>${u.telephone || '-'}</td>
+      <td>${u.email || u.emial || '-'}</td>
+      <td>
+        <button class="btn-add-action"
+          onclick="seleccionarUsuarioParaPedido('${String(u.id).replace(/'/g, "\\'")}')">
+          Usar
+        </button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function seleccionarUsuarioParaPedido(usuarioId) {
+  const usuario = usuariosPedidoCache.find(u => String(u.id) === String(usuarioId));
+  if (!usuario) return;
+  cerrarModalSeleccionarUsuarioPedido();
+  rellenarFormularioPedidoDesdeUsuario(usuario); // ya existe en pedidos.js
+}
+
+function cerrarModalSeleccionarUsuarioPedido() {
+  document.getElementById('modalSeleccionarUsuarioPedido')?.classList.remove('active');
+} 

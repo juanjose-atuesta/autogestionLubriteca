@@ -484,27 +484,8 @@ async function abrirModalSeleccionarUsuarioContactar(boton) {
   const usuarioId = obtenerIdUsuarioDesdeClick(boton);
   if (!usuarioId) return;
   usuarioIdDelContextoARecomendar = usuarioId;
-
-  let usuariosDisponibles = await obtenerUsuariosNoRecomendados();
-  usuariosDisponibles = Array.isArray(usuariosDisponibles) ? usuariosDisponibles : [];
-
-  // Eliminar el usuario que clickeó el botón
-  const index = usuariosDisponibles.findIndex(u => u.id == usuarioId);
-  if (index !== -1) {
-    usuariosDisponibles.splice(index, 1);
-  }
-
-  // Obtener quién recomendó a este usuario y eliminarlo también
-  const recommendedMe = await obtenerUsuarioQueMeRecomendo(usuarioId);
-  if (recommendedMe) {
-    const indexRecomendador = usuariosDisponibles.findIndex(u => String(u.id).trim() === String(recommendedMe).trim());
-    if (indexRecomendador !== -1) {
-      usuariosDisponibles.splice(indexRecomendador, 1);
-    }
-  }
-
-  usuariosDisponiblesCache = usuariosDisponibles;
-  renderModalSeleccionarUsuarioContactar(usuariosDisponiblesCache);
+  await refrescarModalRecomendados();
+  // renderModalSeleccionarUsuarioContactar ya abre el modal internamente
 }
 
 function renderModalSeleccionarUsuarioContactar(usuarios = []) {

@@ -17,6 +17,14 @@ function mostrarCargando(visible) {
     setTimeout(() => { el.style.display = 'none'; }, 400);
   }
 }
+
+async function refrescarModalRecomendados() {
+  if (!usuarioIdDelContextoARecomendar) return;
+  const disponibles = await obtenerUsuariosDisponiblesParaRecomendar(usuarioIdDelContextoARecomendar);
+  usuariosDisponiblesCache = disponibles;
+  renderModalSeleccionarUsuarioContactar(disponibles);
+}
+
 function iniciarSSE() {
   const source = new EventSource(API_BACKEND_URL + 'eventos');
 
@@ -78,10 +86,57 @@ function iniciarSSE() {
   source.addEventListener('historial-guardado', () => {
     buscarHistorial();
   })
+  // En tu archivo de sockets / init
+  source.addEventListener('usuario-agregado', async () => {
+    // Actualiza la lista principal siempre
+    mostrarUsuarios(document.getElementById('buscadorUsuarios')?.value || '');
+
+    // Actualiza el modal solo si está abierto y hay un contexto activo
+    const modalAbierto = document.getElementById('modalSeleccionarUsuarioContactar')
+      ?.classList.contains('active');
+
+    if (modalAbierto && usuarioIdDelContextoARecomendar) {
+      await refrescarModalRecomendados();
+    }
+  });
+
+  source.addEventListener('meRecomendaron-editado', async () => {
+    const modalAbierto = document.getElementById('modalSeleccionarUsuarioContactar')
+      ?.classList.contains('active');
+
+    if (modalAbierto && usuarioIdDelContextoARecomendar) {
+      await refrescarModalRecomendados();
+    }
+  });
+
+  source.addEventListener('usuario-eliminado', async () => {
+    mostrarUsuarios(document.getElementById('buscadorUsuarios')?.value || '');
+
+    const modalAbierto = document.getElementById('modalSeleccionarUsuarioContactar')
+      ?.classList.contains('active');
+    if (modalAbierto && usuarioIdDelContextoARecomendar) {
+      await refrescarModalRecomendados();
+    }
+  });
+
+  // Para estadísticas
+  source.addEventListener('usuarioRecomendado-agregado', () => mostrarEstadisticas());
+  source.addEventListener('agregarPuntos-compraAlta', () => mostrarEstadisticas());
+  source.addEventListener('agregarPuntos-compraRecurrente', () => mostrarEstadisticas());
+  source.addEventListener('puntosEditados', () => mostrarEstadisticas());
 
 
+  // Cuando se crea un pedido nuevo
+  function refrescarPedidosSiVisible() {
+    const filtro = document.getElementById('buscadorPedidos')?.value || '';
+    if (modoPedidosHoy || filtro.trim()) {
+      mostrarPedidos(filtro);
+    }
+  }
 
-
+  source.addEventListener('pedido-agregado', refrescarPedidosSiVisible);
+  source.addEventListener('pedido-editado', refrescarPedidosSiVisible);
+  source.addEventListener('pedido-eliminado', refrescarPedidosSiVisible);
 
 
 
@@ -113,7 +168,6 @@ function sincronizarConSheets() {
       }
 
       // Sincronizar clientes
-      console.log(datos);
       const clientesSheets = datos.customers
         .map(c => ({
           ...c,

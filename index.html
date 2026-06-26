@@ -509,7 +509,11 @@
               <div class="field"><label>Kilometraje</label><input type="text" id="pedidoKilometraje" placeholder="Ej: 45000"></div>
               <div class="field"><label>Correo</label><input type="email" id="pedidoCorreo" placeholder="Ej: usuario@correo.com"></div>
             </div>
-
+            <div style="padding: 0 0 12px 0;">
+              <button type="button" class="btn-search-user" onclick="abrirModalSeleccionarUsuarioPedido()">
+                👤 Buscar cliente registrado
+              </button>
+            </div>
             <!-- Items del pedido -->
             <div class="pedido-items-wrap">
               <h4 class="pedido-items-titulo">Items del pedido</h4>
@@ -1178,7 +1182,44 @@
       </div>
     </div>
   </div>
-
+<!-- MODAL SELECCIONAR CLIENTE PARA PEDIDO -->
+<div class="modal-overlay" id="modalSeleccionarUsuarioPedido">
+  <div class="modal modal-wide">
+    <div class="modal-icon modal-icon-primary">👤</div>
+    <h3>Buscar cliente registrado</h3>
+    <p>Selecciona un usuario para completar los datos del pedido.</p>
+    <div class="modal-search-bar">
+      <input
+        type="text"
+        id="filtroUsuariosModalPedido"
+        placeholder="Buscar por nombre, cédula, teléfono o correo..."
+        oninput="filtrarUsuariosModalPedido()"
+        class="search-input"
+      >
+    </div>
+    <div class="table-wrap">
+      <table id="tablaUsuariosModalPedido">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Cédula</th>
+            <th>Teléfono</th>
+            <th>Correo</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="listaUsuariosModalPedido"></tbody>
+      </table>
+      <div class="empty-state" id="emptyUsuariosModalPedido" style="display:none">
+        <div class="empty-icon">👥</div>
+        <p>No hay usuarios registrados.</p>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="cerrarModalSeleccionarUsuarioPedido()">Cancelar</button>
+    </div>
+  </div>
+</div>
 </body>
 
 </html>
