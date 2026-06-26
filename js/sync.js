@@ -25,7 +25,9 @@ function iniciarSSE() {
   });
 
   source.addEventListener('cliente-creado', () => {
-    actualizar();
+    actualizarStats();
+    mostrarAlertas();
+
   });
 
 
@@ -37,18 +39,42 @@ function iniciarSSE() {
     mostrarAlertas();
 
   });
-  source.addEventListener('agregar-reserva', () => {
-    mostrarAlertas();
-    actualizarBadgeAgenda();
-    actualizarBadgeCitasProgramadas();
-    renderAgenda();
-  })
 
   source.addEventListener('cliente-eliminado', () => {
     mostrarAlertas();
     actualizarStats();
 
   });
+
+  source.addEventListener('reserva-agregada', () => {
+    mostrarAlertas();
+    actualizarBadgeAgenda();
+    actualizarBadgeCitasProgramadas();
+    renderAgenda();
+  })
+
+  //reservas 
+  source.addEventListener('reserva-eliminada', () => {
+
+    //  mostrarAlertas();
+    actualizarBadgeAgenda();
+    actualizarBadgeCitasProgramadas();
+    renderAgenda();
+  });
+
+  source.addEventListener('reserva-editada', () => {
+    //        mostrarAlertas();
+    //  actualizarBadgeAgenda();
+    //actualizarBadgeCitasProgramadas();
+    renderAgenda();
+
+  })
+
+
+
+
+
+
 
 
   source.onerror = () => {
