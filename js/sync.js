@@ -47,10 +47,12 @@ function iniciarSSE() {
   });
 
   source.addEventListener('reserva-agregada', () => {
-    mostrarAlertas();
+    //  mostrarAlertas();
     actualizarBadgeAgenda();
     actualizarBadgeCitasProgramadas();
     renderAgenda();
+    renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
+
   })
 
   //reservas 
@@ -60,6 +62,8 @@ function iniciarSSE() {
     actualizarBadgeAgenda();
     actualizarBadgeCitasProgramadas();
     renderAgenda();
+    renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
+
   });
 
   source.addEventListener('reserva-editada', () => {
