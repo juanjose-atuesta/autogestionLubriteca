@@ -75,6 +75,10 @@ function iniciarSSE() {
 
   })
 
+  source.addEventListener('historial-guardado', () => {
+    buscarHistorial();
+  })
+
 
 
 
