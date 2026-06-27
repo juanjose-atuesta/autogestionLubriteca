@@ -79,7 +79,7 @@ async function registrarUsuarioDesdeFormulario(evento) {
   const name = String(nombreInput.value || '').trim();
   const id = String(cedulaInput.value).trim();
   const telephone = String(telefonoInput.value).trim();
-  const emial = String(correoInput.value || '').trim();
+  const email = String(correoInput.value || '').trim();
   const registrationDay = formatearRegistrationDayComoTexto(fechaIngresoInput.value);
   if (!name || !id || !telephone || !registrationDay) return;
 
@@ -88,7 +88,7 @@ async function registrarUsuarioDesdeFormulario(evento) {
     id,
     telephone,
     registrationDay,
-    emial
+    email
   });
 
   const form = document.getElementById('usuarioForm');
@@ -101,7 +101,7 @@ function normalizarUsuarioRegistrado(usuario = {}) {
   const id = String(usuario.id || '').trim();
   const name = String(usuario.name || '').trim();
   const telephone = String(usuario.telephone || '').trim();
-  const emial = String(usuario.emial || usuario.email || '').trim();
+  const email = String(usuario.email || usuario.email || '').trim();
   const registrationDay = formatearRegistrationDayComoTexto(usuario.registrationDay);
   const recommendedUsers = Array.isArray(usuario.recommendedUsers)
     ? usuario.recommendedUsers
@@ -111,7 +111,7 @@ function normalizarUsuarioRegistrado(usuario = {}) {
     id,
     name,
     telephone,
-    emial,
+    email,
     registrationDay,
     recommendedUsers
   };
@@ -407,7 +407,7 @@ function abrirModalEditarUsuario(usuario) {
   inputNombre.value = String(usuario?.name || '').trim();
   inputCedula.value = String(usuario?.id || '').trim();
   inputTelefono.value = String(usuario?.telephone || '').trim();
-  inputCorreo.value = String(usuario?.emial || usuario?.email || '').trim();
+  inputCorreo.value = String(usuario.email || '').trim();
   inputFecha.value = formatearRegistrationDayParaInputDate(usuario?.registrationDay);
   modal.classList.add('active');
 }
@@ -419,7 +419,7 @@ async function guardarEdicionUsuarioRegistrado() {
   const name = String(document.getElementById('editUsuarioNombre')?.value || '').trim();
   const idNew = String(document.getElementById('editUsuarioCedula')?.value || '').trim();
   const telephone = String(document.getElementById('editUsuarioTelefono')?.value || '').trim();
-  const emial = String(document.getElementById('editUsuarioCorreo')?.value || '').trim();
+  const email = String(document.getElementById('editUsuarioCorreo')?.value || '').trim();
   const registrationInput = String(document.getElementById('editUsuarioFechaRegistro')?.value || '').trim();
   if (!name || !idNew || !telephone || !registrationInput) return;
 
@@ -428,7 +428,7 @@ async function guardarEdicionUsuarioRegistrado() {
     idNew,
     registrationDay: formatearRegistrationDayComoTexto(registrationInput),
     telephone,
-    emial
+    email
 
   });
 
