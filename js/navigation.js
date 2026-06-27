@@ -46,7 +46,7 @@ function seleccionarTab(tab) {
     });
     */
   }
-  if (tab === 'trabajadores') resetTabTrabajadores();
+  if (tab === 'nav-trabajadores') resetTabTrabajadores();
   cerrarMenu();
 }
 /*

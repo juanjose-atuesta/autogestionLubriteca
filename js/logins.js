@@ -1,7 +1,5 @@
 // ═══════════ TRABAJADORES ═══════════
 
-// ═══════════ TRABAJADORES ═══════════
-
 async function guardarLogin(e) {
   e.preventDefault();
   const username = document.getElementById('loginNuevoUser').value.trim();
@@ -33,4 +31,16 @@ async function guardarLogin(e) {
     errorEl.textContent = 'Error de conexión.';
     console.error(e);
   }
+}
+
+
+
+// Al salir del tab, resetear el panel
+function resetTabTrabajadores() {
+  document.getElementById('panelAddLogin').style.display = 'none';
+  document.getElementById('formAdminLogin')?.reset();
+  document.getElementById('formAddLogin')?.reset();
+  document.getElementById('adminLoginError').textContent = '';
+  document.getElementById('loginAddError').textContent = '';
+  document.getElementById('loginAddOk').textContent = '';
 }

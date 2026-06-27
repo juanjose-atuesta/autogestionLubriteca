@@ -608,7 +608,7 @@
           <div class="search-bar">
             <input type="text" id="buscadorPedidos" oninput="filtrarPedidos()"
               placeholder="🔍 Buscar por cliente, cédula, placa, orden o marca...">
-            <button id="btnPedidosHoy" class="btn-hoy-pedidos" onclick="togglePedidosHoy()">📅 Pedidos de hoy</button>
+            <button id="btnPedidosHoy" class="btn-modal-cancel" onclick="togglePedidosHoy()">📅 Pedidos de hoy</button>
             <button onclick="limpiarBuscadorPedidos()" class="btn-clear">Limpiar</button>
           </div>
           <div class="table-wrap">
@@ -704,11 +704,11 @@
         </div>
         <div class="field">
           <label>Contraseña</label>
-          <input type="password" id="loginNuevoPass" placeholder="Contraseña" autocomplete="off">
+          <input type="text" id="loginNuevoPass" placeholder="Contraseña" autocomplete="off">
         </div>
       </div>
       <div class="form-actions">
-        <button type="submit" class="btn-primary">➕ Agregar trabajador</button>
+        <button type="submit" class="btn-modal-cancel" class="btn-primary" id="botonDemrd">➕ Agregar trabajador</button>
       </div>
       <p id="loginAddError" style="color:var(--danger);margin-top:8px;font-size:13px;"></p>
       <p id="loginAddOk" style="color:var(--success);margin-top:8px;font-size:13px;"></p>

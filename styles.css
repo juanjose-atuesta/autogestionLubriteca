@@ -370,7 +370,9 @@ td strong { font-family:var(--font-display);font-weight:700;font-size:0.82rem; }
     display: flex; flex-direction: column; gap: 6px;
     justify-content: center;
 }
-
+#botonDemrd{
+  margin-left: 25px;
+}
 /* Tarjeta de cita individual */
 .agenda-cita-chip {
     display: flex; align-items: center; gap: 10px;
