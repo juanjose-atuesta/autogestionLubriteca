@@ -225,6 +225,7 @@ async function mostrarUsuarios(filtro = '') {
 
   usuarios.forEach(usuario => {
     const idSafe = String(usuario.id || '').replace(/'/g, "\\'");
+    const esAdmin = sessionStorage.getItem('ag_role') === 'admin';
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${usuario.name || '-'}</td>
@@ -235,10 +236,11 @@ async function mostrarUsuarios(filtro = '') {
       <td><button class="btn-compra btn-compra-frecuente" data-usuario-id="${idSafe}" onclick="abrirModalCompraUsuario(this, 'frecuente')" ${idSafe ? '' : 'disabled'}>Agregar compra frecuente</button></td>
       <td>
         <div class="usuarios-acciones">
+          ${esAdmin ? `
           <div class="usuarios-acciones-edicion">
             <button class="btn-edit" data-usuario-id="${idSafe}" onclick="editarUsuarioRegistradoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✎ Editar</button>
             <button class="btn-del" data-usuario-id="${idSafe}" onclick="eliminarUsuarioRegistradoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✕ Eliminar</button>
-          </div>
+          </div>` : ''}
           <div class="usuarios-acciones-principales">
             <button class="btn-add-usuario" data-usuario-id="${idSafe}" onclick="abrirModalSeleccionarUsuarioContactar(this)" ${idSafe ? '' : 'disabled'}>
               + Agregar

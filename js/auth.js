@@ -19,12 +19,14 @@ function intentarLogin(e) {
       fetch(API_BACKEND_URL + 'login/validateLogin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario, clave })
+        body: JSON.stringify({ username: usuario, password: clave })
       })
         .then(res => res.json())
         .then(data => {
-          if (data.status = true) {
-
+          console.log(data);
+          if (data.status === true) {
+            sessionStorage.setItem('ag_sesion', 'ok');
+            sessionStorage.setItem('ag_role', data.role); // ← guardas el rol
             sessionStorage.setItem('ag_sesion', 'ok');
             document.getElementById('loginScreen').classList.add('saliendo');
             setTimeout(() => mostrarApp(), 400);
@@ -57,6 +59,16 @@ function mostrarApp() {
   actualizarBadgeCitasProgramadas();
 
   sincronizarConSheets();
+  const role = sessionStorage.getItem('ag_role');
+  if (role !== 'admin') {
+    document.getElementById('nav-trabajadores')?.style.setProperty('display', 'none');
+    document.getElementById('nav-estadisticas')?.style.setProperty('display', 'none');
+
+    document.querySelectorAll('.btn-editar-usuario, .btn-eliminar-usuario').forEach(btn => {
+      btn.style.display = 'none';
+    });
+    // cualquier otro elemento que quieras ocultar
+  }
 }
 
 function cerrarSesion() {

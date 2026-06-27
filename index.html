@@ -28,6 +28,7 @@
   <script src="js/pedidosRegistrados.js" defer></script>
   <script src="js/estadisticas-api.js" defer></script>
   <script src="js/estadisticas.js" defer></script>
+  <script src="js/logins.js" defer></script>
 
   <script src="js/agenda.js" defer></script>
   <script src="js/clientes.js" defer></script>
@@ -153,6 +154,9 @@
           <span class="nav-icon">📊</span><span class="nav-label">Estadísticas</span>
           <span class="nav-badge-usuarios" id="nav-badge-estadisticas">0</span>
         </li>
+          <li class="nav-item" id="nav-trabajadores" onclick="seleccionarTab('trabajadores')">
+  <span class="nav-icon">🔐</span><span class="nav-label">Trabajadores</span>
+</li>
       </ul>
       <div class="sidebar-footer">v3.4 · AutoGestión</div>
     </nav>
@@ -683,7 +687,34 @@
         </div>
 
       </div>
-
+<div id="tab-trabajadores" class="tab-view" style="display:none">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">🔐</span>
+      <div class="card-header-content">
+        <h3>Agregar acceso de trabajador</h3>
+        <p>Crea credenciales para un nuevo trabajador</p>
+      </div>
+    </div>
+    <form id="formAddLogin" onsubmit="guardarLogin(event)">
+      <div class="form-grid">
+        <div class="field">
+          <label>Usuario</label>
+          <input type="text" id="loginNuevoUser" placeholder="Nombre de usuario" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="password" id="loginNuevoPass" placeholder="Contraseña" autocomplete="off">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">➕ Agregar trabajador</button>
+      </div>
+      <p id="loginAddError" style="color:var(--danger);margin-top:8px;font-size:13px;"></p>
+      <p id="loginAddOk" style="color:var(--success);margin-top:8px;font-size:13px;"></p>
+    </form>
+  </div>
+</div>
     </main>
   </div>
 
