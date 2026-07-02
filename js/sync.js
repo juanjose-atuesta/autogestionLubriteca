@@ -18,6 +18,140 @@ function mostrarCargando(visible) {
   }
 }
 
+async function refrescarModalRecomendados() {
+  if (!usuarioIdDelContextoARecomendar) return;
+  const disponibles = await obtenerUsuariosDisponiblesParaRecomendar(usuarioIdDelContextoARecomendar);
+  usuariosDisponiblesCache = disponibles;
+  renderModalSeleccionarUsuarioContactar(disponibles);
+}
+
+function iniciarSSE() {
+  const source = new EventSource(API_BACKEND_URL + 'eventos');
+
+  source.addEventListener('conectado', () => {
+    console.log('SSE conectado');
+  });
+
+  source.addEventListener('cliente-creado', () => {
+    actualizarStats();
+    mostrarAlertas();
+
+  });
+
+
+  source.addEventListener('cliente-editado', () => {
+
+    actualizarBadgeContactados();
+    mostrarContactados();
+    actualizarStats();
+    mostrarAlertas();
+
+  });
+
+  source.addEventListener('cliente-eliminado', () => {
+    mostrarAlertas();
+    actualizarStats();
+
+  });
+
+  source.addEventListener('reserva-agregada', () => {
+    //  mostrarAlertas();
+    actualizarBadgeAgenda();
+    actualizarBadgeCitasProgramadas();
+    renderAgenda();
+    renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
+
+  })
+
+  //reservas 
+  source.addEventListener('reserva-eliminada', () => {
+
+    //  mostrarAlertas();
+    actualizarBadgeAgenda();
+    actualizarBadgeCitasProgramadas();
+    renderAgenda();
+    renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
+
+  });
+
+  source.addEventListener('reserva-editada', () => {
+    //        mostrarAlertas();
+    //actualizarBadgeAgenda();
+    //actualizarBadgeCitasProgramadas();
+    renderAgenda();
+    renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
+
+  })
+
+  source.addEventListener('historial-guardado', () => {
+    buscarHistorial();
+  })
+  // En tu archivo de sockets / init
+  source.addEventListener('usuario-agregado', async () => {
+    // Actualiza la lista principal siempre
+    mostrarUsuarios(document.getElementById('buscadorUsuarios')?.value || '');
+
+    // Actualiza el modal solo si está abierto y hay un contexto activo
+    const modalAbierto = document.getElementById('modalSeleccionarUsuarioContactar')
+      ?.classList.contains('active');
+
+    if (modalAbierto && usuarioIdDelContextoARecomendar) {
+      await refrescarModalRecomendados();
+    }
+  });
+
+  source.addEventListener('meRecomendaron-editado', async () => {
+    const modalAbierto = document.getElementById('modalSeleccionarUsuarioContactar')
+      ?.classList.contains('active');
+
+    if (modalAbierto && usuarioIdDelContextoARecomendar) {
+      await refrescarModalRecomendados();
+    }
+  });
+
+  source.addEventListener('usuario-eliminado', async () => {
+    mostrarUsuarios(document.getElementById('buscadorUsuarios')?.value || '');
+
+    const modalAbierto = document.getElementById('modalSeleccionarUsuarioContactar')
+      ?.classList.contains('active');
+    if (modalAbierto && usuarioIdDelContextoARecomendar) {
+      await refrescarModalRecomendados();
+    }
+  });
+
+  // Para estadísticas
+  source.addEventListener('usuarioRecomendado-agregado', () => mostrarEstadisticas());
+  source.addEventListener('agregarPuntos-compraAlta', () => mostrarEstadisticas());
+  source.addEventListener('agregarPuntos-compraRecurrente', () => mostrarEstadisticas());
+  source.addEventListener('puntosEditados', () => mostrarEstadisticas());
+
+
+  // Cuando se crea un pedido nuevo
+  function refrescarPedidosSiVisible() {
+    const filtro = document.getElementById('buscadorPedidos')?.value || '';
+    if (modoPedidosHoy || filtro.trim()) {
+      mostrarPedidos(filtro);
+    }
+  }
+
+  source.addEventListener('pedido-agregado', refrescarPedidosSiVisible);
+  source.addEventListener('pedido-editado', refrescarPedidosSiVisible);
+  source.addEventListener('pedido-eliminado', refrescarPedidosSiVisible);
+
+
+
+
+  source.onerror = () => {
+    console.warn('SSE desconectado, reconectando...');
+    source.close();
+    setTimeout(iniciarSSE, 3000);
+  };
+}
+
+// Llamar esto después del login
+document.addEventListener('DOMContentLoaded', () => {
+  iniciarSSE();
+});
 
 // ═══════════ SINCRONIZAR CON GOOGLE SHEETS (CORREGIDO) ═══════════
 function sincronizarConSheets() {
@@ -34,7 +168,6 @@ function sincronizarConSheets() {
       }
 
       // Sincronizar clientes
-      console.log(datos);
       const clientesSheets = datos.customers
         .map(c => ({
           ...c,
@@ -48,32 +181,6 @@ function sincronizarConSheets() {
           mileage: String(c.mileage)
         }));
 
-
-      /*
-            // 🔧 CORREGIDO: Sincronizar citas usando String para citaId y comparación correcta
-            if (Array.isArray(datos.citas)) {
-              const citasSheets = datos.citas.map(c => ({
-                citaId: String(c.citaId),   // Forzar string
-                placa: String(c.placa || '').toUpperCase().trim(),
-                nombre: String(c.nombre || ''),
-                telefono: String(c.telefono || ''),
-                categoria: String(c.categoria || ''),
-                fecha: String(c.fecha || ''),
-                hora: String(c.hora || ''),
-                espacio: String(c.espacio || ''),
-                notas: String(c.notas || '')
-              }));
-              const idsSheets = new Set(citasSheets.map(c => c.citaId));
-              const citasLocal = getCitas();
-              const ahora = Date.now();
-              // Conservar citas locales recientes (< 2 min) que Sheets aún no confirmó
-              const pendientes = citasLocal.filter(c =>
-                !idsSheets.has(String(c.citaId)) && (ahora - Number(c.citaId)) < 120000
-              );
-              setCitas([...citasSheets, ...pendientes]);
-              console.log('✓ ' + citasSheets.length + ' citas + ' + pendientes.length + ' pendientes locales');
-            }
-      */
       //migrarClientesAHistorial();
       actualizarStats();
       mostrarAlertas();
@@ -102,6 +209,7 @@ function sincronizarConSheets() {
       mostrarCargando(false);
     });
 }
+
 
 
 // 🔧 CORREGIDO: sincronizarSoloCitas con manejo de string para citaId

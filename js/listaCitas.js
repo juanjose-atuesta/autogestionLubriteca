@@ -206,13 +206,14 @@ async function renderListaCitasProgramadas(filtro = '') {
 
     const reservationId = String(cita.reservationId || '').trim();
     const reservationIdSafe = reservationId.replace(/'/g, "\\'");
+    const esAdmin = sessionStorage.getItem('ag_role') === 'admin';
     const tdAcciones = document.createElement('td');
     tdAcciones.innerHTML = `
-      <div class="citas-programadas-acciones">
-        <button class="btn-ver-cita" onclick="abrirModalNotasCita('${reservationIdSafe}')" ${reservationId ? '' : 'disabled'}>👁 Ver notas</button>
-        <button class="btn-edit" onclick="editarCitaProgramada('${reservationIdSafe}')" ${reservationId ? '' : 'disabled'}>✎ Editar</button>
-        <button class="btn-del" onclick="eliminarCita('${reservationIdSafe}')" ${reservationId ? '' : 'disabled'}>✕ Eliminar</button>
-      </div>`;
+  <div class="citas-programadas-acciones">
+    <button class="btn-ver-cita" onclick="abrirModalNotasCita('${reservationIdSafe}')" ${reservationId ? '' : 'disabled'}>👁 Ver notas</button>
+    ${esAdmin ? `<button class="btn-edit" onclick="editarCitaProgramada('${reservationIdSafe}')" ${reservationId ? '' : 'disabled'}>✎ Editar</button>` : ''}
+    <button class="btn-del" onclick="eliminarCita('${reservationIdSafe}')" ${reservationId ? '' : 'disabled'}>✕ Eliminar</button>
+  </div>`;
     tr.appendChild(tdAcciones);
 
     tbody.appendChild(tr);

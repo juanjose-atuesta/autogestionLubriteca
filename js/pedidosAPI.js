@@ -68,3 +68,16 @@ async function eliminarPedidoRegistrado(pedidoMongoId) {
     return null;
   }
 }
+
+async function getPedidosDeHoyRegistrados() {
+  try {
+    const response = await fetch(API_BACKEND_URL + "pedidos/getPedidosDeHoy");
+    const data = await response.json();
+    return data.pedidos || null;
+
+  }
+  catch (e) {
+    console.error("error al botener los pedidos de hoy")
+    return null;
+  }
+}

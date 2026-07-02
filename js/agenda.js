@@ -237,10 +237,12 @@ async function renderAgenda() {
                         ${cita.name}
                         ${cita.notes ? `<small>📝 ${cita.notes}</small>` : ''}
                     </div>
-                    <div class="cita-acciones">
-                        <button class="btn-ver-cita" onclick="verDetalleCita('${cita.reservationId}')" title="Ver detalle">👁</button>
-                        <button class="btn-del-cita-chip" onclick="eliminarCita('${cita.reservationId}')">✕</button>
-                    </div>
+<div class="cita-acciones">
+    <button class="btn-ver-cita" onclick="verDetalleCita('${cita.reservationId}')" title="Ver detalle">👁</button>
+    ${sessionStorage.getItem('ag_role') === 'admin' ? `<button class="btn-edit" onclick="editarCitaProgramada('${cita.reservationId}')" title="Editar">✎</button>` : ''}
+    <button class="btn-del-cita-chip" onclick="eliminarCita('${cita.reservationId}')">✕</button>
+</div>
+</div>
                 </div>`;
       });
     } else {

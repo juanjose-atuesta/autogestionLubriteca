@@ -25,7 +25,8 @@ function seleccionarTab(tab) {
     agenda: 'Agenda',
     'citas-programadas': 'Citas programadas',
     pedidos: 'Registrar Pedido',
-    'pedidos-registrados': 'Pedidos Registrados'
+    'pedidos-registrados': 'Pedidos Registrados',
+    trabajadores: 'trabajadores'
   };
   document.getElementById('tab-indicator').textContent = t[tab];
   if (tab === 'database') mostrarGeneral();
@@ -45,6 +46,7 @@ function seleccionarTab(tab) {
     });
     */
   }
+  if (tab === 'nav-trabajadores') resetTabTrabajadores();
   cerrarMenu();
 }
 /*

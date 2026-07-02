@@ -28,16 +28,18 @@
   <script src="js/pedidosRegistrados.js" defer></script>
   <script src="js/estadisticas-api.js" defer></script>
   <script src="js/estadisticas.js" defer></script>
+  <script src="js/logins.js" defer></script>
 
   <script src="js/agenda.js" defer></script>
   <script src="js/clientes.js" defer></script>
 
-  <script src="js/sync.js" defer></script>
 
   <script src="js/auth.js" defer></script>
   <script src="js/navigation.js" defer></script>
   <script src="js/main.js" defer></script>
   <script src="js/actualizar.js" defer></script>
+      <script src="js/sync.js" defer></script>
+
 </head>
 
 <body>
@@ -145,13 +147,16 @@
           <span class="nav-badge" id="nav-badge-pedidos">0</span>
         </li>
         <li class="nav-item" id="nav-pedidos-registrados" onclick="seleccionarTab('pedidos-registrados')">
-          <span class="nav-icon">📋</span><span class="nav-label">Pedidos del día</span>
+          <span class="nav-icon">📋</span><span class="nav-label">Pedidos registrados</span>
           <span class="nav-badge" id="nav-badge-pedidos-registrados">0</span>
         </li>
         <li class="nav-item" id="nav-estadisticas" onclick="seleccionarTab('estadisticas')">
           <span class="nav-icon">📊</span><span class="nav-label">Estadísticas</span>
           <span class="nav-badge-usuarios" id="nav-badge-estadisticas">0</span>
         </li>
+          <li class="nav-item" id="nav-trabajadores" onclick="seleccionarTab('trabajadores')">
+  <span class="nav-icon">🔐</span><span class="nav-label">Trabajadores</span>
+</li>
       </ul>
       <div class="sidebar-footer">v3.4 · AutoGestión</div>
     </nav>
@@ -508,7 +513,11 @@
               <div class="field"><label>Kilometraje</label><input type="text" id="pedidoKilometraje" placeholder="Ej: 45000"></div>
               <div class="field"><label>Correo</label><input type="email" id="pedidoCorreo" placeholder="Ej: usuario@correo.com"></div>
             </div>
-
+            <div style="padding: 0 0 12px 0;">
+              <button type="button" class="btn-search-user" onclick="abrirModalSeleccionarUsuarioPedido()">
+                👤 Buscar cliente registrado
+              </button>
+            </div>
             <!-- Items del pedido -->
             <div class="pedido-items-wrap">
               <h4 class="pedido-items-titulo">Items del pedido</h4>
@@ -592,14 +601,14 @@
           <div class="card-header card-header-usuarios">
             <span class="card-icon card-icon-usuarios">📋</span>
             <div>
-              <h3>Pedidos del día</h3>
-              <p>Listado de órdenes registradas hoy</p>
+              <h3>Pedidos registrados</h3>
+              <p>Listado de órdenes de servicio</p>
             </div>
           </div>
           <div class="search-bar">
             <input type="text" id="buscadorPedidos" oninput="filtrarPedidos()"
               placeholder="🔍 Buscar por cliente, cédula, placa, orden o marca...">
-            <button id="btnPedidosHoy" class="btn-hoy-pedidos activo" onclick="togglePedidosHoy()">📅 Hoy</button>
+            <button id="btnPedidosHoy" class="btn-modal-cancel" onclick="togglePedidosHoy()">📅 Pedidos de hoy</button>
             <button onclick="limpiarBuscadorPedidos()" class="btn-clear">Limpiar</button>
           </div>
           <div class="table-wrap">
@@ -678,7 +687,34 @@
         </div>
 
       </div>
-
+<div id="tab-trabajadores" class="tab-view" style="display:none">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">🔐</span>
+      <div class="card-header-content">
+        <h3>Agregar acceso de trabajador</h3>
+        <p>Crea credenciales para un nuevo trabajador</p>
+      </div>
+    </div>
+    <form id="formAddLogin" onsubmit="guardarLogin(event)">
+      <div class="form-grid">
+        <div class="field">
+          <label>Usuario</label>
+          <input type="text" id="loginNuevoUser" placeholder="Nombre de usuario" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="text" id="loginNuevoPass" placeholder="Contraseña" autocomplete="off">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-modal-cancel" class="btn-primary" id="botonDemrd">➕ Agregar trabajador</button>
+      </div>
+      <p id="loginAddError" style="color:var(--danger);margin-top:8px;font-size:13px;"></p>
+      <p id="loginAddOk" style="color:var(--success);margin-top:8px;font-size:13px;"></p>
+    </form>
+  </div>
+</div>
     </main>
   </div>
 
@@ -1177,7 +1213,44 @@
       </div>
     </div>
   </div>
-
+<!-- MODAL SELECCIONAR CLIENTE PARA PEDIDO -->
+<div class="modal-overlay" id="modalSeleccionarUsuarioPedido">
+  <div class="modal modal-wide">
+    <div class="modal-icon modal-icon-primary">👤</div>
+    <h3>Buscar cliente registrado</h3>
+    <p>Selecciona un usuario para completar los datos del pedido.</p>
+    <div class="modal-search-bar">
+      <input
+        type="text"
+        id="filtroUsuariosModalPedido"
+        placeholder="Buscar por nombre, cédula, teléfono o correo..."
+        oninput="filtrarUsuariosModalPedido()"
+        class="search-input"
+      >
+    </div>
+    <div class="table-wrap">
+      <table id="tablaUsuariosModalPedido">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Cédula</th>
+            <th>Teléfono</th>
+            <th>Correo</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="listaUsuariosModalPedido"></tbody>
+      </table>
+      <div class="empty-state" id="emptyUsuariosModalPedido" style="display:none">
+        <div class="empty-icon">👥</div>
+        <p>No hay usuarios registrados.</p>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="cerrarModalSeleccionarUsuarioPedido()">Cancelar</button>
+    </div>
+  </div>
+</div>
 </body>
 
 </html>
