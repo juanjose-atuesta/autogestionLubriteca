@@ -342,4 +342,112 @@ function seleccionarUsuarioParaPedido(usuarioId) {
 
 function cerrarModalSeleccionarUsuarioPedido() {
   document.getElementById('modalSeleccionarUsuarioPedido')?.classList.remove('active');
-} 
+}
+
+// ═══════════ GENERAR .TXT DEL PEDIDO ═══════════
+
+function formatearLineaItemTxt(label, fila) {
+  if (!Array.isArray(fila)) return '';
+  const [cantidad, referencia, precio] = fila;
+  if (!cantidad && !referencia && !precio) return '';
+  return `${label}: ${cantidad || 0} x ${referencia || '-'} = ${formatearMonedaPedido(calcularTotalFilaPedido(cantidad, precio))}`;
+}
+
+function generarTextoPedido(pedido) {
+  const lineas = [];
+  lineas.push('═══════════════════════════════');
+  lineas.push('       PEDIDO — AUTOGESTIÓN');
+  lineas.push('═══════════════════════════════');
+  lineas.push('');
+  lineas.push(`Orden: ${pedido.orden || '-'}`);
+  lineas.push(`EL: ${pedido.EL || '-'}`);
+  lineas.push(`Fecha: ${new Date().toLocaleDateString('es-CO')}`);
+  lineas.push('');
+  lineas.push('── DATOS DEL CLIENTE ──');
+  lineas.push(`Nombre: ${pedido.name || '-'}`);
+  lineas.push(`Cédula: ${pedido.id || '-'}`);
+  lineas.push(`Teléfono: ${pedido.telephone || '-'}`);
+  lineas.push(`Correo: ${pedido.email || '-'}`);
+  lineas.push('');
+  lineas.push('── DATOS DEL VEHÍCULO ──');
+  lineas.push(`Marca: ${pedido.vehicleMake || '-'}`);
+  lineas.push(`Placa: ${pedido.plate || '-'}`);
+  lineas.push(`Kilometraje: ${pedido.mileage || '-'}`);
+  lineas.push('');
+  lineas.push('── ITEMS ──');
+
+  const gruposLabel = { oil: 'F. Aceite', FAire: 'F. Aire', FComb: 'F. Combustible', FAA: 'F.A.A' };
+  let hayItemsFijos = false;
+  Object.keys(gruposLabel).forEach(key => {
+    const grupo = Array.isArray(pedido[key]) ? pedido[key] : [];
+    grupo.forEach(fila => {
+      const linea = formatearLineaItemTxt(gruposLabel[key], fila);
+      if (linea) { lineas.push(linea); hayItemsFijos = true; }
+    });
+  });
+  if (!hayItemsFijos) lineas.push('(sin items fijos)');
+
+  const otros = Array.isArray(pedido.otros) ? pedido.otros : [];
+  if (otros.length) {
+    lineas.push('');
+    lineas.push('── OTROS ──');
+    otros.forEach(fila => {
+      const linea = formatearLineaItemTxt('Item', fila);
+      if (linea) lineas.push(linea);
+    });
+  }
+
+  lineas.push('');
+  lineas.push('═══════════════════════════════');
+  const total = pedido.precioTotal !== undefined
+    ? Number(pedido.precioTotal) || 0
+    : calcularPrecioTotalPedidoLocal(pedido);
+  lineas.push(`TOTAL: ${formatearMonedaPedido(total)}`);
+  lineas.push('═══════════════════════════════');
+
+  return lineas.join('\n');
+}
+
+// Por si el pedido no trae precioTotal calculado desde el backend (caso del formulario antes de guardar)
+function calcularPrecioTotalPedidoLocal(pedido) {
+  const grupos = [pedido.oil, pedido.FAire, pedido.FComb, pedido.FAA, pedido.otros];
+  let total = 0;
+  grupos.forEach(grupo => {
+    if (!Array.isArray(grupo)) return;
+    grupo.forEach(fila => {
+      if (!Array.isArray(fila)) return;
+      total += calcularTotalFilaPedido(fila[0], fila[2]);
+    });
+  });
+  return total;
+}
+
+function descargarTxt(contenido, nombreArchivo) {
+  const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombreArchivo;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ── Botón en el formulario de pedidos (usa lo que hay escrito, sin guardar) ──
+function descargarTxtPedidoFormulario() {
+  const payload = construirPayloadPedidoDesdeForm();
+  if (!payload.name || !payload.orden) {
+    alert('Completa al menos Cliente y N° de Orden antes de descargar.');
+    return;
+  }
+  const texto = generarTextoPedido(payload);
+  descargarTxt(texto, `Pedido_${payload.orden || 'sin-orden'}.txt`);
+}
+
+// ── Botón en pedidos registrados (usa el pedido ya guardado) ──
+function descargarTxtPedidoRegistrado(pedido) {
+  if (!pedido) return;
+  const texto = generarTextoPedido(pedido);
+  descargarTxt(texto, `Pedido_${pedido.orden || pedido._id || 'sin-orden'}.txt`);
+}

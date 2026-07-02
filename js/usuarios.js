@@ -9,7 +9,8 @@ function waMsgAutorizacionUsuario(nombre) {
 De acuerdo con la normativa vigente sobre protección de datos personales, le informamos que la información suministrada será utilizada únicamente para fines comerciales, de contacto, atención al cliente, envío de información, promociones y seguimiento de nuestros servicios.
 Sus datos serán tratados de manera confidencial y no serán compartidos con terceros sin su autorización.
 
-Para autorizar el uso de datos personales, entre al siguiente formulario de google (${FORMULARIO_AUTORIZACION_DATOS_URL})`);
+Para autorizar el uso de datos personales, entre al siguiente formulario de google:
+${formulario_autorizacion_datos_url}`);
 }
 
 function enviarAutorizacionUsuarioDesdeFormulario() {
