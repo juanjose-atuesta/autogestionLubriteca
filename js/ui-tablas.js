@@ -1,4 +1,7 @@
-
+function normalizarBooleanConcluido(valor) {
+  if (valor === true || valor === 'true' || valor === 1 || valor === '1') return true;
+  return false;
+}
 // ═══════════ STATS ═══════════
 function actualizarStats() {
   const cl = getClientes().then(
@@ -47,13 +50,16 @@ function construirFila(c, citas = []) {
 
 
   const citasCliente = citas.filter(ct => ct.customerId == id);
-  const tieneReserva = citasCliente.length > 0;
+  const citaActiva = citasCliente.find(ct => !normalizarBooleanConcluido(ct.wasConcluded));
+  const citaConcluida = citasCliente.find(ct => normalizarBooleanConcluido(ct.wasConcluded));
   const idSafe = String(id).replace(/'/g, "\\'");
   const nombreSafe = nombre.replace(/'/g, "\\'").replace(/"/g, '&quot;');
   const categoriaSafe = categoria.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-  const btnReservar = tieneReserva
-    ? `<button class="btn-reservar-cita btn-reservado" onclick="abrirModalReservar('${idSafe}','${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">✅ Reservado</button>`
-    : `<button class="btn-reservar-cita" onclick="abrirModalReservar('${idSafe}','${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">📅 Reservar</button>`;
+  const btnReservar = citaActiva
+    ? `<button class="btn-reservar-cita btn-reservado" disabled>✅ Reservado</button>`
+    : citaConcluida
+      ? `<button class="btn-reservar-cita btn-concluido-reservar" onclick="abrirModalReservar('${idSafe}','${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">✓ Concluido · Reservar</button>`
+      : `<button class="btn-reservar-cita" onclick="abrirModalReservar('${idSafe}','${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">📅 Reservar</button>`;
 
   const tr = document.createElement('tr');
   if (cl) tr.classList.add(cl);
@@ -102,7 +108,7 @@ async function mostrarAlertas() {
 // ═══════════ BASE DE DATOS ═══════════
 async function mostrarGeneral(filtro = '') {
   const tbody = document.getElementById('listaGeneral'), empty = document.getElementById('emptyGeneral'), hoy = getHoy();
-  Promise.all([getClientes(), getCitas()]).then(([todos, citas]) => {
+  Promise.all([getClientesDB(), getCitas()]).then(([todos, citas]) => {
     let cl = todos;
     if (filtro.trim()) {
       const f = filtro.trim().toUpperCase();

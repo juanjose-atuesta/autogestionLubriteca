@@ -124,7 +124,11 @@ function iniciarSSE() {
   source.addEventListener('agregarPuntos-compraAlta', () => mostrarEstadisticas());
   source.addEventListener('agregarPuntos-compraRecurrente', () => mostrarEstadisticas());
   source.addEventListener('puntosEditados', () => mostrarEstadisticas());
+  source.addEventListener('reservacion-concluida', () => {
+    renderAgenda();
+    renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
 
+  })
 
   // Cuando se crea un pedido nuevo
   function refrescarPedidosSiVisible() {

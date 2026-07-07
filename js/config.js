@@ -1,13 +1,6 @@
 
-const API_BACKEND_URL = "http://10.44.17.141:3000/api/";
+const API_BACKEND_URL = "http://10.44.26.68:3000/api/";
 const formulario_autorizacion_datos_url = "https://docs.google.com/forms/d/e/1faipqlsfmtcluyap9f79nboprgssdyx6pmtdfilfjkedtbbfk6hqpfa/viewform?usp=sharing&ouid=115359686355008826821";
-let currentValue = null;
-async function cargarValorInicial() {
-  const response = await fetch(API_BACKEND_URL + "eventos/getvalue");
-  const data = await response.json();
-  const objeto = data.valor;
-  currentValue = objeto.value;
-}
 
 
 // ═══════════ CREDENCIALES ═══════════
