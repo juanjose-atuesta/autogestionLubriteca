@@ -208,6 +208,8 @@ td strong { font-family:var(--font-display);font-weight:700;font-size:0.82rem; }
 .fila-hoy:hover { background:#fef3c7 !important; }
 .fila-vencido { background:var(--danger-soft) !important; }
 .fila-vencido:hover { background:#fee2e2 !important; }
+.fila-contactado { background:var(--contactado-soft) !important; }
+.fila-contactado:hover { background:#a7f3d0 !important; }
 
 /* ═══════════ BADGES ═══════════ */
 .badge-estado { display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;font-family:var(--font-display);letter-spacing:0.3px;white-space:nowrap; }
@@ -215,6 +217,7 @@ td strong { font-family:var(--font-display);font-weight:700;font-size:0.82rem; }
 .badge-vencido { background:#fee2e2;color:#991b1b;border:1px solid #fca5a5; }
 .badge-ok      { background:#d1fae5;color:#065f46;border:1px solid #6ee7b7; }
 .badge-pronto  { background:#dbeafe;color:#1e40af;border:1px solid #93c5fd; }
+.badge-contactado { background:var(--contactado-soft);color:var(--contactado-color);border:1px solid #6ee7b7; }
 .badge-eliminado { display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;font-family:var(--font-display);background:#f1f5f9;color:var(--text-muted);border:1px solid var(--border-dark);white-space:nowrap; }
 
 /* ═══════════ BOTONES ACCIÓN ═══════════ */

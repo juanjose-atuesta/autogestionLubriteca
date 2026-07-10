@@ -31,6 +31,7 @@ function abrirModalReservar(clienteId, placa, nombre, telefono, categoria) {
 // ═══════════ CONCLUIR CITA — reemplaza la función en agenda.js ═══════════
 
 let reservationIdPendienteConcluir = null;
+let customerIdPendienteConcluir = null;
 
 async function concluirCita(citaId) {
   const reservationId = String(citaId || '').trim();
@@ -47,6 +48,7 @@ async function concluirCita(citaId) {
 
   // Rellenar el modal con los datos de la cita
   reservationIdPendienteConcluir = reservationId;
+  customerIdPendienteConcluir = String(cita.customerId || '').trim();
 
   document.getElementById('concluirCitaNombre').textContent =
     String(cita.name || '—').trim();
@@ -70,11 +72,13 @@ async function concluirCita(citaId) {
 function cerrarModalConcluirCita() {
   document.getElementById('modalConcluirCita').classList.remove('active');
   reservationIdPendienteConcluir = null;
+  customerIdPendienteConcluir = null;
 }
 
 async function confirmarConcluirCita() {
   if (!reservationIdPendienteConcluir) return;
   const reservationId = reservationIdPendienteConcluir;
+  const customerId = customerIdPendienteConcluir;
   cerrarModalConcluirCita();
 
   try {
@@ -84,14 +88,14 @@ async function confirmarConcluirCita() {
     );
     if (!response.ok) throw new Error('HTTP ' + response.status);
 
-    await actualizarBadgeAgenda();
-    await actualizarBadgeCitasProgramadas();
+    if (customerId) {
+      const customerResponse = await fetch(
+        API_BACKEND_URL + "customers/toogleReservationConcluded/" + customerId,
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' } }
+      );
+      if (!customerResponse.ok) throw new Error('HTTP ' + customerResponse.status);
+    }
 
-    if (document.getElementById('tab-citas-programadas').classList.contains('active'))
-      renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
-
-    if (document.getElementById('tab-agenda').classList.contains('active'))
-      await renderAgenda();
 
   } catch (error) {
     console.error('Error al concluir cita:', error);

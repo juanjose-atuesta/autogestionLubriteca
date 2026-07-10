@@ -61,6 +61,19 @@ async function getCitas() {
     return [];
   }
 }
+
+async function getReservationsConcluded() {
+  try {
+    const response = await fetch(API_BACKEND_URL + "reservations/getReservationsConcluded");
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const data = await response.json();
+    return data.reservationList || data.reservations || [];
+  } catch (error) {
+    console.error('Error fetching citas concluidas:', error);
+    return [];
+  }
+}
+
 async function setCitas() {
   return getCitas();
 }

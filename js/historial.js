@@ -1,76 +1,136 @@
+function formatoEspacioHistorial(space) {
+  const valor = String(space || '').trim();
+  const etiquetas = {
+    carcamo: 'Cárcamo',
+    gato_hidraulico: 'Gato Hidráulico',
+    gato_electrico: 'Gato Eléctrico'
+  };
+  return etiquetas[valor] || valor || '—';
+}
 
-// ═══════════ HISTORIAL ═══════════
-function buscarHistorial() {
-  getHistorialDB().then(regs => {
-    const busqueda = document.getElementById('buscadorPlaca').value.trim();
-    const res = document.getElementById('historialResultado');
+function compararFechaHoraDesc(a = {}, b = {}) {
+  const claveA = `${String(a.date || '')} ${String(a.hour || '')}`;
+  const claveB = `${String(b.date || '')} ${String(b.hour || '')}`;
+  return claveB.localeCompare(claveA);
+}
 
-    if (busqueda.length < 2) {
-      res.innerHTML = `<div class="empty-state"><div class="empty-icon">◎</div><p>Ingresa al menos 2 caracteres para buscar por placa, nombre, teléfono, servicio o fecha.</p></div>`;
+function renderEstadoInicialHistorial() {
+  const res = document.getElementById('historialResultado');
+  if (!res) return;
+  res.innerHTML = `<div class="empty-state"><div class="empty-icon">◎</div><p>Escribe un criterio para filtrar citas concluidas (placa, nombre, servicio, fecha o teléfono).</p></div>`;
+}
+
+// ═══════════ HISTORIAL (CITAS CONCLUIDAS) ═══════════
+async function buscarHistorial() {
+  const res = document.getElementById('historialResultado');
+  const input = document.getElementById('buscadorPlaca');
+  if (!res || !input) return;
+
+  const busqueda = String(input.value || '').trim();
+  const busquedaUpper = busqueda.toUpperCase();
+
+  const citasRaw = await getReservationsConcluded();
+  const citasConcluidas = (Array.isArray(citasRaw) ? citasRaw : [])
+    .filter(c => normalizarBooleanConcluido(c.wasConcluded))
+    .sort(compararFechaHoraDesc);
+
+  if (!busqueda) {
+    const recientes = citasConcluidas.slice(0, 20);
+    if (!recientes.length) {
+      res.innerHTML = `<div class="empty-state"><div class="empty-icon">○</div><p>No hay citas concluidas para mostrar.</p></div>`;
       return;
     }
+    res.innerHTML = '';
+    res.innerHTML = `<div class="historial-placa-header"><div class="historial-meta"><strong>${citasConcluidas.length}</strong> cita${citasConcluidas.length !== 1 ? 's' : ''} concluida${citasConcluidas.length !== 1 ? 's' : ''} · mostrando las <strong>${recientes.length}</strong> más recientes</div></div>`;
+    res.innerHTML += `<div class="historial-timeline">${recientes.map((cita, idx) => {
+      const nombre = String(cita.name || '—').trim();
+      const telefono = String(cita.telephone || '—').trim();
+      const placa = String(cita.plate || '—').toUpperCase().trim();
+      const servicio = String(cita.service || '—').trim();
+      const fecha = String(cita.date || '—').trim();
+      const hora = String(cita.hour || '—').trim();
+      const espacio = formatoEspacioHistorial(cita.space);
+      const notas = String(cita.notes || '').trim();
+      return `<div class="historial-item"><div class="historial-linea"><div class="historial-dot dot-actual"></div>${idx !== recientes.length - 1 ? '<div class="historial-connector"></div>' : ''}</div>
+        <div class="historial-card card-actual">
+          <div class="historial-card-top">
+            <div class="historial-nombre">${nombre}<small>${telefono}</small></div>
+            <span class="badge-estado badge-contactado">✓ CONCLUIDA</span>
+          </div>
+          <div class="historial-card-info">
+            <div class="historial-info-item">🚗 <strong>${placa}</strong></div>
+            <div class="historial-info-item">🔧 <strong>${servicio}</strong></div>
+            <div class="historial-info-item">📍 <strong>${espacio}</strong></div>
+            <div class="historial-info-item">📅 <strong>${fecha}</strong></div>
+            <div class="historial-info-item">🕒 <strong>${hora}</strong></div>
+            ${notas ? `<div class="historial-info-item">📝 <strong>${notas}</strong></div>` : ''}
+          </div>
+        </div></div>`;
+    }).join('')}</div>`;
+    return;
+  }
 
-    const busquedaUpper = busqueda.toUpperCase();
+  const filtradas = citasConcluidas.filter(cita => {
+    const nombre = String(cita.name || '').toUpperCase();
+    const telefono = String(cita.telephone || '').toUpperCase();
+    const placa = String(cita.plate || '').toUpperCase();
+    const servicio = String(cita.service || '').toUpperCase();
+    const fecha = String(cita.date || '').toUpperCase();
+    const hora = String(cita.hour || '').toUpperCase();
+    const espacio = formatoEspacioHistorial(cita.space).toUpperCase();
+    const reservationId = String(cita.reservationId || '').toUpperCase();
 
-    // Filtrar por múltiples campos
-    let regsFiltered = regs.filter(c => {
-      const plate = String(c.plate || '').toUpperCase();
-      const name = String(c.name || '').toUpperCase();
-      const telephone = String(c.telephone || '').toUpperCase();
-      const service = String(c.service || '').toUpperCase();
-      const entryDate = String(c.entryDate || '').toUpperCase();
-      const nextContact = String(c.nextContact || '').toUpperCase();
+    return nombre.includes(busquedaUpper) ||
+      telefono.includes(busquedaUpper) ||
+      placa.includes(busquedaUpper) ||
+      servicio.includes(busquedaUpper) ||
+      fecha.includes(busquedaUpper) ||
+      hora.includes(busquedaUpper) ||
+      espacio.includes(busquedaUpper) ||
+      reservationId.includes(busquedaUpper);
+  });
 
-      return plate.includes(busquedaUpper) ||
-        name.includes(busquedaUpper) ||
-        telephone.includes(busquedaUpper) ||
-        service.includes(busquedaUpper) ||
-        entryDate.includes(busquedaUpper) ||
-        nextContact.includes(busquedaUpper);
-    }).sort((a, b) => String(a.entryDate).localeCompare(String(b.nextContact)));
+  if (!filtradas.length) {
+    res.innerHTML = `<div class="empty-state"><div class="empty-icon">○</div><p>No se encontraron citas concluidas para "<strong>${busqueda}</strong>".</p></div>`;
+    return;
+  }
 
-    if (!regsFiltered.length) {
-      res.innerHTML = `<div class="empty-state"><div class="empty-icon">○</div><p>No se encontraron registros para "<strong>${busqueda}</strong>".</p></div>`;
-      return;
-    }
+  res.innerHTML = `<div class="historial-placa-header"><div class="historial-meta"><strong>${filtradas.length}</strong> resultado${filtradas.length !== 1 ? 's' : ''} para "<strong>${busqueda}</strong>"</div></div>`;
+  res.innerHTML += `<div class="historial-timeline">${filtradas.map((cita, idx) => {
+    const nombre = String(cita.name || '—').trim();
+    const telefono = String(cita.telephone || '—').trim();
+    const placa = String(cita.plate || '—').toUpperCase().trim();
+    const servicio = String(cita.service || '—').trim();
+    const fecha = String(cita.date || '—').trim();
+    const hora = String(cita.hour || '—').trim();
+    const espacio = formatoEspacioHistorial(cita.space);
+    const notas = String(cita.notes || '').trim();
+    return `<div class="historial-item"><div class="historial-linea"><div class="historial-dot dot-actual"></div>${idx !== filtradas.length - 1 ? '<div class="historial-connector"></div>' : ''}</div>
+      <div class="historial-card card-actual">
+        <div class="historial-card-top">
+          <div class="historial-nombre">${nombre}<small>${telefono}</small></div>
+          <span class="badge-estado badge-contactado">✓ CONCLUIDA</span>
+        </div>
+        <div class="historial-card-info">
+          <div class="historial-info-item">🚗 <strong>${placa}</strong></div>
+          <div class="historial-info-item">🔧 <strong>${servicio}</strong></div>
+          <div class="historial-info-item">📍 <strong>${espacio}</strong></div>
+          <div class="historial-info-item">📅 <strong>${fecha}</strong></div>
+          <div class="historial-info-item">🕒 <strong>${hora}</strong></div>
+          ${notas ? `<div class="historial-info-item">📝 <strong>${notas}</strong></div>` : ''}
+        </div>
+      </div></div>`;
+  }).join('')}</div>`;
+}
 
-    const hoy = getHoy(), pu = [...new Set(regsFiltered.map(c => c.plate))];
-    let html = '';
-    pu.forEach(p => {
-      const r = regsFiltered.filter(c => c.plate === p), d = new Set(r.map(x => x.nombre)).size;
-      html += `<div class="historial-placa-header"><div class="historial-placa-badge">${p}</div><div class="historial-meta"><strong>${r.length}</strong> servicio${r.length !== 1 ? 's' : ''} · <strong>${d}</strong> dueño${d !== 1 ? 's' : ''}</div></div><div class="historial-timeline">`;
-      r.forEach((c, idx) => {
-        const esE = c.eliminado === true, esH = !esE && String(c.nextContact).trim() === hoy, esV = !esE && String(c.nextContact).trim() < hoy;
-        const dotC = esE ? '' : esH ? 'dot-hoy' : esV ? 'dot-vencido' : 'dot-actual';
-        const cardC = esE ? 'card-eliminado' : esH ? 'card-hoy' : esV ? 'card-vencido' : 'card-actual';
-        const idSafe = String(c.id || '').replace(/'/g, "\\'");
-        html += `<div class="historial-item"><div class="historial-linea"><div class="historial-dot ${dotC}"></div>${idx !== r.length - 1 ? '<div class="historial-connector"></div>' : ''}</div>
-            <div class="historial-card ${cardC}">
-                <div class="historial-card-top"><div class="historial-nombre">${c.name}<small>${c.telephone}</small></div>${buildBadge(c.fechaFutura, esE)}</div>
-                <div class="historial-card-info">
-                    <div class="historial-info-item">🔧 <strong>${c.service}</strong></div>
-                    <div class="historial-info-item">📅 Ingreso: <strong>${c.entryDate}</strong></div>
-                    <div class="historial-info-item">📅 Contacto: <strong>${c.nextContact}</strong></div>
-                    <div class="historial-info-item">🛣 <strong>${c.mileage} KM</strong></div>
-                    ${esE ? '<div class="historial-info-item">🗑 <strong>Eliminado del sistema</strong></div>' : ''}
-                </div>
-                ${!esE ? `<button class="btn-reservar-historial" onclick="abrirModalReservar('${idSafe}','${c.plate}','${c.name.replace(/'/g, "\\'")}','${c.telephone}','${c.service.replace(/'/g, "\\'")}')">📅 Reservar cita</button>` : ''}
-            </div></div>`;
-      });
-      html += `</div>`;
-    });
-    res.innerHTML = html;
-
-  })
-
+function consultarHistorialHoy() {
+  document.getElementById('buscadorPlaca').value = getHoy();
+  buscarHistorial();
+  document.getElementById('buscadorPlaca').focus();
 }
 
 function limpiarHistorial() {
-  let hoy = new Date();
-  let dia = hoy.getDate();
-  let mes = hoy.getMonth() + 1;
-  let anio = hoy.getFullYear();
-  document.getElementById('buscadorPlaca').value = `${anio}-${mes.toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+  document.getElementById('buscadorPlaca').value = '';
   buscarHistorial();
   document.getElementById('buscadorPlaca').focus();
 }

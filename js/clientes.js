@@ -61,8 +61,9 @@ document.getElementById('clienteForm').addEventListener('submit', async e => {
 
 function eliminarCliente(id) {
   console.log("Hiciste click en eliminar cliente con id:", id);
+  id = String(id);
   getClientes().then(cl => {
-    const c = cl.find(x => x.id === id);
+    const c = cl.find(x => String(x.id) === id);
     if (c) {
       fetch(API_BACKEND_URL + "customers/deleteCustomer/" + id, {
         method: 'DELETE',
@@ -96,7 +97,7 @@ function abrirModalEditar(id) {
 
   id = String(id);
   getClientes().then(clientes => {
-    const c = clientes.find(x => x.id === id);
+    const c = clientes.find(x => String(x.id) === id);
     if (!c) return;
     //document.getElementById('editId').value = c.id;
     document.getElementById('editNombre').value = c.name;

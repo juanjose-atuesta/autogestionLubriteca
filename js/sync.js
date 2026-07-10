@@ -54,6 +54,13 @@ function iniciarSSE() {
 
   });
 
+  source.addEventListener('cliente-citaConcluida', () => {
+    mostrarAlertas();
+    actualizarStats();
+
+  });
+
+
   source.addEventListener('reserva-agregada', () => {
     //  mostrarAlertas();
     actualizarBadgeAgenda();

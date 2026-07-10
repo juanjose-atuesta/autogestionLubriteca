@@ -284,20 +284,20 @@
           <div class="card-header"><span class="card-icon">◎</span>
             <div>
               <h3>Historial por Placa</h3>
-              <p>Todos los servicios y dueños de un vehículo</p>
+              <p>Citas concluidas del taller</p>
             </div>
           </div>
           <div class="search-bar">
             <input type="text" id="buscadorPlaca" oninput="buscarHistorial()"
-              placeholder="🔍 Escribe una placa para ver su historial..." style="text-transform:uppercase">
-            <button onclick="limpiarHistorial()" class="btn-clear">Consultar Hoy</button>
+              placeholder="🔍 Buscar por placa, nombre, servicio, fecha u hora..." style="text-transform:uppercase">
+            <button onclick="consultarHistorialHoy()" class="btn-clear">Consultar Hoy</button>
 
             <button onclick="limpiarHistorial()" class="btn-clear">Limpiar</button>
           </div>
           <div id="historialResultado">
             <div class="empty-state">
               <div class="empty-icon">◎</div>
-              <p>Ingresa una placa para ver su historial completo.</p>
+              <p>Escribe un criterio para buscar citas concluidas.</p>
             </div>
           </div>
         </div>
