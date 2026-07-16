@@ -1,22 +1,46 @@
+function normalizarBooleanConcluido(valor) {
+  if (valor === true || valor === 'true' || valor === 1 || valor === '1') return true;
+  return false;
+}
 
+function estaContactado(cliente = {}) {
+  return normalizarBooleanContactado(cliente.wasContacted);
+}
+
+function estaVencidoCliente(cliente = {}, hoy = getHoy()) {
+  const fecha = String(cliente.nextContact || '').trim();
+  return fecha < hoy && !estaContactado(cliente);
+}
+
+function esPendienteHoy(cliente = {}, hoy = getHoy()) {
+  const fecha = String(cliente.nextContact || '').trim();
+  return fecha === hoy && !estaContactado(cliente);
+}
+
+function estaAlDiaCliente(cliente = {}, hoy = getHoy()) {
+  const fecha = String(cliente.nextContact || '').trim();
+  return fecha > hoy && !estaContactado(cliente);
+}
 // ═══════════ STATS ═══════════
 function actualizarStats() {
   const cl = getClientes().then(
     cl => {
 
       hoy = getHoy();
-      const v = cl.filter(c => String(c.nextContact).trim() < hoy).length;
-      const h = cl.filter(c => String(c.nextContact).trim() === hoy).length;
+      const v = cl.filter(c => estaVencidoCliente(c, hoy)).length;
+      const h = cl.filter(c => esPendienteHoy(c, hoy)).length;
+      const alDia = cl.filter(c => estaAlDiaCliente(c, hoy)).length;
       document.getElementById('statsGrid').innerHTML = `
         <div class="stat-card stat-primary"><div class="stat-value">${cl.length}</div><div class="stat-label">Total clientes</div></div>
         <div class="stat-card stat-danger"><div class="stat-value">${v}</div><div class="stat-label">Vencidos</div></div>
         <div class="stat-card stat-warning"><div class="stat-value">${h}</div><div class="stat-label">Citas hoy</div></div>
-        <div class="stat-card stat-success"><div class="stat-value">${cl.length - v - h}</div><div class="stat-label">Al día</div></div>`;
+        <div class="stat-card stat-success"><div class="stat-value">${alDia}</div><div class="stat-label">Al día</div></div>`;
     }
   )
 }
-function buildBadge(fechaStr, eliminado = false) {
+function buildBadge(fechaStr, eliminado = false, contactado = false) {
   if (eliminado) return `<span class="badge-eliminado">● Eliminado</span>`;
+  if (contactado) return `<span class="badge-estado badge-contactado">✓ CONTACTADO</span>`;
   const hoy = getHoy(), f = String(fechaStr).trim(), d = diasRestantes(f);
   if (f === hoy) return `<span class="badge-estado badge-hoy">⚠ HOY</span>`;
   if (f < hoy) return `<span class="badge-estado badge-vencido">✕ VENCIDO hace ${Math.abs(d)}d</span>`;
@@ -38,8 +62,9 @@ function construirFila(c, citas = []) {
   const hoy = getHoy(), f = fechaFutura.trim();
   const esHoy = f === hoy, esV = f < hoy;
 
-  const marcado = normalizarBooleanContactado(c.wasContacted);
-  const cl = esHoy ? 'fila-hoy' : esV ? 'fila-vencido' : '';
+  const marcado = estaContactado(c);
+  const reservaConcluidaCliente = normalizarBooleanConcluido(c.reservationConcluded);
+  const cl = marcado ? 'fila-contactado' : esHoy ? 'fila-hoy' : esV ? 'fila-vencido' : '';
 
   const waTxt = esHoy
     ? `Hola%20${encodeURIComponent(nombre)},%20te%20recordamos%20que%20tu%20servicio%20de%20${encodeURIComponent(categoria)}%20es%20HOY.%20%C2%A1Te%20esperamos!`
@@ -47,13 +72,18 @@ function construirFila(c, citas = []) {
 
 
   const citasCliente = citas.filter(ct => ct.customerId == id);
-  const tieneReserva = citasCliente.length > 0;
+  const citaActiva = citasCliente.find(ct => !normalizarBooleanConcluido(ct.wasConcluded));
+  const citaConcluida = citasCliente.find(ct => normalizarBooleanConcluido(ct.wasConcluded));
   const idSafe = String(id).replace(/'/g, "\\'");
   const nombreSafe = nombre.replace(/'/g, "\\'").replace(/"/g, '&quot;');
   const categoriaSafe = categoria.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-  const btnReservar = tieneReserva
-    ? `<button class="btn-reservar-cita btn-reservado" onclick="abrirModalReservar('${idSafe}','${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">✅ Reservado</button>`
-    : `<button class="btn-reservar-cita" onclick="abrirModalReservar('${idSafe}','${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">📅 Reservar</button>`;
+  const btnReservar = reservaConcluidaCliente
+    ? `<button class="btn-reservar-cita btn-reservado" disabled>✅ Cita realizada</button>`
+    : citaActiva
+    ? `<button class="btn-reservar-cita btn-reservado" disabled>✅ Reservado</button>`
+    : citaConcluida
+      ? `<button class="btn-reservar-cita btn-concluido-reservar" onclick="abrirModalReservar('${idSafe}','${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">✓ Concluido · Reservar</button>`
+      : `<button class="btn-reservar-cita" onclick="abrirModalReservar('${idSafe}','${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">📅 Reservar</button>`;
 
   const tr = document.createElement('tr');
   if (cl) tr.classList.add(cl);
@@ -63,7 +93,7 @@ function construirFila(c, citas = []) {
         <td><strong>${placa}</strong></td>
         <td>${fechaActual}</td>
         <td>${fechaFutura}</td>
-        <td>${buildBadge(fechaFutura)}</td>
+        <td>${buildBadge(fechaFutura, false, marcado)}</td>
         <td>${km} KM</td>
         <td>${btnReservar}</td>
         <td>
@@ -84,7 +114,9 @@ function construirFila(c, citas = []) {
 async function mostrarAlertas() {
   const tbody = document.getElementById('listaAlertas'), empty = document.getElementById('emptyAlertas'), hoy = getHoy();
   Promise.all([getClientes(), getCitas()]).then(([clientes, citas]) => {
-    const al = clientes.filter(c => { const f = String(c.nextContact).trim(); return f === hoy || f < hoy; })
+    const al = clientes.filter(c => {
+      return esPendienteHoy(c, hoy) || estaVencidoCliente(c, hoy);
+    })
       .sort((a, b) => { const fa = String(a.nextContact).trim(), fb = String(b.nextContact).trim(); if (fa === hoy && fb !== hoy) return -1; if (fb === hoy && fa !== hoy) return 1; return fb.localeCompare(fa); });
     tbody.innerHTML = '';
     if (!al.length) { empty.style.display = 'block'; document.getElementById('tablaAlertas').style.display = 'none'; }
@@ -102,7 +134,7 @@ async function mostrarAlertas() {
 // ═══════════ BASE DE DATOS ═══════════
 async function mostrarGeneral(filtro = '') {
   const tbody = document.getElementById('listaGeneral'), empty = document.getElementById('emptyGeneral'), hoy = getHoy();
-  Promise.all([getClientes(), getCitas()]).then(([todos, citas]) => {
+  Promise.all([getClientesDB(), getCitas()]).then(([todos, citas]) => {
     let cl = todos;
     if (filtro.trim()) {
       const f = filtro.trim().toUpperCase();
@@ -115,12 +147,13 @@ async function mostrarGeneral(filtro = '') {
       });
     }
     cl.sort((a, b) => String(a.nextContact).localeCompare(String(b.nextContact)));
-    const v = todos.filter(c => String(c.nextContact).trim() < hoy).length;
-    const hC = todos.filter(c => String(c.nextContact).trim() === hoy).length;
+    const v = todos.filter(c => estaVencidoCliente(c, hoy)).length;
+    const hC = todos.filter(c => esPendienteHoy(c, hoy)).length;
+    const alDia = todos.filter(c => estaAlDiaCliente(c, hoy)).length;
     document.getElementById('dbStats').innerHTML = `
         <div class="db-stat-item"><span class="db-dot" style="background:#ef4444"></span>${v} vencidos</div>
         <div class="db-stat-item"><span class="db-dot" style="background:#f59e0b"></span>${hC} hoy</div>
-        <div class="db-stat-item"><span class="db-dot" style="background:#10b981"></span>${todos.length - v - hC} al día</div>
+        <div class="db-stat-item"><span class="db-dot" style="background:#10b981"></span>${alDia} al día</div>
         <div class="db-stats-total">${todos.length} registros</div>`;
     tbody.innerHTML = '';
     if (!cl.length) { empty.style.display = 'block'; document.getElementById('tablaGeneral').style.display = 'none'; }

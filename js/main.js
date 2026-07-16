@@ -74,7 +74,7 @@ function abrirModalEliminar(id) {
   id = String(id);
   getClientes()
     .then(clientes => {
-      const c = clientes.find(x => x.id === id);
+      const c = clientes.find(x => String(x.id) === id);
       if (!c) return;
       idPendienteEliminar = id;
       document.getElementById('modalEliminarTexto').textContent = `¿Eliminar a "${c.name}" (${c.plate})? Se moverá a la papelera en Google Sheets.`;

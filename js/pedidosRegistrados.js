@@ -281,6 +281,7 @@ function renderizarFilasPedidos(pedidos) {
       <td>
         <button class="btn-view" data-pedido-id="${idSafe}" onclick="verDetallePedidoDesdeBoton(this)">👁 Ver detalles</button>
         <button class="btn-edit" data-pedido-id="${idSafe}" onclick="editarPedidoDesdeBoton(this)">✎ Editar</button>
+        <button class="btn-modal-cancel" data-pedido-id="${idSafe}" onclick="descargarTxtPedidoRegistradoDesdeBoton(this)">📄 .txt</button>
         <button class="btn-del"  data-pedido-id="${idSafe}" onclick="eliminarPedidoDesdeBoton(this)">✕ Eliminar</button>
       </td>`;
     tbody.appendChild(tr);
@@ -568,3 +569,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnHoy = document.getElementById('btnPedidosHoy');
   if (btnHoy) btnHoy.addEventListener('click', togglePedidosHoy);
 });
+function descargarTxtPedidoRegistradoDesdeBoton(boton) {
+  const pedidoId = obtenerIdPedidoDesdeClick(boton);
+  if (!pedidoId) return;
+
+  const pedido = cachePedidosRegistrados.find(p => String(p._id) === pedidoId);
+  if (!pedido) return;
+
+  descargarTxtPedidoRegistrado(pedido); // función que ya te pasé en pedidos.js
+}

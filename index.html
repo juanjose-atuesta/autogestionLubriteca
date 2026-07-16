@@ -284,20 +284,20 @@
           <div class="card-header"><span class="card-icon">◎</span>
             <div>
               <h3>Historial por Placa</h3>
-              <p>Todos los servicios y dueños de un vehículo</p>
+              <p>Citas concluidas del taller</p>
             </div>
           </div>
           <div class="search-bar">
             <input type="text" id="buscadorPlaca" oninput="buscarHistorial()"
-              placeholder="🔍 Escribe una placa para ver su historial..." style="text-transform:uppercase">
-            <button onclick="limpiarHistorial()" class="btn-clear">Consultar Hoy</button>
+              placeholder="🔍 Buscar por placa, nombre, servicio, fecha u hora..." style="text-transform:uppercase">
+            <button onclick="consultarHistorialHoy()" class="btn-clear">Consultar Hoy</button>
 
             <button onclick="limpiarHistorial()" class="btn-clear">Limpiar</button>
           </div>
           <div id="historialResultado">
             <div class="empty-state">
               <div class="empty-icon">◎</div>
-              <p>Ingresa una placa para ver su historial completo.</p>
+              <p>Escribe un criterio para buscar citas concluidas.</p>
             </div>
           </div>
         </div>
@@ -489,8 +489,17 @@
 
       <!-- PEDIDOS -->
       <div id="tab-pedidos" class="tab-view" style="display:none">
-
         <div class="card">
+          <div class="card-header card-header-danger">
+            <span class="card-icon">🚧</span>
+            <div>
+              <h3>Sección inhabilitada</h3>
+              <p>Estamos trabajando en esta sección de pedidos.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="display:none" aria-hidden="true">
           <div class="card-header card-header-usuarios">
             <span class="card-icon card-icon-usuarios">🧾</span>
             <div>
@@ -587,6 +596,9 @@
 
             <div class="field field-submit" style="flex-direction:column;gap:8px;align-items:center;padding:0 24px 24px;">
               <button type="submit" class="btn-save" id="btnGuardarPedido" style="width:auto;min-width:220px;">💾 Guardar Pedido</button>
+                <button type="button" class="btn-modal-cancel" onclick="descargarTxtPedidoFormulario()">
+  📄 Descargar .txt
+</button> 
               <button type="button" class="btn-clear" onclick="cancelarEdicionPedido()">Cancelar edición / Limpiar</button>
             </div>
           </form>
@@ -596,8 +608,17 @@
 
       <!-- PEDIDOS DEL DÍA -->
       <div id="tab-pedidos-registrados" class="tab-view" style="display:none">
-
         <div class="card">
+          <div class="card-header card-header-danger">
+            <span class="card-icon">🚧</span>
+            <div>
+              <h3>Sección inhabilitada</h3>
+              <p>Estamos trabajando en esta sección de pedidos.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="display:none" aria-hidden="true">
           <div class="card-header card-header-usuarios">
             <span class="card-icon card-icon-usuarios">📋</span>
             <div>
@@ -717,13 +738,48 @@
 </div>
     </main>
   </div>
-
+<!-- MODAL CONFIRMAR CONCLUIR CITA -->
+<div class="modal-overlay" id="modalConcluirCita">
+  <div class="modal">
+    <div class="modal-icon" style="background:#dcfce7;color:#16a34a;font-size:1.6rem;">✓</div>
+    <h3>¿Concluir esta cita?</h3>
+    <p style="margin:0 24px 14px;color:var(--text-muted);font-size:0.85rem;">
+      Confirma que el servicio se realizó con éxito.
+    </p>
+    <div class="modal-concluir-detalle">
+      <div class="modal-concluir-campo">
+        <span class="modal-concluir-label">Cliente</span>
+        <span class="modal-concluir-valor" id="concluirCitaNombre">—</span>
+      </div>
+      <div class="modal-concluir-campo">
+        <span class="modal-concluir-label">Placa</span>
+        <span class="modal-concluir-valor" id="concluirCitaPlaca">—</span>
+      </div>
+      <div class="modal-concluir-campo">
+        <span class="modal-concluir-label">Servicio</span>
+        <span class="modal-concluir-valor" id="concluirCitaServicio">—</span>
+      </div>
+      <div class="modal-concluir-campo">
+        <span class="modal-concluir-label">Espacio</span>
+        <span class="modal-concluir-valor" id="concluirCitaEspacio">—</span>
+      </div>
+      <div class="modal-concluir-campo modal-concluir-campo-full">
+        <span class="modal-concluir-label">Fecha y hora</span>
+        <span class="modal-concluir-valor" id="concluirCitaFechaHora">—</span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="cerrarModalConcluirCita()">Cancelar</button>
+      <button class="btn-modal-confirm-green" id="btnConfirmarConcluirCita">✓ Sí, concluir</button>
+    </div>
+  </div>
+</div>
   <!-- MODAL ELIMINAR -->
   <div class="modal-overlay" id="modalEliminar">
     <div class="modal">
       <div class="modal-icon modal-icon-danger">✕</div>
       <h3>¿Eliminar registro?</h3>
-      <p id="modalEliminarTexto">Esta acción moverá el cliente a la papelera en Google Sheets.</p>
+      <p id="modalEliminarTexto">Esta acción eliminará esta notificación de la base de datos</p>
       <div class="modal-actions">
         <button class="btn-modal-cancel" onclick="cerrarModalEliminar()">Cancelar</button>
         <button class="btn-modal-confirm" id="btnConfirmarEliminar">Sí, eliminar</button>
