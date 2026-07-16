@@ -394,7 +394,15 @@ async function verDetalleCita(citaId) {
 
   const esp = ESPACIOS[cita.space] || {};
   const hoy = getHoy();
-  const waTxt = encodeURIComponent(`Hola ${cita.name}, te confirmamos tu cita en ${cita.space} el ${cita.date} a las ${HORAS_DISPLAY[cita.hour]}. ¡Te esperamos!`);
+  let mensaje;
+
+  if (cita.mileage === ".") {
+    mensaje = "MENSAJE CUANDO ES \".\"";
+  } else {
+    mensaje = "MENSAJE CUANDO TIENE UN VALOR";
+  }
+
+  const waTxt = encodeURIComponent(mensaje);
   const esHoy = cita.date === hoy;
   const esPasada = cita.date < hoy;
 
