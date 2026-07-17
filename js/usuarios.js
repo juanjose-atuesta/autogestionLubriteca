@@ -4,13 +4,14 @@ let compraUsuarioIdPendiente = null;
 let compraTipoPendiente = null;
 
 function waMsgAutorizacionUsuario(nombre) {
-  return encodeURIComponent(`Estimado/a ${nombre},
+  return encodeURIComponent(`Estimado/a ${nombre}.
 
-De acuerdo con la normativa vigente sobre protección de datos personales, le informamos que la información suministrada será utilizada únicamente para fines comerciales, de contacto, atención al cliente, envío de información, promociones y seguimiento de nuestros servicios.
-Sus datos serán tratados de manera confidencial y no serán compartidos con terceros sin su autorización.
+¿Autoriza a Lubri Repuestos Yumbo JRC para tratar sus datos personales y contactarlo por WhatsApp con el fin de activar el servicio de recordatorios de mantenimiento, informarle sobre la llegada de repuestos solicitados y brindarle información relacionada con nuestros servicios?
 
-Para autorizar el uso de datos personales, entre al siguiente formulario de google:
-${formulario_autorizacion_datos_url}`);
+Responda únicamente: Sí o No.
+
+Si desea conocer cómo tratamos y protegemos sus datos personales, puede consultar nuestra Política de Tratamiento de Datos aquí:
+${documento_autorizacion_datos_url}`);
 }
 
 function enviarAutorizacionUsuarioDesdeFormulario() {

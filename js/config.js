@@ -1,6 +1,6 @@
 
 const API_BACKEND_URL = "http://192.168.0.132:3000/api/";
-const formulario_autorizacion_datos_url = "https://docs.google.com/forms/d/e/1faipqlsfmtcluyap9f79nboprgssdyx6pmtdfilfjkedtbbfk6hqpfa/viewform?usp=sharing&ouid=115359686355008826821";
+const documento_autorizacion_datos_url = "https://docs.google.com/document/d/1JuuQcjqJRRoOjid0BEr6Yz_FpABXftCkNRBVhflbGLI/edit?usp=sharing";
 
 
 // ═══════════ CREDENCIALES ═══════════
