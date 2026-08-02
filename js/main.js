@@ -23,7 +23,7 @@ function waMsgAutorizacion(nombre) {
 }
 function enviarAutorizacion() {
   const nombre = document.getElementById('nombre').value.trim();
-  const telefono = document.getElementById('telefono').value.trim();
+  const telefono = limpiarTelefono(document.getElementById('telefono').value);
   if (!nombre || !telefono) { alert('Ingresa el nombre y teléfono del cliente primero.'); return; }
   window.open(`https://wa.me/57${telefono}?text=${waMsgAutorizacion(nombre)}`, '_blank');
 }

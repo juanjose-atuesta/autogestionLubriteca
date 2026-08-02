@@ -22,7 +22,7 @@ function enviarAutorizacionUsuarioDesdeFormulario() {
     return;
   }
 
-  const telefonoLimpio = telefono.replace(/\D/g, '');
+  const telefonoLimpio = limpiarTelefono(telefono);
   if (!telefonoLimpio) {
     alert('El teléfono no es válido.');
     return;
@@ -80,7 +80,7 @@ async function registrarUsuarioDesdeFormulario(evento) {
 
   const name = String(nombreInput.value || '').trim();
   const id = String(cedulaInput.value).trim();
-  const telephone = String(telefonoInput.value).trim();
+  const telephone = limpiarTelefono(telefonoInput.value);
   const email = String(correoInput.value || '').trim();
   const registrationDay = formatearRegistrationDayComoTexto(fechaIngresoInput.value);
   if (!name || !id || !telephone || !registrationDay) return;
@@ -420,7 +420,7 @@ async function guardarEdicionUsuarioRegistrado() {
 
   const name = String(document.getElementById('editUsuarioNombre')?.value || '').trim();
   const idNew = String(document.getElementById('editUsuarioCedula')?.value || '').trim();
-  const telephone = String(document.getElementById('editUsuarioTelefono')?.value || '').trim();
+  const telephone = limpiarTelefono(document.getElementById('editUsuarioTelefono')?.value || '');
   const email = String(document.getElementById('editUsuarioCorreo')?.value || '').trim();
   const registrationInput = String(document.getElementById('editUsuarioFechaRegistro')?.value || '').trim();
   if (!name || !idNew || !telephone || !registrationInput) return;

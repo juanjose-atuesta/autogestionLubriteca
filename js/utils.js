@@ -1,4 +1,8 @@
 
+function limpiarTelefono(valor) {
+  return String(valor || '').replace(/\D/g, '');
+}
+
 function getHoy() { return new Date().toLocaleDateString('en-CA'); }
 function setFechaHoyEnInput(inputId) {
   const input = document.getElementById(inputId);
