@@ -19,7 +19,7 @@ document.getElementById('clienteForm').addEventListener('submit', async e => {
   const c = {
     id: Date.now(),
     name: document.getElementById('nombre').value.toUpperCase(),
-    telephone: document.getElementById('telefono').value.trim(),
+    telephone: limpiarTelefono(document.getElementById('telefono').value),
     plate: document.getElementById('placa').value.toUpperCase().trim(),
     service: document.getElementById('categoria').value,
     entryDate: document.getElementById('fechaActual').value,
@@ -118,7 +118,7 @@ function abrirModalEditar(id) {
       body: JSON.stringify({
         id: id,
         name: document.getElementById('editNombre').value.toUpperCase(),
-        telephone: document.getElementById('editTelefono').value.trim(),
+        telephone: limpiarTelefono(document.getElementById('editTelefono').value),
         plate: document.getElementById('editPlaca').value.toUpperCase().trim(),
         service: document.getElementById('editCategoria').value,
         entryDate: document.getElementById('editFechaActual').value,
@@ -133,7 +133,7 @@ function abrirModalEditar(id) {
           body: JSON.stringify({
             id: id,
             name: document.getElementById('editNombre').value.toUpperCase(),
-            telephone: document.getElementById('editTelefono').value.trim(),
+            telephone: limpiarTelefono(document.getElementById('editTelefono').value),
             plate: document.getElementById('editPlaca').value.toUpperCase().trim(),
             service: document.getElementById('editCategoria').value,
             entryDate: document.getElementById('editFechaActual').value,

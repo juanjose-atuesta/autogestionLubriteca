@@ -438,7 +438,7 @@ async function verDetalleCita(citaId) {
             </div>
         </div>
         <div class="detalle-acciones">
-            <a href="https://wa.me/57${cita.telephone}?text=${waTxt}" target="_blank" class="btn-wa btn-detalle-wa">
+            <a href="https://wa.me/57${limpiarTelefono(cita.telephone)}?text=${waTxt}" target="_blank" class="btn-wa btn-detalle-wa">
                 📱 Contactar por WhatsApp
             </a>
             <button class="btn-del btn-detalle-del" onclick="eliminarCita('${cita.reservationId}')">

@@ -52,6 +52,7 @@ function buildBadge(fechaStr, eliminado = false, contactado = false) {
 function construirFila(c, citas = []) {
   const nombre = String(c.name || '');
   const telefono = String(c.telephone || '');
+  const telefonoLimpio = limpiarTelefono(telefono);
   const placa = String(c.plate || '').toUpperCase().trim();
   const categoria = String(c.service || 'Servicio General');
   const fechaActual = String(c.entryDate || '');
@@ -99,7 +100,7 @@ function construirFila(c, citas = []) {
         <td>
             <div class="acciones">
                 <div class="btn-wa-wrap">
-                    <a href="https://wa.me/57${telefono}?text=${waTxt}" target="_blank" class="btn-wa">📱 WhatsApp</a>
+                    <a href="https://wa.me/57${telefonoLimpio}?text=${waTxt}" target="_blank" class="btn-wa">📱 WhatsApp</a>
                     <button class="btn-chulo ${marcado ? 'marcado' : ''}" onclick="toggleContactado('${id}')" title="${marcado ? 'Contactado ✓' : 'Marcar contactado'}">✓</button>
                 </div>
                 <button class="btn-edit" onclick="abrirModalEditar('${id}')">✎ Editar</button>
