@@ -2,6 +2,20 @@
 // ═══════════ STORAGE ═══════════
 async function getClientes() {
   try {
+    const response = await fetch(API_BACKEND_URL + "customers/customersListPanelPrincipal");
+    const data = await response.json();
+    return data.customers || [];
+
+  }
+  catch (error) {
+    console.error('Error fetching clientes:', error);
+    return [];
+  }
+
+}
+
+async function getClientesDB() {
+  try {
     const response = await fetch(API_BACKEND_URL + "customers/customersList");
     const data = await response.json();
     return data.customers || [];
@@ -13,6 +27,7 @@ async function getClientes() {
   }
 
 }
+
 //function setClientes(arr) { localStorage.setItem('db_clientes', JSON.stringify(arr)); }
 async function getHistorialDB() {
   try {
@@ -46,6 +61,19 @@ async function getCitas() {
     return [];
   }
 }
+
+async function getReservationsConcluded() {
+  try {
+    const response = await fetch(API_BACKEND_URL + "reservations/getReservationsConcluded");
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const data = await response.json();
+    return data.reservationList || data.reservations || [];
+  } catch (error) {
+    console.error('Error fetching citas concluidas:', error);
+    return [];
+  }
+}
+
 async function setCitas() {
   return getCitas();
 }

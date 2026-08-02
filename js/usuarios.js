@@ -4,12 +4,14 @@ let compraUsuarioIdPendiente = null;
 let compraTipoPendiente = null;
 
 function waMsgAutorizacionUsuario(nombre) {
-  return encodeURIComponent(`Estimado/a ${nombre},
+  return encodeURIComponent(`Estimado/a ${nombre}.
 
-De acuerdo con la normativa vigente sobre protección de datos personales, le informamos que la información suministrada será utilizada únicamente para fines comerciales, de contacto, atención al cliente, envío de información, promociones y seguimiento de nuestros servicios.
-Sus datos serán tratados de manera confidencial y no serán compartidos con terceros sin su autorización.
+¿Autoriza a Lubri Repuestos Yumbo JRC para tratar sus datos personales y contactarlo por WhatsApp con el fin de activar el servicio de recordatorios de mantenimiento, informarle sobre la llegada de repuestos solicitados y brindarle información relacionada con nuestros servicios?
 
-Para autorizar el uso de datos personales, entre al siguiente formulario de google (${FORMULARIO_AUTORIZACION_DATOS_URL})`);
+Responda únicamente: Sí o No.
+
+Si desea conocer cómo tratamos y protegemos sus datos personales, puede consultar nuestra Política de Tratamiento de Datos aquí:
+${documento_autorizacion_datos_url}`);
 }
 
 function enviarAutorizacionUsuarioDesdeFormulario() {
@@ -20,7 +22,7 @@ function enviarAutorizacionUsuarioDesdeFormulario() {
     return;
   }
 
-  const telefonoLimpio = telefono.replace(/\D/g, '');
+  const telefonoLimpio = limpiarTelefono(telefono);
   if (!telefonoLimpio) {
     alert('El teléfono no es válido.');
     return;
@@ -78,8 +80,8 @@ async function registrarUsuarioDesdeFormulario(evento) {
 
   const name = String(nombreInput.value || '').trim();
   const id = String(cedulaInput.value).trim();
-  const telephone = String(telefonoInput.value).trim();
-  const emial = String(correoInput.value || '').trim();
+  const telephone = limpiarTelefono(telefonoInput.value);
+  const email = String(correoInput.value || '').trim();
   const registrationDay = formatearRegistrationDayComoTexto(fechaIngresoInput.value);
   if (!name || !id || !telephone || !registrationDay) return;
 
@@ -88,7 +90,7 @@ async function registrarUsuarioDesdeFormulario(evento) {
     id,
     telephone,
     registrationDay,
-    emial
+    email
   });
 
   const form = document.getElementById('usuarioForm');
@@ -101,7 +103,7 @@ function normalizarUsuarioRegistrado(usuario = {}) {
   const id = String(usuario.id || '').trim();
   const name = String(usuario.name || '').trim();
   const telephone = String(usuario.telephone || '').trim();
-  const emial = String(usuario.emial || usuario.email || '').trim();
+  const email = String(usuario.email || usuario.email || '').trim();
   const registrationDay = formatearRegistrationDayComoTexto(usuario.registrationDay);
   const recommendedUsers = Array.isArray(usuario.recommendedUsers)
     ? usuario.recommendedUsers
@@ -111,7 +113,7 @@ function normalizarUsuarioRegistrado(usuario = {}) {
     id,
     name,
     telephone,
-    emial,
+    email,
     registrationDay,
     recommendedUsers
   };
@@ -225,6 +227,7 @@ async function mostrarUsuarios(filtro = '') {
 
   usuarios.forEach(usuario => {
     const idSafe = String(usuario.id || '').replace(/'/g, "\\'");
+    const esAdmin = sessionStorage.getItem('ag_role') === 'admin';
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${usuario.name || '-'}</td>
@@ -235,10 +238,11 @@ async function mostrarUsuarios(filtro = '') {
       <td><button class="btn-compra btn-compra-frecuente" data-usuario-id="${idSafe}" onclick="abrirModalCompraUsuario(this, 'frecuente')" ${idSafe ? '' : 'disabled'}>Agregar compra frecuente</button></td>
       <td>
         <div class="usuarios-acciones">
+          ${esAdmin ? `
           <div class="usuarios-acciones-edicion">
             <button class="btn-edit" data-usuario-id="${idSafe}" onclick="editarUsuarioRegistradoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✎ Editar</button>
             <button class="btn-del" data-usuario-id="${idSafe}" onclick="eliminarUsuarioRegistradoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✕ Eliminar</button>
-          </div>
+          </div>` : ''}
           <div class="usuarios-acciones-principales">
             <button class="btn-add-usuario" data-usuario-id="${idSafe}" onclick="abrirModalSeleccionarUsuarioContactar(this)" ${idSafe ? '' : 'disabled'}>
               + Agregar
@@ -405,7 +409,7 @@ function abrirModalEditarUsuario(usuario) {
   inputNombre.value = String(usuario?.name || '').trim();
   inputCedula.value = String(usuario?.id || '').trim();
   inputTelefono.value = String(usuario?.telephone || '').trim();
-  inputCorreo.value = String(usuario?.emial || usuario?.email || '').trim();
+  inputCorreo.value = String(usuario.email || '').trim();
   inputFecha.value = formatearRegistrationDayParaInputDate(usuario?.registrationDay);
   modal.classList.add('active');
 }
@@ -416,8 +420,8 @@ async function guardarEdicionUsuarioRegistrado() {
 
   const name = String(document.getElementById('editUsuarioNombre')?.value || '').trim();
   const idNew = String(document.getElementById('editUsuarioCedula')?.value || '').trim();
-  const telephone = String(document.getElementById('editUsuarioTelefono')?.value || '').trim();
-  const emial = String(document.getElementById('editUsuarioCorreo')?.value || '').trim();
+  const telephone = limpiarTelefono(document.getElementById('editUsuarioTelefono')?.value || '');
+  const email = String(document.getElementById('editUsuarioCorreo')?.value || '').trim();
   const registrationInput = String(document.getElementById('editUsuarioFechaRegistro')?.value || '').trim();
   if (!name || !idNew || !telephone || !registrationInput) return;
 
@@ -426,7 +430,7 @@ async function guardarEdicionUsuarioRegistrado() {
     idNew,
     registrationDay: formatearRegistrationDayComoTexto(registrationInput),
     telephone,
-    emial
+    email
 
   });
 
@@ -484,27 +488,8 @@ async function abrirModalSeleccionarUsuarioContactar(boton) {
   const usuarioId = obtenerIdUsuarioDesdeClick(boton);
   if (!usuarioId) return;
   usuarioIdDelContextoARecomendar = usuarioId;
-
-  let usuariosDisponibles = await obtenerUsuariosNoRecomendados();
-  usuariosDisponibles = Array.isArray(usuariosDisponibles) ? usuariosDisponibles : [];
-
-  // Eliminar el usuario que clickeó el botón
-  const index = usuariosDisponibles.findIndex(u => u.id == usuarioId);
-  if (index !== -1) {
-    usuariosDisponibles.splice(index, 1);
-  }
-
-  // Obtener quién recomendó a este usuario y eliminarlo también
-  const recommendedMe = await obtenerUsuarioQueMeRecomendo(usuarioId);
-  if (recommendedMe) {
-    const indexRecomendador = usuariosDisponibles.findIndex(u => String(u.id).trim() === String(recommendedMe).trim());
-    if (indexRecomendador !== -1) {
-      usuariosDisponibles.splice(indexRecomendador, 1);
-    }
-  }
-
-  usuariosDisponiblesCache = usuariosDisponibles;
-  renderModalSeleccionarUsuarioContactar(usuariosDisponiblesCache);
+  await refrescarModalRecomendados();
+  // renderModalSeleccionarUsuarioContactar ya abre el modal internamente
 }
 
 function renderModalSeleccionarUsuarioContactar(usuarios = []) {

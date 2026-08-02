@@ -18,7 +18,18 @@ async function getUsuariosRegistrados() {
     return [];
   }
 }
-
+async function obtenerUsuariosDisponiblesParaRecomendar(usuarioId) {
+  const id = String(usuarioId || '').trim();
+  if (!id) return [];
+  try {
+    const response = await fetch(API_BACKEND_URL + "users/availableToRecommend/" + id);
+    const data = await response.json();
+    return data.users || [];
+  } catch (error) {
+    console.error('Error obteniendo usuarios disponibles:', error);
+    return [];
+  }
+}
 async function crearUsuarioRegistrado(payload) {
   try {
     const response = await fetch(API_BACKEND_URL + "users/addUser", {

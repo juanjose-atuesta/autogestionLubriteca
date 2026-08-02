@@ -24,18 +24,16 @@ function seleccionarTab(tab) {
     usuarios: 'Usuarios',
     agenda: 'Agenda',
     'citas-programadas': 'Citas programadas',
-    pedidos: 'Registrar Pedido',
-    'pedidos-registrados': 'Pedidos Registrados'
+    pedidos: 'Pedidos (inhabilitado)',
+    'pedidos-registrados': 'Pedidos registrados (inhabilitado)',
+    trabajadores: 'trabajadores'
   };
   document.getElementById('tab-indicator').textContent = t[tab];
   if (tab === 'database') mostrarGeneral();
   if (tab === 'contactados') mostrarContactados();
   if (tab === 'usuarios') mostrarUsuarios();
   if (tab === 'citas-programadas') renderListaCitasProgramadas();
-  if (tab === 'pedidos-registrados') mostrarPedidos();
-  if (tab === 'pedidos') limpiarFormularioPedido();
   if (tab === 'estadisticas') mostrarEstadisticas();
-  if (tab === 'pedidos-registrados') mostrarPedidos();
   if (tab === 'agenda') {
     irHoyAgenda();
     /*
@@ -45,6 +43,7 @@ function seleccionarTab(tab) {
     });
     */
   }
+  if (tab === 'nav-trabajadores') resetTabTrabajadores();
   cerrarMenu();
 }
 /*

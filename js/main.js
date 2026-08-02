@@ -23,7 +23,7 @@ function waMsgAutorizacion(nombre) {
 }
 function enviarAutorizacion() {
   const nombre = document.getElementById('nombre').value.trim();
-  const telefono = document.getElementById('telefono').value.trim();
+  const telefono = limpiarTelefono(document.getElementById('telefono').value);
   if (!nombre || !telefono) { alert('Ingresa el nombre y teléfono del cliente primero.'); return; }
   window.open(`https://wa.me/57${telefono}?text=${waMsgAutorizacion(nombre)}`, '_blank');
 }
@@ -74,7 +74,7 @@ function abrirModalEliminar(id) {
   id = String(id);
   getClientes()
     .then(clientes => {
-      const c = clientes.find(x => x.id === id);
+      const c = clientes.find(x => String(x.id) === id);
       if (!c) return;
       idPendienteEliminar = id;
       document.getElementById('modalEliminarTexto').textContent = `¿Eliminar a "${c.name}" (${c.plate})? Se moverá a la papelera en Google Sheets.`;

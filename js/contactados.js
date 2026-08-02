@@ -3,6 +3,7 @@
 async function actualizarBadgeContactados() {
   getContactados().then(contactados => {
     document.getElementById('nav-badge-contactados').textContent = contactados.length
+
   })
 }
 function toggleContactado(id) {
@@ -27,7 +28,7 @@ function toggleContactado(id) {
         });
     })
     .then(listado => {
-      actualizarBadgeContactados();
+      //actualizarBadgeContactados();
       mostrarAlertas();
       if (document.getElementById('tab-database').classList.contains('active')) {
         mostrarGeneral(document.getElementById('buscadorGeneral').value);
@@ -61,6 +62,7 @@ function mostrarContactados(filtro = '') {
       log = [...log].reverse();
       const total = data.length, placas = new Set(data.map(r => r.plate)).size;
       document.getElementById('statsContactados').innerHTML = `<div class="db-stat-item"><span class="db-dot" style="background:#059669"></span>${total} contacto${total !== 1 ? 's' : ''}</div><div class="db-stats-total">${placas} placa${placas !== 1 ? 's' : ''} distinta${placas !== 1 ? 's' : ''}</div>`;
+      document.getElementById('nav-badge-contactados').textContent = total;
       tbody.innerHTML = '';
       if (!log.length) { empty.style.display = 'block'; document.getElementById('tablaContactados').style.display = 'none'; }
       else {

@@ -239,3 +239,215 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fila) engancharCalculoFilaPedido(fila);
   });
 });
+
+
+// ═══════════ MODAL SELECCIONAR USUARIO PARA PEDIDO ═══════════
+let usuariosPedidoCache = [];
+
+async function abrirModalSeleccionarUsuarioPedido() {
+  const data = await getUsuariosRegistrados();
+  usuariosPedidoCache = Array.isArray(data) ? data : [];
+  renderModalUsuariosPedido(usuariosPedidoCache);
+}
+
+function renderModalUsuariosPedido(usuarios) {
+  const modal = document.getElementById('modalSeleccionarUsuarioPedido');
+  const tbody = document.getElementById('listaUsuariosModalPedido');
+  const tabla = document.getElementById('tablaUsuariosModalPedido');
+  const empty = document.getElementById('emptyUsuariosModalPedido');
+  const filtro = document.getElementById('filtroUsuariosModalPedido');
+  if (!modal || !tbody || !tabla || !empty || !filtro) return;
+
+  tbody.innerHTML = '';
+  filtro.value = '';
+
+  if (!usuarios.length) {
+    empty.style.display = 'block';
+    tabla.style.display = 'none';
+    modal.classList.add('active');
+    return;
+  }
+
+  empty.style.display = 'none';
+  tabla.style.display = '';
+
+  usuarios.forEach(u => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${u.name || '-'}</td>
+      <td>${u.id || '-'}</td>
+      <td>${u.telephone || '-'}</td>
+      <td>${u.email || u.emial || '-'}</td>
+      <td>
+        <button class="btn-add-action"
+          onclick="seleccionarUsuarioParaPedido('${String(u.id).replace(/'/g, "\\'")}')">
+          Usar
+        </button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  modal.classList.add('active');
+}
+
+function filtrarUsuariosModalPedido() {
+  const texto = String(document.getElementById('filtroUsuariosModalPedido')?.value || '')
+    .trim().toUpperCase();
+
+  const filtrados = texto
+    ? usuariosPedidoCache.filter(u =>
+      String(u.name || '').toUpperCase().includes(texto) ||
+      String(u.id || '').toUpperCase().includes(texto) ||
+      String(u.telephone || '').toUpperCase().includes(texto) ||
+      String(u.email || u.emial || '').toUpperCase().includes(texto))
+    : usuariosPedidoCache;
+
+  const tbody = document.getElementById('listaUsuariosModalPedido');
+  const tabla = document.getElementById('tablaUsuariosModalPedido');
+  const empty = document.getElementById('emptyUsuariosModalPedido');
+  if (!tbody || !tabla || !empty) return;
+
+  tbody.innerHTML = '';
+  if (!filtrados.length) {
+    empty.style.display = 'block';
+    tabla.style.display = 'none';
+    return;
+  }
+
+  empty.style.display = 'none';
+  tabla.style.display = '';
+  filtrados.forEach(u => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${u.name || '-'}</td>
+      <td>${u.id || '-'}</td>
+      <td>${u.telephone || '-'}</td>
+      <td>${u.email || u.emial || '-'}</td>
+      <td>
+        <button class="btn-add-action"
+          onclick="seleccionarUsuarioParaPedido('${String(u.id).replace(/'/g, "\\'")}')">
+          Usar
+        </button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function seleccionarUsuarioParaPedido(usuarioId) {
+  const usuario = usuariosPedidoCache.find(u => String(u.id) === String(usuarioId));
+  if (!usuario) return;
+  cerrarModalSeleccionarUsuarioPedido();
+  rellenarFormularioPedidoDesdeUsuario(usuario); // ya existe en pedidos.js
+}
+
+function cerrarModalSeleccionarUsuarioPedido() {
+  document.getElementById('modalSeleccionarUsuarioPedido')?.classList.remove('active');
+}
+
+// ═══════════ GENERAR .TXT DEL PEDIDO ═══════════
+
+function formatearLineaItemTxt(label, fila) {
+  if (!Array.isArray(fila)) return '';
+  const [cantidad, referencia, precio] = fila;
+  if (!cantidad && !referencia && !precio) return '';
+  return `${label}: ${cantidad || 0} x ${referencia || '-'} = ${formatearMonedaPedido(calcularTotalFilaPedido(cantidad, precio))}`;
+}
+
+function generarTextoPedido(pedido) {
+  const lineas = [];
+  lineas.push('═══════════════════════════════');
+  lineas.push('       PEDIDO — AUTOGESTIÓN');
+  lineas.push('═══════════════════════════════');
+  lineas.push('');
+  lineas.push(`Orden: ${pedido.orden || '-'}`);
+  lineas.push(`EL: ${pedido.EL || '-'}`);
+  lineas.push(`Fecha: ${new Date().toLocaleDateString('es-CO')}`);
+  lineas.push('');
+  lineas.push('── DATOS DEL CLIENTE ──');
+  lineas.push(`Nombre: ${pedido.name || '-'}`);
+  lineas.push(`Cédula: ${pedido.id || '-'}`);
+  lineas.push(`Teléfono: ${pedido.telephone || '-'}`);
+  lineas.push(`Correo: ${pedido.email || '-'}`);
+  lineas.push('');
+  lineas.push('── DATOS DEL VEHÍCULO ──');
+  lineas.push(`Marca: ${pedido.vehicleMake || '-'}`);
+  lineas.push(`Placa: ${pedido.plate || '-'}`);
+  lineas.push(`Kilometraje: ${pedido.mileage || '-'}`);
+  lineas.push('');
+  lineas.push('── ITEMS ──');
+
+  const gruposLabel = { oil: 'F. Aceite', FAire: 'F. Aire', FComb: 'F. Combustible', FAA: 'F.A.A' };
+  let hayItemsFijos = false;
+  Object.keys(gruposLabel).forEach(key => {
+    const grupo = Array.isArray(pedido[key]) ? pedido[key] : [];
+    grupo.forEach(fila => {
+      const linea = formatearLineaItemTxt(gruposLabel[key], fila);
+      if (linea) { lineas.push(linea); hayItemsFijos = true; }
+    });
+  });
+  if (!hayItemsFijos) lineas.push('(sin items fijos)');
+
+  const otros = Array.isArray(pedido.otros) ? pedido.otros : [];
+  if (otros.length) {
+    lineas.push('');
+    lineas.push('── OTROS ──');
+    otros.forEach(fila => {
+      const linea = formatearLineaItemTxt('Item', fila);
+      if (linea) lineas.push(linea);
+    });
+  }
+
+  lineas.push('');
+  lineas.push('═══════════════════════════════');
+  const total = pedido.precioTotal !== undefined
+    ? Number(pedido.precioTotal) || 0
+    : calcularPrecioTotalPedidoLocal(pedido);
+  lineas.push(`TOTAL: ${formatearMonedaPedido(total)}`);
+  lineas.push('═══════════════════════════════');
+
+  return lineas.join('\n');
+}
+
+// Por si el pedido no trae precioTotal calculado desde el backend (caso del formulario antes de guardar)
+function calcularPrecioTotalPedidoLocal(pedido) {
+  const grupos = [pedido.oil, pedido.FAire, pedido.FComb, pedido.FAA, pedido.otros];
+  let total = 0;
+  grupos.forEach(grupo => {
+    if (!Array.isArray(grupo)) return;
+    grupo.forEach(fila => {
+      if (!Array.isArray(fila)) return;
+      total += calcularTotalFilaPedido(fila[0], fila[2]);
+    });
+  });
+  return total;
+}
+
+function descargarTxt(contenido, nombreArchivo) {
+  const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombreArchivo;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ── Botón en el formulario de pedidos (usa lo que hay escrito, sin guardar) ──
+function descargarTxtPedidoFormulario() {
+  const payload = construirPayloadPedidoDesdeForm();
+  if (!payload.name || !payload.orden) {
+    alert('Completa al menos Cliente y N° de Orden antes de descargar.');
+    return;
+  }
+  const texto = generarTextoPedido(payload);
+  descargarTxt(texto, `Pedido_${payload.orden || 'sin-orden'}.txt`);
+}
+
+// ── Botón en pedidos registrados (usa el pedido ya guardado) ──
+function descargarTxtPedidoRegistrado(pedido) {
+  if (!pedido) return;
+  const texto = generarTextoPedido(pedido);
+  descargarTxt(texto, `Pedido_${pedido.orden || pedido._id || 'sin-orden'}.txt`);
+}

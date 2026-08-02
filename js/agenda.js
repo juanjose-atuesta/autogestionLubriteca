@@ -28,8 +28,79 @@ function abrirModalReservar(clienteId, placa, nombre, telefono, categoria) {
   mostrarPaso2();
 }
 
-let reservationIdPendienteEliminar = null;
+// ═══════════ CONCLUIR CITA — reemplaza la función en agenda.js ═══════════
 
+let reservationIdPendienteConcluir = null;
+let customerIdPendienteConcluir = null;
+
+async function concluirCita(citaId) {
+  const reservationId = String(citaId || '').trim();
+  if (!reservationId) return;
+
+  // Buscar los datos de la cita para mostrarlos en el modal
+  const citas = await getCitas();
+  const cita = (Array.isArray(citas) ? citas : []).find(
+    c => String(c.reservationId) === reservationId
+  );
+  if (!cita) return;
+
+  if (normalizarBooleanConcluido(cita.wasConcluded)) return;
+
+  // Rellenar el modal con los datos de la cita
+  reservationIdPendienteConcluir = reservationId;
+  customerIdPendienteConcluir = String(cita.customerId || '').trim();
+
+  document.getElementById('concluirCitaNombre').textContent =
+    String(cita.name || '—').trim();
+
+  document.getElementById('concluirCitaPlaca').textContent =
+    String(cita.plate || '—').toUpperCase().trim();
+
+  document.getElementById('concluirCitaServicio').textContent =
+    String(cita.service || '—').trim();
+
+  document.getElementById('concluirCitaEspacio').textContent =
+    formatoEspacioCita(cita.space);
+
+  document.getElementById('concluirCitaFechaHora').textContent =
+    `${String(cita.date || '')} — ${String(cita.hour || '')}`;
+
+  document.getElementById('btnConfirmarConcluirCita').onclick = confirmarConcluirCita;
+  document.getElementById('modalConcluirCita').classList.add('active');
+}
+
+function cerrarModalConcluirCita() {
+  document.getElementById('modalConcluirCita').classList.remove('active');
+  reservationIdPendienteConcluir = null;
+  customerIdPendienteConcluir = null;
+}
+
+async function confirmarConcluirCita() {
+  if (!reservationIdPendienteConcluir) return;
+  const reservationId = reservationIdPendienteConcluir;
+  const customerId = customerIdPendienteConcluir;
+  cerrarModalConcluirCita();
+
+  try {
+    const response = await fetch(
+      API_BACKEND_URL + "reservations/reservationConcluded/" + reservationId,
+      { method: 'PATCH', headers: { 'Content-Type': 'application/json' } }
+    );
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+
+    if (customerId) {
+      const customerResponse = await fetch(
+        API_BACKEND_URL + "customers/toogleReservationConcluded/" + customerId,
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' } }
+      );
+      if (!customerResponse.ok) throw new Error('HTTP ' + customerResponse.status);
+    }
+
+
+  } catch (error) {
+    console.error('Error al concluir cita:', error);
+  }
+}
 function mostrarPaso2() {
   const fecha = document.getElementById('reservarFecha').value;
   if (!fecha) return;
@@ -225,22 +296,29 @@ async function renderAgenda() {
     if (citasEnEstaHora.length > 0) {
       citasEnEstaHora.forEach(cita => {
         const esp = ESPACIOS[cita.space] || {};
+        const citaConcluida = normalizarBooleanConcluido(cita.wasConcluded);
+        const reservationId = String(cita.reservationId || '').trim();
+        const reservationIdSafe = reservationId.replace(/'/g, "\\'");
         html += `
                 <div class="agenda-cita-chip ${esp.clase || ''}"
                     draggable="true"
-                    data-citaid="${cita.reservationId}"
-                    ondragstart="onDragStart(event,'${cita.reservationId}')"
+                    data-citaid="${reservationIdSafe}"
+                    ondragstart="onDragStart(event,'${reservationIdSafe}')"
                     ondragend="onDragEnd(event)">
                     <span class="cita-espacio-tag ${esp.tag || ''}">${esp.icono || ''} ${esp.nombre || cita.space}</span>
                     <span class="cita-placa">${cita.plate}</span>
                     <div class="cita-info">
                         ${cita.name}
                         ${cita.notes ? `<small>📝 ${cita.notes}</small>` : ''}
+                        ${citaConcluida ? `<small>✅ Concluida</small>` : ''}
                     </div>
-                    <div class="cita-acciones">
-                        <button class="btn-ver-cita" onclick="verDetalleCita('${cita.reservationId}')" title="Ver detalle">👁</button>
-                        <button class="btn-del-cita-chip" onclick="eliminarCita('${cita.reservationId}')">✕</button>
-                    </div>
+<div class="cita-acciones">
+    <button class="btn-concluir-cita-chip ${citaConcluida ? 'concluida' : ''}" onclick="concluirCita('${reservationIdSafe}')" title="${citaConcluida ? 'Cita concluida' : 'Concluir cita'}" ${reservationId && !citaConcluida ? '' : 'disabled'}>✅</button>
+    <button class="btn-ver-cita" onclick="verDetalleCita('${reservationIdSafe}')" title="Ver detalle">👁</button>
+    ${sessionStorage.getItem('ag_role') === 'admin' ? `<button class="btn-edit" onclick="editarCitaProgramada('${reservationIdSafe}')" title="Editar">✎</button>` : ''}
+    <button class="btn-del-cita-chip" onclick="eliminarCita('${reservationIdSafe}')">✕</button>
+</div>
+</div>
                 </div>`;
       });
     } else {
@@ -316,7 +394,15 @@ async function verDetalleCita(citaId) {
 
   const esp = ESPACIOS[cita.space] || {};
   const hoy = getHoy();
-  const waTxt = encodeURIComponent(`Hola ${cita.name}, te confirmamos tu cita en ${cita.space} el ${cita.date} a las ${HORAS_DISPLAY[cita.hour]}. ¡Te esperamos!`);
+  let mensaje;
+
+  if (cita.mileage === ".") {
+    mensaje = "MENSAJE CUANDO ES \".\"";
+  } else {
+    mensaje = "MENSAJE CUANDO TIENE UN VALOR";
+  }
+
+  const waTxt = encodeURIComponent(mensaje);
   const esHoy = cita.date === hoy;
   const esPasada = cita.date < hoy;
 
@@ -352,7 +438,7 @@ async function verDetalleCita(citaId) {
             </div>
         </div>
         <div class="detalle-acciones">
-            <a href="https://wa.me/57${cita.telephone}?text=${waTxt}" target="_blank" class="btn-wa btn-detalle-wa">
+            <a href="https://wa.me/57${limpiarTelefono(cita.telephone)}?text=${waTxt}" target="_blank" class="btn-wa btn-detalle-wa">
                 📱 Contactar por WhatsApp
             </a>
             <button class="btn-del btn-detalle-del" onclick="eliminarCita('${cita.reservationId}')">

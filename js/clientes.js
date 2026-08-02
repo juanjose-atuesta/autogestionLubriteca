@@ -19,7 +19,7 @@ document.getElementById('clienteForm').addEventListener('submit', async e => {
   const c = {
     id: Date.now(),
     name: document.getElementById('nombre').value.toUpperCase(),
-    telephone: document.getElementById('telefono').value.trim(),
+    telephone: limpiarTelefono(document.getElementById('telefono').value),
     plate: document.getElementById('placa').value.toUpperCase().trim(),
     service: document.getElementById('categoria').value,
     entryDate: document.getElementById('fechaActual').value,
@@ -61,15 +61,15 @@ document.getElementById('clienteForm').addEventListener('submit', async e => {
 
 function eliminarCliente(id) {
   console.log("Hiciste click en eliminar cliente con id:", id);
+  id = String(id);
   getClientes().then(cl => {
-    const c = cl.find(x => x.id === id);
+    const c = cl.find(x => String(x.id) === id);
     if (c) {
       fetch(API_BACKEND_URL + "customers/deleteCustomer/" + id, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' }
       }).then(response => response.json())
         .then(data => {
-          console.log("Se borro un cliente" + data.status);
           actualizarStats(); mostrarAlertas(); actualizarBadgeAgenda();
           if (document.getElementById('tab-database').classList.contains('active'))
             mostrarGeneral(document.getElementById('buscadorGeneral').value);
@@ -97,7 +97,7 @@ function abrirModalEditar(id) {
 
   id = String(id);
   getClientes().then(clientes => {
-    const c = clientes.find(x => x.id === id);
+    const c = clientes.find(x => String(x.id) === id);
     if (!c) return;
     //document.getElementById('editId').value = c.id;
     document.getElementById('editNombre').value = c.name;
@@ -118,7 +118,7 @@ function abrirModalEditar(id) {
       body: JSON.stringify({
         id: id,
         name: document.getElementById('editNombre').value.toUpperCase(),
-        telephone: document.getElementById('editTelefono').value.trim(),
+        telephone: limpiarTelefono(document.getElementById('editTelefono').value),
         plate: document.getElementById('editPlaca').value.toUpperCase().trim(),
         service: document.getElementById('editCategoria').value,
         entryDate: document.getElementById('editFechaActual').value,
@@ -133,7 +133,7 @@ function abrirModalEditar(id) {
           body: JSON.stringify({
             id: id,
             name: document.getElementById('editNombre').value.toUpperCase(),
-            telephone: document.getElementById('editTelefono').value.trim(),
+            telephone: limpiarTelefono(document.getElementById('editTelefono').value),
             plate: document.getElementById('editPlaca').value.toUpperCase().trim(),
             service: document.getElementById('editCategoria').value,
             entryDate: document.getElementById('editFechaActual').value,

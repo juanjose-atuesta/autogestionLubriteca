@@ -1,4 +1,8 @@
 
+function limpiarTelefono(valor) {
+  return String(valor || '').replace(/\D/g, '');
+}
+
 function getHoy() { return new Date().toLocaleDateString('en-CA'); }
 function setFechaHoyEnInput(inputId) {
   const input = document.getElementById(inputId);
@@ -16,6 +20,16 @@ function formatearFechaLarga(fechaStr) {
 }
 
 function normalizarBooleanContactado(valor) {
+  if (typeof valor === 'boolean') return valor;
+  if (typeof valor === 'number') return valor === 1;
+  if (typeof valor === 'string') {
+    const v = valor.trim().toLowerCase();
+    return v === 'true' || v === '1' || v === 'si' || v === 'sí' || v === 'yes';
+  }
+  return false;
+}
+
+function normalizarBooleanConcluido(valor) {
   if (typeof valor === 'boolean') return valor;
   if (typeof valor === 'number') return valor === 1;
   if (typeof valor === 'string') {
