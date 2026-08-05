@@ -58,6 +58,7 @@ function construirFila(c, citas = []) {
   const fechaActual = String(c.entryDate || '');
   const fechaFutura = String(c.nextContact || '');
   const km = String(c.mileage || '0');
+  const kmEsPunto = km.trim() === '.';
   const id = c.id;
   //console.log(id);
   const hoy = getHoy(), f = fechaFutura.trim();
@@ -67,11 +68,27 @@ function construirFila(c, citas = []) {
   const reservaConcluidaCliente = normalizarBooleanConcluido(c.reservationConcluded);
   const cl = marcado ? 'fila-contactado' : esHoy ? 'fila-hoy' : esV ? 'fila-vencido' : '';
 
-  const waTxt = esHoy
-    ? `Hola%20${encodeURIComponent(nombre)},%20te%20recordamos%20que%20tu%20servicio%20de%20${encodeURIComponent(categoria)}%20es%20HOY.%20%C2%A1Te%20esperamos!`
-    : `Hola%20${encodeURIComponent(nombre)},%20tu%20servicio%20de%20${encodeURIComponent(categoria)}%20est%C3%A1%20vencido.%20%C2%A1Cont%C3%A1ctanos!`;
+  const msgConKm = `🚗 Hola, ${nombre}
+En Lubri Repuestos Yumbo JRC SAS queremos recordarte que tu vehículo de placa ${placa} ya está próximo a su próximo cambio de aceite. 🛢️
+Según nuestro registro, el próximo cambio está previsto aproximadamente a los ${km} km.
+📍 Si ya estás cerca de ese kilometraje, te recomendamos programar tu cambio. Si todavía no has llegado, recuerda no dejar pasar demasiado tiempo antes de realizarlo.
+📅 ¿Ya es momento de hacer tu cambio? Puedes agendar tu cita directamente con nosotros o, si aún no es el momento, puedes reprogramar este recordatorio para recibirlo más adelante.
+Lubri Repuestos Yumbo JRC SAS
+Cuidamos la vida de tu motor. 🔧`;
 
+  const msgSinKm = `🚗 Hola, ${nombre}
+En Lubri Repuestos Yumbo JRC SAS queremos recordarte que tu vehículo de placa ${placa} ya está próximo a su cambio de aceite. 🛢️
+Este recordatorio se genera teniendo en cuenta el tiempo transcurrido desde tu último servicio. Te recomendamos revisar el kilometraje actual de tu vehículo y compararlo con el kilometraje indicado para tu próximo cambio, ya sea en tu tarjeta de mantenimiento, factura o registro del último servicio.
+📍 Si ya estás cerca del kilometraje recomendado, es un buen momento para programar tu cambio. Y recuerda: no es recomendable esperar demasiado tiempo aunque todavía no hayas alcanzado ese kilometraje.
+📅 Puedes agendar tu cita directamente con nosotros o, si todavía no es el momento, reprogramar este recordatorio para recibirlo más adelante.
+Lubri Repuestos Yumbo JRC SAS
+Cuidamos la vida de tu motor. 🔧`;
 
+  // elige cuál mensaje usar según si tienes km o no
+  const waTxt = kmEsPunto ? msgSinKm : msgConKm;
+
+console.log('waTxt:', waTxt);
+console.log('encoded:', encodeURIComponent(waTxt));
   const citasCliente = citas.filter(ct => ct.customerId == id);
   const citaActiva = citasCliente.find(ct => !normalizarBooleanConcluido(ct.wasConcluded));
   const citaConcluida = citasCliente.find(ct => normalizarBooleanConcluido(ct.wasConcluded));
@@ -81,10 +98,10 @@ function construirFila(c, citas = []) {
   const btnReservar = reservaConcluidaCliente
     ? `<button class="btn-reservar-cita btn-reservado" disabled>✅ Cita realizada</button>`
     : citaActiva
-    ? `<button class="btn-reservar-cita btn-reservado" disabled>✅ Reservado</button>`
-    : citaConcluida
-      ? `<button class="btn-reservar-cita btn-concluido-reservar" onclick="abrirModalReservar('${idSafe}','${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">✓ Concluido · Reservar</button>`
-      : `<button class="btn-reservar-cita" onclick="abrirModalReservar('${idSafe}','${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">📅 Reservar</button>`;
+      ? `<button class="btn-reservar-cita btn-reservado" disabled>✅ Reservado</button>`
+      : citaConcluida
+        ? `<button class="btn-reservar-cita btn-concluido-reservar" onclick="abrirModalReservar('${idSafe}','${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">✓ Concluido · Reservar</button>`
+        : `<button class="btn-reservar-cita" onclick="abrirModalReservar('${idSafe}','${placa}','${nombreSafe}','${telefono}','${categoriaSafe}')">📅 Reservar</button>`;
 
   const tr = document.createElement('tr');
   if (cl) tr.classList.add(cl);
@@ -100,7 +117,7 @@ function construirFila(c, citas = []) {
         <td>
             <div class="acciones">
                 <div class="btn-wa-wrap">
-                    <a href="https://wa.me/57${telefonoLimpio}?text=${waTxt}" target="_blank" class="btn-wa">📱 WhatsApp</a>
+<a href="https://wa.me/57${telefonoLimpio}?text=${encodeURIComponent(waTxt)}" target="_blank" class="btn-wa">📱 WhatsApp</a>
                     <button class="btn-chulo ${marcado ? 'marcado' : ''}" onclick="toggleContactado('${id}')" title="${marcado ? 'Contactado ✓' : 'Marcar contactado'}">✓</button>
                 </div>
                 <button class="btn-edit" onclick="abrirModalEditar('${id}')">✎ Editar</button>
