@@ -85,13 +85,18 @@ async function registrarUsuarioDesdeFormulario(evento) {
   const registrationDay = formatearRegistrationDayComoTexto(fechaIngresoInput.value);
   if (!name || !id || !telephone || !registrationDay) return;
 
-  await crearUsuarioRegistrado({
+  const resultado = await crearUsuarioRegistrado({
     name: name.toUpperCase(),
     id,
     telephone,
     registrationDay,
     email
   });
+
+  if (resultado?.status === 'error') {
+    alert(resultado.message);
+    return;
+  }
 
   const form = document.getElementById('usuarioForm');
   if (form) form.reset();
