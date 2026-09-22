@@ -24,7 +24,7 @@ function intentarLogin(e) {
         .then(res => res.json())
         .then(data => {
           console.log(data);
-          if (1 == 1) {
+          if (data.status === true) {
             sessionStorage.setItem('ag_sesion', 'ok');
             sessionStorage.setItem('ag_role', data.role); // ← guardas el rol
             sessionStorage.setItem('ag_sesion', 'ok');
