@@ -73,8 +73,6 @@ En Lubri Repuestos Yumbo JRC SAS queremos recordarte que tu vehículo de placa $
 
 Según nuestro registro, el próximo cambio está previsto aproximadamente a los ${km} km.
 
-Si ya estás cerca de ese kilometraje, te recomendamos programar tu cambio. Si todavía no has llegado, recuerda no dejar pasar demasiado tiempo antes de realizarlo.
-
 ¿Ya es momento de hacer tu cambio? Puedes agendar tu cita directamente con nosotros o, si aún no es el momento, puedes reprogramar este recordatorio para recibirlo más adelante.
 
 Lubri Repuestos Yumbo JRC SAS
@@ -84,8 +82,6 @@ Cuidamos la vida de tu motor.`;
 En Lubri Repuestos Yumbo JRC SAS queremos recordarte que tu vehículo de placa ${placa} ya está próximo a su cambio de aceite.
 
 Este recordatorio se genera teniendo en cuenta el tiempo transcurrido desde tu último servicio. Te recomendamos revisar el kilometraje actual de tu vehículo y compararlo con el kilometraje indicado para tu próximo cambio, ya sea en tu tarjeta de mantenimiento, factura o registro del último servicio.
-
-Si ya estás cerca del kilometraje recomendado, es un buen momento para programar tu cambio. Y recuerda: no es recomendable esperar demasiado tiempo aunque todavía no hayas alcanzado ese kilometraje.
 
 Puedes agendar tu cita directamente con nosotros o, si todavía no es el momento, reprogramar este recordatorio para recibirlo más adelante.
 
