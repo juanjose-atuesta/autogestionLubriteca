@@ -1,5 +1,4 @@
-FROM python:3.10.21-alpine3.24
-WORKDIR /app
-COPY . .
-EXPOSE 8080
-CMD ["python3", "-m", "http.server", "8080"]
+FROM nginx:alpine
+COPY . /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
