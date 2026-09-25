@@ -1,5 +1,5 @@
 
-const API_BACKEND_URL = "apilt.juanjodev.win";
+const API_BACKEND_URL = "https://apilt.juanjodev.win";
 const documento_autorizacion_datos_url = "https://docs.google.com/document/d/1JuuQcjqJRRoOjid0BEr6Yz_FpABXftCkNRBVhflbGLI/edit?usp=sharing";
 
 
