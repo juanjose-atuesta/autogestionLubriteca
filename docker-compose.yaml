@@ -1,0 +1,8 @@
+
+  frontend:
+    build: .
+    ports:
+      - "2402:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
