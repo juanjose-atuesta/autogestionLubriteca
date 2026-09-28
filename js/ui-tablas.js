@@ -69,7 +69,7 @@ function construirFila(c, citas = []) {
   const cl = marcado ? 'fila-contactado' : esHoy ? 'fila-hoy' : esV ? 'fila-vencido' : '';
 
   const msgConKm = `Hola, ${nombre}
-En Lubri Repuestos Yumbo JRC SAS queremos recordarte que tu vehículo de placa ${placa} ya está próximo a su próximo cambio de aceite.
+En Lubri Repuestos Yumbo JRC SAS queremos recordarte que tu vehículo de placa ${placa} ya está próximo a su cambio de aceite.
 
 Según nuestro registro, el próximo cambio está previsto aproximadamente a los ${km} km.
 
