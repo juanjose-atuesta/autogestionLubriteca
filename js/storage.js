@@ -1,3 +1,11 @@
+const store = {
+  clientes: new Map(),
+  citas: new Map(),
+};
+
+//fetch 
+async function fetchClientesAPI() { /* tu getClientes actual, la que hace el fetch */ }
+async function fetchCitasAPI() { /* tu getCitas actual */ }
 
 // ═══════════ STORAGE ═══════════
 async function getClientes() {
