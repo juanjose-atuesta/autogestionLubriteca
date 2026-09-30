@@ -34,6 +34,16 @@ async function refrescarModalRecomendados() {
 const tabActiva = tabId => !!document.getElementById(tabId)?.classList.contains('active');
 
 function refrescarVistas(_cambios = {}) {
+  console.log('[refrescarVistas] repintando desde el store', {
+    clientesEnStore: clientesTodos().length,
+    citasEnStore: citasTodas().length,
+    historialEnStore: historialTodos().length,
+    alertasARenderizar: alertas().map(c => ({
+      id: c.id, name: c.name, nextContact: c.nextContact, wasContacted: c.wasContacted
+    })),
+    stats: resumenClientes(getHoy())
+  });
+
   actualizarStats();
   mostrarAlertas();
 
