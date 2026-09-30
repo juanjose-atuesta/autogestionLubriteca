@@ -87,8 +87,6 @@ Cuidamos la vida de tu motor. 🔧`;
   // elige cuál mensaje usar según si tienes km o no
   const waTxt = kmEsPunto ? msgSinKm : msgConKm;
 
-console.log('waTxt:', waTxt);
-console.log('encoded:', encodeURIComponent(waTxt));
   const citasCliente = citas.filter(ct => ct.customerId == id);
   const citaActiva = citasCliente.find(ct => !normalizarBooleanConcluido(ct.wasConcluded));
   const citaConcluida = citasCliente.find(ct => normalizarBooleanConcluido(ct.wasConcluded));

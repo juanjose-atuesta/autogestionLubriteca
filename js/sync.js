@@ -28,30 +28,29 @@ async function refrescarModalRecomendados() {
 function iniciarSSE() {
   const source = new EventSource(API_BACKEND_URL + 'eventos');
 
-  source.addEventListener('conectado', () => {
+  source.addEventListener('conectado', async () => {
     console.log('SSE conectado');
+    await recargarTodo();
+    refrescarVistaClientes();
   });
 
-  source.addEventListener('cliente-creado', () => {
-    actualizarStats();
-    mostrarAlertas();
-
+  source.addEventListener('cliente-creado', e => {
+    const { cliente } = JSON.parse(e.data);
+    store.clientes.set(String(cliente.id ?? cliente._id), cliente);
+    refrescarVistaClientes();
   });
 
 
-  source.addEventListener('cliente-editado', () => {
-
-    actualizarBadgeContactados();
-    mostrarContactados();
-    actualizarStats();
-    mostrarAlertas();
-
+  source.addEventListener('cliente-editado', e => {
+    const { cliente } = JSON.parse(e.data);
+    store.clientes.set(String(cliente.id ?? cliente._id), cliente); // reemplaza el anterior
+    refrescarVistaClientes();
   });
 
-  source.addEventListener('cliente-eliminado', () => {
-    mostrarAlertas();
-    actualizarStats();
-
+  source.addEventListener('cliente-eliminado', e => {
+    const { id } = JSON.parse(e.data);
+    store.clientes.delete(String(id));
+    refrescarVistaClientes();
   });
 
   source.addEventListener('cliente-citaConcluida', () => {
@@ -164,113 +163,10 @@ document.addEventListener('DOMContentLoaded', () => {
   iniciarSSE();
 });
 
-// ═══════════ SINCRONIZAR CON GOOGLE SHEETS (CORREGIDO) ═══════════
-function sincronizarConSheets() {
-  mostrarCargando(true);
 
-  fetch(API_BACKEND_URL + "customers/customersList")
-    .then(res => {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.json();
-    })
-    .then(datos => {
-      if (!datos || !Array.isArray(datos.customers)) {
-        throw new Error('Respuesta inválida');
-      }
-
-      // Sincronizar clientes
-      const clientesSheets = datos.customers
-        .map(c => ({
-          ...c,
-          id: String(c.id),
-          name: String(c.name),
-          telephone: String(c.telephone),
-          plate: String(c.plate).toUpperCase().trim(),
-          service: String(c.service),
-          entryDate: String(c.entryDate),
-          nextContact: String(c.nextContact),
-          mileage: String(c.mileage)
-        }));
-
-      //migrarClientesAHistorial();
-      actualizarStats();
-      mostrarAlertas();
-      actualizarBadgeContactados();
-      actualizarBadgeUsuarios();
-      actualizarBadgeAgenda();
-      actualizarBadgeCitasProgramadas();
-      if (document.getElementById('tab-database').classList.contains('active'))
-        mostrarGeneral(document.getElementById('buscadorGeneral').value);
-      if (document.getElementById('tab-contactados').classList.contains('active'))
-        mostrarContactados();
-      if (document.getElementById('tab-usuarios').classList.contains('active'))
-        mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
-      if (document.getElementById('tab-historial').classList.contains('active'))
-        buscarHistorial();
-      if (document.getElementById('tab-agenda').classList.contains('active'))
-        renderAgenda();
-      if (document.getElementById('tab-citas-programadas').classList.contains('active'))
-        renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
-      console.log('✓ ' + clientesSheets.length + ' clientes sincronizados desde Sheets');
-    })
-    .catch(err => {
-      console.warn('Sheets no disponible — usando datos locales:', err.message);
-    })
-    .finally(() => {
-      mostrarCargando(false);
-    });
+function refrescarVistaClientes() {
+  actualizarStats();
+  mostrarAlertas();
+  // actualizarBadgeContactados();
+  //mostrarContactados();
 }
-
-
-
-// 🔧 CORREGIDO: sincronizarSoloCitas con manejo de string para citaId
-/*
-async function sincronizarSoloCitas() {
-  try {
-    const res = await fetch(API_BACKEND_URL + "reservations/reservationsList");
-    const datos = await res.json();
-    if (!datos.ok || !Array.isArray(datos.reservationList)) return;
-
-    const citasSheets = datos.reservationList.map(c => ({
-      reservationId: String(c.reservationId),
-      plate: String(c.plate || '').toUpperCase().trim(),
-      name: String(c.name || ''),
-      telephone: String(c.telephone || ''),
-      service: String(c.service || ''),
-      date: String(c.date || ''),
-      hour: String(c.hour || ''),
-      space: String(c.space || ''),
-      notes: String(c.notes || '')
-    }));
-
-    const idsSheets = new Set(citasSheets.map(c => c.citaId));
-    const citasLocales = getCitas();
-    const ahora = Date.now();
-
-    const pendientes = citasLocales.filter(c =>
-      !idsSheets.has(String(c.citaId)) && (ahora - Number(c.citaId)) < 600000
-    );
-
-    const citasMerge = [...citasSheets, ...pendientes];
-
-    const localIds = new Set(citasLocales.map(c => String(c.citaId)));
-    const sheetsIds = new Set(citasMerge.map(c => String(c.citaId)));
-    const hayDiferencia =
-      citasMerge.length !== citasLocales.length ||
-      [...sheetsIds].some(id => !localIds.has(id)) ||
-      [...localIds].some(id => !sheetsIds.has(id));
-
-    if (hayDiferencia) {
-      setCitas().then(respuesta => {
-        console.log(respuesta.status);
-        actualizarBadgeAgenda();
-        mostrarAlertas();
-        if (document.getElementById('tab-database').classList.contains('active'))
-          mostrarGeneral(document.getElementById('buscadorGeneral').value);
-      })
-    }
-  } catch (err) {
-    console.warn('Sync citas falló:', err.message);
-  }
-}
- */

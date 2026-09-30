@@ -1,14 +1,12 @@
+
+// ═══════════ STORAGE ═══════════
 const store = {
   clientes: new Map(),
   citas: new Map(),
 };
 
-//fetch 
-async function fetchClientesAPI() { /* tu getClientes actual, la que hace el fetch */ }
-async function fetchCitasAPI() { /* tu getCitas actual */ }
-
-// ═══════════ STORAGE ═══════════
-async function getClientes() {
+//fetch a la API 
+async function fetchClientesAPI() {
   try {
     const response = await fetch(API_BACKEND_URL + "customers/customersListPanelPrincipal");
     const data = await response.json();
@@ -20,6 +18,39 @@ async function getClientes() {
     return [];
   }
 
+}
+async function fetchCitasAPI() {
+  try {
+    const response = await fetch(API_BACKEND_URL + "reservations/reservationsList");
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const data = await response.json();
+    return data.reservationList || [];
+  } catch (error) {
+    console.error('Error fetching citas:', error);
+    return [];
+  }
+}
+
+
+//CARGAR INFORMACION EN EL STORRE 
+async function recargarTodo() {
+  const [clientes, citas] = await Promise.all([fetchClientesAPI(), fetchCitasAPI()]);
+  store.clientes.clear();
+  store.citas.clear();
+  clientes.forEach(c => store.clientes.set(String(c.id), c));
+  citas.forEach(ct => store.citas.set(String(ct.id), ct));
+}
+
+//Leer informacion en memoria
+function getClientes() {
+  console.log("se obtubo la info desde el store")
+  return Promise.resolve(Array.from(store.clientes.values()));
+
+}
+
+function getCitas() {
+
+  return Promise.resolve(Array.from(store.citas.values()));
 }
 
 async function getClientesDB() {
@@ -58,18 +89,6 @@ async function getContactados() {
 //function setContactados(arr) { localStorage.setItem('db_contactados_log', JSON.stringify(arr)); }
 //function getIdsContactados() { return JSON.parse(localStorage.getItem('db_contactados_ids')) || []; }
 //function setIdsContactados(arr) { localStorage.setItem('db_contactados_ids', JSON.stringify(arr)); }
-async function getCitas() {
-  try {
-    const response = await fetch(API_BACKEND_URL + "reservations/reservationsList");
-    if (!response.ok) throw new Error('HTTP ' + response.status);
-    const data = await response.json();
-    return data.reservationList || [];
-  } catch (error) {
-    console.error('Error fetching citas:', error);
-    return [];
-  }
-}
-
 async function getReservationsConcluded() {
   try {
     const response = await fetch(API_BACKEND_URL + "reservations/getReservationsConcluded");

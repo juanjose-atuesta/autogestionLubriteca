@@ -1,5 +1,4 @@
 // ═══════════ ESTADÍSTICAS / PUNTOS — API ═══════════
-
 async function getRankingUsuariosRegistrados() {
   try {
     const response = await fetch(API_BACKEND_URL + "users/rankingUsuarios");
