@@ -1,18 +1,11 @@
+// Redibuja todo desde el store. No hace fetch.
+// El SSE ya llama a refrescarVistas() por evento; esto queda como
+// "pintar todo" manual.
 function actualizar() {
-  //mostrarGeneral();
-  mostrarAlertas();
-  actualizarStats();
-  buscarHistorial();
-  actualizarBadgeContactados();
-  mostrarContactados();
+  refrescarVistas({ clientes: true, citas: true });
+  refrescarContactados();
   actualizarBadgeUsuarios();
-  if (document.getElementById('tab-usuarios').classList.contains('active'))
-    mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
-  renderAgenda();
-  if (document.getElementById('tab-citas-programadas').classList.contains('active'))
-    renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
-  actualizarBadgeAgenda();
-  actualizarBadgeCitasProgramadas();
+  revisarCitasDeHoy();
 }
 
 /*

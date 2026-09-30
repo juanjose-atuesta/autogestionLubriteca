@@ -1,34 +1,38 @@
 
-// ═══════════ STORAGE ═══════════
-async function getClientes() {
+// ═══════════════════════════════════════════════════════════
+// STORAGE — única capa que habla con el backend para LEER
+// Solo se usa en la carga inicial del store (js/store.js).
+// Cualquier render posterior lee del store, nunca de aquí.
+// ═══════════════════════════════════════════════════════════
+
+// Clientes sin filtro de wasContacted: el store guarda pendientes y
+// contactados, y cada vista decide qué mostrar.
+async function getClientesAll() {
   try {
-    const response = await fetch(API_BACKEND_URL + "customers/customersListPanelPrincipal");
+    const response = await fetch(API_BACKEND_URL + "customers/customersListAll");
     const data = await response.json();
     return data.customers || [];
-
   }
   catch (error) {
-    console.error('Error fetching clientes:', error);
+    console.error('Error fetching clientesAll:', error);
     return [];
   }
-
 }
 
-async function getClientesDB() {
+// Reservas sin filtro de wasConcluded (abiertas + concluidas).
+async function getCitasAll() {
   try {
-    const response = await fetch(API_BACKEND_URL + "customers/customersList");
+    const response = await fetch(API_BACKEND_URL + "reservations/reservationsListAll");
+    if (!response.ok) throw new Error('HTTP ' + response.status);
     const data = await response.json();
-    return data.customers || [];
-
-  }
-  catch (error) {
-    console.error('Error fetching clientes:', error);
+    return data.reservationList || [];
+  } catch (error) {
+    console.error('Error fetching citasAll:', error);
     return [];
   }
-
 }
 
-//function setClientes(arr) { localStorage.setItem('db_clientes', JSON.stringify(arr)); }
+// Colección historialDB completa (base de la pestaña Contactados).
 async function getHistorialDB() {
   try {
     const response = await fetch(API_BACKEND_URL + "historial/historialDBList");
@@ -36,44 +40,6 @@ async function getHistorialDB() {
     return data.historialDBList || [];
   } catch (error) {
     console.error('Error fetching historialDB:', error);
-  }
-}
-//function setHistorialDB(arr) { localStorage.setItem('db_historial', JSON.stringify(arr)); }
-async function getContactados() {
-  try {
-    const response = await fetch(API_BACKEND_URL + "historial/historialListCustomersContacted");
-    const data = await response.json();
-    return data.customerList;
-  }
-  catch (error) { console.error(error); return []; }
-}
-//function setContactados(arr) { localStorage.setItem('db_contactados_log', JSON.stringify(arr)); }
-//function getIdsContactados() { return JSON.parse(localStorage.getItem('db_contactados_ids')) || []; }
-//function setIdsContactados(arr) { localStorage.setItem('db_contactados_ids', JSON.stringify(arr)); }
-async function getCitas() {
-  try {
-    const response = await fetch(API_BACKEND_URL + "reservations/reservationsList");
-    if (!response.ok) throw new Error('HTTP ' + response.status);
-    const data = await response.json();
-    return data.reservationList || [];
-  } catch (error) {
-    console.error('Error fetching citas:', error);
     return [];
   }
-}
-
-async function getReservationsConcluded() {
-  try {
-    const response = await fetch(API_BACKEND_URL + "reservations/getReservationsConcluded");
-    if (!response.ok) throw new Error('HTTP ' + response.status);
-    const data = await response.json();
-    return data.reservationList || data.reservations || [];
-  } catch (error) {
-    console.error('Error fetching citas concluidas:', error);
-    return [];
-  }
-}
-
-async function setCitas() {
-  return getCitas();
 }

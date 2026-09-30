@@ -1,42 +1,15 @@
-function normalizarBooleanConcluido(valor) {
-  if (valor === true || valor === 'true' || valor === 1 || valor === '1') return true;
-  return false;
-}
+// Los predicados de cliente (esAlertaDeHoy / esAlertaAtrasada / estaAlDia /
+// estaContactado) y el orden de la tabla de alertas viven en store.js.
 
-function estaContactado(cliente = {}) {
-  return normalizarBooleanContactado(cliente.wasContacted);
-}
-
-function estaVencidoCliente(cliente = {}, hoy = getHoy()) {
-  const fecha = String(cliente.nextContact || '').trim();
-  return fecha < hoy && !estaContactado(cliente);
-}
-
-function esPendienteHoy(cliente = {}, hoy = getHoy()) {
-  const fecha = String(cliente.nextContact || '').trim();
-  return fecha === hoy && !estaContactado(cliente);
-}
-
-function estaAlDiaCliente(cliente = {}, hoy = getHoy()) {
-  const fecha = String(cliente.nextContact || '').trim();
-  return fecha > hoy && !estaContactado(cliente);
-}
 // ═══════════ STATS ═══════════
 function actualizarStats() {
-  const cl = getClientes().then(
-    cl => {
-
-      hoy = getHoy();
-      const v = cl.filter(c => estaVencidoCliente(c, hoy)).length;
-      const h = cl.filter(c => esPendienteHoy(c, hoy)).length;
-      const alDia = cl.filter(c => estaAlDiaCliente(c, hoy)).length;
-      document.getElementById('statsGrid').innerHTML = `
-        <div class="stat-card stat-primary"><div class="stat-value">${cl.length}</div><div class="stat-label">Total clientes</div></div>
-        <div class="stat-card stat-danger"><div class="stat-value">${v}</div><div class="stat-label">Vencidos</div></div>
-        <div class="stat-card stat-warning"><div class="stat-value">${h}</div><div class="stat-label">Citas hoy</div></div>
-        <div class="stat-card stat-success"><div class="stat-value">${alDia}</div><div class="stat-label">Al día</div></div>`;
-    }
-  )
+  const hoy = getHoy();
+  const r = resumenClientes(hoy);
+  document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card stat-primary"><div class="stat-value">${r.pendientes}</div><div class="stat-label">Total clientes</div></div>
+        <div class="stat-card stat-danger"><div class="stat-value">${r.vencidos}</div><div class="stat-label">Vencidos</div></div>
+        <div class="stat-card stat-warning"><div class="stat-value">${r.hoy}</div><div class="stat-label">Citas hoy</div></div>
+        <div class="stat-card stat-success"><div class="stat-value">${r.alDia}</div><div class="stat-label">Al día</div></div>`;
 }
 function buildBadge(fechaStr, eliminado = false, contactado = false) {
   if (eliminado) return `<span class="badge-eliminado">● Eliminado</span>`;
@@ -49,7 +22,7 @@ function buildBadge(fechaStr, eliminado = false, contactado = false) {
 }
 
 // ═══════════ CONSTRUIR FILA ═══════════
-function construirFila(c, citas = []) {
+function construirFila(c) {
   const nombre = String(c.name || '');
   const telefono = String(c.telephone || '');
   const telefonoLimpio = limpiarTelefono(telefono);
@@ -87,9 +60,7 @@ Cuidamos la vida de tu motor. 🔧`;
   // elige cuál mensaje usar según si tienes km o no
   const waTxt = kmEsPunto ? msgSinKm : msgConKm;
 
-console.log('waTxt:', waTxt);
-console.log('encoded:', encodeURIComponent(waTxt));
-  const citasCliente = citas.filter(ct => ct.customerId == id);
+  const citasCliente = citasDeCliente(id);
   const citaActiva = citasCliente.find(ct => !normalizarBooleanConcluido(ct.wasConcluded));
   const citaConcluida = citasCliente.find(ct => normalizarBooleanConcluido(ct.wasConcluded));
   const idSafe = String(id).replace(/'/g, "\\'");
@@ -129,54 +100,45 @@ console.log('encoded:', encodeURIComponent(waTxt));
 
 
 // ═══════════ ALERTAS ═══════════
-async function mostrarAlertas() {
-  const tbody = document.getElementById('listaAlertas'), empty = document.getElementById('emptyAlertas'), hoy = getHoy();
-  Promise.all([getClientes(), getCitas()]).then(([clientes, citas]) => {
-    const al = clientes.filter(c => {
-      return esPendienteHoy(c, hoy) || estaVencidoCliente(c, hoy);
-    })
-      .sort((a, b) => { const fa = String(a.nextContact).trim(), fb = String(b.nextContact).trim(); if (fa === hoy && fb !== hoy) return -1; if (fb === hoy && fa !== hoy) return 1; return fb.localeCompare(fa); });
-    tbody.innerHTML = '';
-    if (!al.length) { empty.style.display = 'block'; document.getElementById('tablaAlertas').style.display = 'none'; }
-    else {
-      empty.style.display = 'none'; document.getElementById('tablaAlertas').style.display = ''; al.forEach(c => {
-        tbody.appendChild(construirFila(c, citas))
-        //console.log(c)
-      });
-    }
-    document.getElementById('badge-alertas').textContent = al.length;
-    document.getElementById('nav-badge').textContent = al.length;
-  }).catch(console.error);
+function mostrarAlertas() {
+  const tbody = document.getElementById('listaAlertas'), empty = document.getElementById('emptyAlertas');
+  const al = alertas();
+  tbody.innerHTML = '';
+  if (!al.length) { empty.style.display = 'block'; document.getElementById('tablaAlertas').style.display = 'none'; }
+  else {
+    empty.style.display = 'none'; document.getElementById('tablaAlertas').style.display = ''; al.forEach(c => {
+      tbody.appendChild(construirFila(c));
+    });
+  }
+  document.getElementById('badge-alertas').textContent = al.length;
+  document.getElementById('nav-badge').textContent = al.length;
 }
 
 // ═══════════ BASE DE DATOS ═══════════
-async function mostrarGeneral(filtro = '') {
+function mostrarGeneral(filtro = '') {
   const tbody = document.getElementById('listaGeneral'), empty = document.getElementById('emptyGeneral'), hoy = getHoy();
-  Promise.all([getClientesDB(), getCitas()]).then(([todos, citas]) => {
-    let cl = todos;
-    if (filtro.trim()) {
-      const f = filtro.trim().toUpperCase();
-      cl = cl.filter(c => {
-        const nombre = String(c.name || '').toUpperCase();
-        const placa = String(c.plate || '').toUpperCase();
-        const servicio = String(c.service || '').toUpperCase();
-        const telefono = String(c.telephone || '');
-        return nombre.includes(f) || placa.includes(f) || servicio.includes(f) || telefono.includes(filtro.trim());
-      });
-    }
-    cl.sort((a, b) => String(a.nextContact).localeCompare(String(b.nextContact)));
-    const v = todos.filter(c => estaVencidoCliente(c, hoy)).length;
-    const hC = todos.filter(c => esPendienteHoy(c, hoy)).length;
-    const alDia = todos.filter(c => estaAlDiaCliente(c, hoy)).length;
-    document.getElementById('dbStats').innerHTML = `
-        <div class="db-stat-item"><span class="db-dot" style="background:#ef4444"></span>${v} vencidos</div>
-        <div class="db-stat-item"><span class="db-dot" style="background:#f59e0b"></span>${hC} hoy</div>
-        <div class="db-stat-item"><span class="db-dot" style="background:#10b981"></span>${alDia} al día</div>
-        <div class="db-stats-total">${todos.length} registros</div>`;
-    tbody.innerHTML = '';
-    if (!cl.length) { empty.style.display = 'block'; document.getElementById('tablaGeneral').style.display = 'none'; }
-    else { empty.style.display = 'none'; document.getElementById('tablaGeneral').style.display = ''; cl.forEach(c => tbody.appendChild(construirFila(c, citas))); }
-  }).catch(console.error);
+  const todos = clientesTodos();
+  let cl = todos;
+  if (filtro.trim()) {
+    const f = filtro.trim().toUpperCase();
+    cl = cl.filter(c => {
+      const nombre = String(c.name || '').toUpperCase();
+      const placa = String(c.plate || '').toUpperCase();
+      const servicio = String(c.service || '').toUpperCase();
+      const telefono = String(c.telephone || '');
+      return nombre.includes(f) || placa.includes(f) || servicio.includes(f) || telefono.includes(filtro.trim());
+    });
+  }
+  cl = cl.sort((a, b) => String(a.nextContact).localeCompare(String(b.nextContact)));
+  const r = resumenClientesDB(hoy);
+  document.getElementById('dbStats').innerHTML = `
+        <div class="db-stat-item"><span class="db-dot" style="background:#ef4444"></span>${r.vencidos} vencidos</div>
+        <div class="db-stat-item"><span class="db-dot" style="background:#f59e0b"></span>${r.hoy} hoy</div>
+        <div class="db-stat-item"><span class="db-dot" style="background:#10b981"></span>${r.alDia} al día</div>
+        <div class="db-stats-total">${r.total} registros</div>`;
+  tbody.innerHTML = '';
+  if (!cl.length) { empty.style.display = 'block'; document.getElementById('tablaGeneral').style.display = 'none'; }
+  else { empty.style.display = 'none'; document.getElementById('tablaGeneral').style.display = ''; cl.forEach(c => tbody.appendChild(construirFila(c))); }
 }
 function filtrarGeneral() { mostrarGeneral(document.getElementById('buscadorGeneral').value); }
 function limpiarBuscadorGeneral() { document.getElementById('buscadorGeneral').value = ''; mostrarGeneral(); document.getElementById('buscadorGeneral').focus(); }

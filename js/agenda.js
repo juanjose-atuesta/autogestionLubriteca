@@ -33,15 +33,12 @@ function abrirModalReservar(clienteId, placa, nombre, telefono, categoria) {
 let reservationIdPendienteConcluir = null;
 let customerIdPendienteConcluir = null;
 
-async function concluirCita(citaId) {
+function concluirCita(citaId) {
   const reservationId = String(citaId || '').trim();
   if (!reservationId) return;
 
   // Buscar los datos de la cita para mostrarlos en el modal
-  const citas = await getCitas();
-  const cita = (Array.isArray(citas) ? citas : []).find(
-    c => String(c.reservationId) === reservationId
-  );
+  const cita = citaPorId(reservationId);
   if (!cita) return;
 
   if (normalizarBooleanConcluido(cita.wasConcluded)) return;
@@ -125,18 +122,12 @@ function seleccionarEspacio(espacio) {
   mostrarHorasDisponibles();
 }
 
-async function mostrarHorasDisponibles() {
+function mostrarHorasDisponibles() {
   const date = document.getElementById('reservarFecha').value;
   const space = reservarEspacioActual;
   if (!date || !space) return;
-  const citas = await getCitas();
 
-  const ocupadas = new Set(
-    citas
-      .filter(c => c.date === date && c.space === space)
-      .map(c => c.hour)
-  );
-
+  const ocupadas = horasOcupadas(date, space);
   const hayDisponibles = HORAS.some(h => !ocupadas.has(h));
 
   let html = '';
@@ -189,9 +180,7 @@ async function confirmarReserva() {
 
   if (!date || !hour || !space) { alert('Completa todos los pasos antes de confirmar.'); return; }
   try {
-    const citas = await getCitas();
-    const conflicto = citas.find(c => c.date === date && c.hour === hour && c.space === space);
-    if (conflicto) {
+    if (hayCitaEnEspacio(date, hour, space)) {
       alert(`⚠ Ya existe una reserva en ese horario para ${ESPACIOS[space].nombre}. Selecciona otra hora o espacio.`);
       return;
     }
@@ -210,20 +199,10 @@ async function confirmarReserva() {
     if (!response.ok) throw new Error('HTTP ' + response.status);
 
     cerrarModalReservar();
-    await actualizarBadgeAgenda();
-    await actualizarBadgeCitasProgramadas();
-    mostrarAlertas();
-    if (document.getElementById('tab-database').classList.contains('active'))
-      mostrarGeneral(document.getElementById('buscadorGeneral').value);
-    if (document.getElementById('tab-citas-programadas').classList.contains('active'))
-      renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
-    if (document.getElementById('tab-agenda').classList.contains('active')) await renderAgenda();
+    refrescarVistas({ citas: true });
   } catch (error) {
     console.error(error);
   }
-
-  // 🔧 Forzar sincronización inmediata para reflejar en la nube
-  //sincronizarSoloCitas();
 }
 
 function cerrarModalReservar() { document.getElementById('modalReservar').classList.remove('active'); }
@@ -231,34 +210,32 @@ function cerrarModalReservar() { document.getElementById('modalReservar').classL
 // ═══════════════════════════════════════════
 // AGENDA — RENDER PRINCIPAL
 // ═══════════════════════════════════════════
-async function actualizarBadgeAgenda() {
-  const citas = await getCitas();
-  const hoy = getHoy();
-  const total = citas.filter(c => c.date === hoy).length;
+function actualizarBadgeAgenda() {
+  const total = citasDeFecha(getHoy()).length;
   document.getElementById('nav-badge-agenda').textContent = total;
 }
 
-async function irHoyAgenda() {
+function irHoyAgenda() {
   document.getElementById('agendaFecha').value = getHoy();
-  await renderAgenda();
+  renderAgenda();
 }
 
-async function cambiarDiaAgenda(delta) {
+function cambiarDiaAgenda(delta) {
   const input = document.getElementById('agendaFecha');
   const fecha = input.value || getHoy();
   const [y, m, d] = fecha.split('-').map(Number);
   input.value = new Date(y, m - 1, d + delta).toLocaleDateString('en-CA');
-  await renderAgenda();
+  renderAgenda();
 }
 
-async function setFiltroAgenda(filtro) {
+function setFiltroAgenda(filtro) {
   filtroAgendaActual = filtro;
   document.querySelectorAll('.agenda-filtro-btn').forEach(b => b.classList.remove('activo'));
   document.getElementById('filtro-' + filtro).classList.add('activo');
-  await renderAgenda();
+  renderAgenda();
 }
 
-async function renderAgenda() {
+function renderAgenda() {
   const fecha = document.getElementById('agendaFecha').value || getHoy();
   const label = document.getElementById('agendaFechaLabel');
   const contenido = document.getElementById('agendaContenido');
@@ -266,9 +243,8 @@ async function renderAgenda() {
   const horaActual = new Date().toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit', hour12: false }).substring(0, 5);
 
   label.textContent = formatearFechaLarga(fecha);
-  const citas = await getCitas();
 
-  let citasDelDia = citas.filter(c => c.date === fecha);
+  let citasDelDia = citasDeFecha(fecha);
   if (filtroAgendaActual !== 'todos') citasDelDia = citasDelDia.filter(c => c.space === filtroAgendaActual);
 
   const totalCitas = citasDelDia.length;
@@ -332,7 +308,7 @@ async function renderAgenda() {
   });
 
   contenido.innerHTML = html;
-  await actualizarBadgeAgenda();
+  actualizarBadgeAgenda();
 }
 
 function siguienteHora(hora) {
@@ -340,9 +316,8 @@ function siguienteHora(hora) {
   return idx < HORAS.length - 1 ? HORAS[idx + 1] : '23:59';
 }
 
-async function eliminarCita(citaId) {
-  const citas = await getCitas();
-  const cita = citas.find(c => String(c.reservationId) === String(citaId));
+function eliminarCita(citaId) {
+  const cita = citaPorId(citaId);
   if (!cita) return;
 
   if (document.getElementById('modalDetalleCita').classList.contains('active')) {
@@ -374,22 +349,14 @@ async function confirmarEliminarCita() {
 
     cerrarModalEliminarCita();
     cerrarDetalleCita();
-    await actualizarBadgeAgenda();
-    await actualizarBadgeCitasProgramadas();
-    mostrarAlertas();
-    if (document.getElementById('tab-database').classList.contains('active'))
-      mostrarGeneral(document.getElementById('buscadorGeneral').value);
-    if (document.getElementById('tab-citas-programadas').classList.contains('active'))
-      renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
-    await renderAgenda();
+    refrescarVistas({ citas: true });
   } catch (error) {
     console.error(error);
   }
 }
 
-async function verDetalleCita(citaId) {
-  const citas = await getCitas();
-  const cita = citas.find(c => String(c.reservationId) === String(citaId));
+function verDetalleCita(citaId) {
+  const cita = citaPorId(citaId);
   if (!cita) return;
 
   const esp = ESPACIOS[cita.space] || {};
@@ -481,33 +448,42 @@ async function onDrop(event, nuevaHora) {
 
   if (!dragCitaId) return;
 
-  const citas = await getCitas();
-  const citaIdx = citas.findIndex(c => String(c.reservationId) === String(dragCitaId));
-  if (citaIdx === -1) return;
+  const cita = citaPorId(dragCitaId);
+  if (!cita) return;
 
-  const cita = citas[citaIdx];
   const fecha = document.getElementById('agendaFecha').value || getHoy();
 
-  const conflicto = citas.find(c =>
-    c.date === fecha &&
-    c.hour === nuevaHora &&
-    c.space === cita.space &&
-    String(c.reservationId) !== String(dragCitaId)
-  );
-  if (conflicto) {
+  if (hayCitaEnEspacio(fecha, nuevaHora, cita.space, dragCitaId)) {
     mostrarToastError(`⚠ ${ESPACIOS[cita.space].nombre} ya tiene una reserva a las ${HORAS_DISPLAY[nuevaHora]}`);
     dragCitaId = null;
     return;
   }
 
-  citas[citaIdx] = { ...cita, hour: nuevaHora };
-  fetch(urlGoogle, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: JSON.stringify({ reservationId: String(dragCitaId), hour: nuevaHora, accion: 'mover_cita' })
-  }).catch(console.error);
+  if (nuevaHora === cita.hour) { dragCitaId = null; return; }
+
+  try {
+    const response = await fetch(API_BACKEND_URL + "reservations/editReservation/" + String(cita.reservationId), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: cita.name,
+        telephone: cita.telephone,
+        plate: cita.plate,
+        service: cita.service,
+        space: cita.space,
+        date: fecha,
+        hour: nuevaHora,
+        notes: cita.notes || ''
+      })
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+  } catch (error) {
+    console.error('Error al mover la cita:', error);
+    mostrarToastError('⚠ No se pudo mover la cita');
+  }
+
   dragCitaId = null;
-  await renderAgenda();
+  refrescarVistas({ citas: true });
 }
 
 function mostrarToastError(msg) {

@@ -30,30 +30,16 @@ function seleccionarTab(tab) {
   };
   document.getElementById('tab-indicator').textContent = t[tab];
   if (tab === 'database') mostrarGeneral();
+  if (tab === 'historial') buscarHistorial();
   if (tab === 'contactados') mostrarContactados();
   if (tab === 'usuarios') mostrarUsuarios();
   if (tab === 'citas-programadas') renderListaCitasProgramadas();
   if (tab === 'estadisticas') mostrarEstadisticas();
-  if (tab === 'agenda') {
-    irHoyAgenda();
-    /*
-    sincronizarSoloCitas().then(() => {
-      if (document.getElementById('tab-agenda').classList.contains('active'))
-        renderAgenda();
-    });
-    */
-  }
+  if (tab === 'agenda') irHoyAgenda();
   if (tab === 'nav-trabajadores') resetTabTrabajadores();
   cerrarMenu();
 }
-/*
-setInterval(() => {
-  sincronizarSoloCitas().then(() => {
-    if (document.getElementById('tab-agenda').classList.contains('active'))
-      renderAgenda();
-  });
-}, 30000);
-*/
+
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { cerrarModalEliminar(); cerrarModalEditar(); cerrarModalReservar(); cerrarDetalleCita(); cerrarModalEliminarCita(); cerrarModalEliminarUsuario(); cerrarModalUsuariosRecomendados(); cerrarModalAutorizacionDatos(); cerrarModalBuscarUsuario(); cerrarDetallePedido(); cerrarModalEditarPedido(); }
 });

@@ -25,119 +25,93 @@ async function refrescarModalRecomendados() {
   renderModalSeleccionarUsuarioContactar(disponibles);
 }
 
-function iniciarSSE() {
-  const source = new EventSource(API_BACKEND_URL + 'eventos');
+// ═══════════ DISPATCH DE RENDERS ═══════════
+// Única puerta de entrada: el store cambió → redibujar lo que corresponda.
+// No hace fetch, solo lee del store.
+const tabActiva = tabId => !!document.getElementById(tabId)?.classList.contains('active');
 
-  source.addEventListener('conectado', () => {
+function refrescarVistas(cambios = {}) {
+  if (!cambios.clientes && !cambios.citas) return;
+
+  // Las alertas dependen de clientes y de citas (botón Reservar)
+  if (cambios.clientes) actualizarStats();
+  mostrarAlertas();
+
+  if (tabActiva('tab-database')) mostrarGeneral(document.getElementById('buscadorGeneral').value);
+
+  if (cambios.citas) {
+    actualizarBadgeAgenda();
+    actualizarBadgeCitasProgramadas();
+    if (tabActiva('tab-agenda')) renderAgenda();
+    if (tabActiva('tab-citas-programadas')) renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
+    if (tabActiva('tab-historial')) buscarHistorial();
+  }
+}
+
+function refrescarContactados() {
+  actualizarBadgeContactados();
+  if (tabActiva('tab-contactados')) mostrarContactados(document.getElementById('buscadorContactados').value);
+}
+
+// ═══════════ SSE ═══════════
+let sseSource = null;
+
+function parsearEvento(e) {
+  try {
+    return JSON.parse(e.data);
+  } catch (err) {
+    console.warn('SSE: payload inválido en', e.type, err);
+    return {};
+  }
+}
+
+function iniciarSSE() {
+  if (sseSource) sseSource.close();
+  sseSource = new EventSource(API_BACKEND_URL + 'eventos');
+
+  sseSource.addEventListener('conectado', () => {
     console.log('SSE conectado');
   });
 
-  source.addEventListener('cliente-creado', () => {
-    actualizarStats();
-    mostrarAlertas();
+  // ── Eventos que alimentan el store ──
+  const eventosDelStore = [
+    'cliente-creado', 'cliente-editado', 'cliente-eliminado',
+    'reserva-agregada', 'reserva-editada', 'reserva-eliminada', 'reservacion-concluida',
+    'historial-guardado', 'historial-contactado', 'historial-editado'
+  ];
 
+  eventosDelStore.forEach(evento => {
+    sseSource.addEventListener(evento, e => {
+      const cambios = aplicarEventoSSE(evento, parsearEvento(e));
+      refrescarVistas(cambios);
+      if (cambios.historial) refrescarContactados();
+    });
   });
 
-
-  source.addEventListener('cliente-editado', () => {
-
-    actualizarBadgeContactados();
-    mostrarContactados();
-    actualizarStats();
-    mostrarAlertas();
-
-  });
-
-  source.addEventListener('cliente-eliminado', () => {
-    mostrarAlertas();
-    actualizarStats();
-
-  });
-
-  source.addEventListener('cliente-citaConcluida', () => {
-    mostrarAlertas();
-    actualizarStats();
-
-  });
-
-
-  source.addEventListener('reserva-agregada', () => {
-    //  mostrarAlertas();
-    actualizarBadgeAgenda();
-    actualizarBadgeCitasProgramadas();
-    renderAgenda();
-    renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
-
-  })
-
-  //reservas 
-  source.addEventListener('reserva-eliminada', () => {
-
-    //  mostrarAlertas();
-    actualizarBadgeAgenda();
-    actualizarBadgeCitasProgramadas();
-    renderAgenda();
-    renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
-
-  });
-
-  source.addEventListener('reserva-editada', () => {
-    //        mostrarAlertas();
-    //actualizarBadgeAgenda();
-    //actualizarBadgeCitasProgramadas();
-    renderAgenda();
-    renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
-
-  })
-
-  source.addEventListener('historial-guardado', () => {
-    buscarHistorial();
-  })
-  // En tu archivo de sockets / init
-  source.addEventListener('usuario-agregado', async () => {
-    // Actualiza la lista principal siempre
+  // ── Eventos que no tocan el store ──
+  sseSource.addEventListener('usuario-agregado', async () => {
     mostrarUsuarios(document.getElementById('buscadorUsuarios')?.value || '');
-
-    // Actualiza el modal solo si está abierto y hay un contexto activo
-    const modalAbierto = document.getElementById('modalSeleccionarUsuarioContactar')
-      ?.classList.contains('active');
-
-    if (modalAbierto && usuarioIdDelContextoARecomendar) {
-      await refrescarModalRecomendados();
-    }
+    await refrescarModalRecomendadosSiEstaAbierto();
   });
 
-  source.addEventListener('meRecomendaron-editado', async () => {
-    const modalAbierto = document.getElementById('modalSeleccionarUsuarioContactar')
-      ?.classList.contains('active');
-
-    if (modalAbierto && usuarioIdDelContextoARecomendar) {
-      await refrescarModalRecomendados();
-    }
-  });
-
-  source.addEventListener('usuario-eliminado', async () => {
+  sseSource.addEventListener('usuario-editado', () => {
     mostrarUsuarios(document.getElementById('buscadorUsuarios')?.value || '');
-
-    const modalAbierto = document.getElementById('modalSeleccionarUsuarioContactar')
-      ?.classList.contains('active');
-    if (modalAbierto && usuarioIdDelContextoARecomendar) {
-      await refrescarModalRecomendados();
-    }
   });
 
-  // Para estadísticas
-  source.addEventListener('usuarioRecomendado-agregado', () => mostrarEstadisticas());
-  source.addEventListener('agregarPuntos-compraAlta', () => mostrarEstadisticas());
-  source.addEventListener('agregarPuntos-compraRecurrente', () => mostrarEstadisticas());
-  source.addEventListener('puntosEditados', () => mostrarEstadisticas());
-  source.addEventListener('reservacion-concluida', () => {
-    renderAgenda();
-    renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
+  sseSource.addEventListener('meRecomendaron-editado', async () => {
+    await refrescarModalRecomendadosSiEstaAbierto();
+  });
 
-  })
+  sseSource.addEventListener('usuario-eliminado', async () => {
+    mostrarUsuarios(document.getElementById('buscadorUsuarios')?.value || '');
+    await refrescarModalRecomendadosSiEstaAbierto();
+  });
 
-  // Cuando se crea un pedido nuevo
+  sseSource.addEventListener('usuarioRecomendado-agregado', () => mostrarEstadisticas());
+  sseSource.addEventListener('agregarPuntos-compraAlta', () => mostrarEstadisticas());
+  sseSource.addEventListener('agregarPuntos-compraRecurrente', () => mostrarEstadisticas());
+  sseSource.addEventListener('puntosEditados', () => mostrarEstadisticas());
+
   function refrescarPedidosSiVisible() {
     const filtro = document.getElementById('buscadorPedidos')?.value || '';
     if (modoPedidosHoy || filtro.trim()) {
@@ -145,132 +119,36 @@ function iniciarSSE() {
     }
   }
 
-  source.addEventListener('pedido-agregado', refrescarPedidosSiVisible);
-  source.addEventListener('pedido-editado', refrescarPedidosSiVisible);
-  source.addEventListener('pedido-eliminado', refrescarPedidosSiVisible);
+  sseSource.addEventListener('pedido-agregado', refrescarPedidosSiVisible);
+  sseSource.addEventListener('pedido-editado', refrescarPedidosSiVisible);
+  sseSource.addEventListener('pedido-eliminado', refrescarPedidosSiVisible);
 
-
-
-
-  source.onerror = () => {
+  sseSource.onerror = () => {
     console.warn('SSE desconectado, reconectando...');
-    source.close();
-    setTimeout(iniciarSSE, 3000);
+    sseSource.close();
+    sseSource = null;
+    setTimeout(() => {
+      iniciarSSE();
+      // Hubo una ventana sin eventos: resincronizamos para no perder datos.
+      if (store.listo) resincronizarStore();
+    }, 3000);
   };
 }
 
-// Llamar esto después del login
-document.addEventListener('DOMContentLoaded', () => {
-  iniciarSSE();
-});
-
-// ═══════════ SINCRONIZAR CON GOOGLE SHEETS (CORREGIDO) ═══════════
-function sincronizarConSheets() {
-  mostrarCargando(true);
-
-  fetch(API_BACKEND_URL + "customers/customersList")
-    .then(res => {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.json();
-    })
-    .then(datos => {
-      if (!datos || !Array.isArray(datos.customers)) {
-        throw new Error('Respuesta inválida');
-      }
-
-      // Sincronizar clientes
-      const clientesSheets = datos.customers
-        .map(c => ({
-          ...c,
-          id: String(c.id),
-          name: String(c.name),
-          telephone: String(c.telephone),
-          plate: String(c.plate).toUpperCase().trim(),
-          service: String(c.service),
-          entryDate: String(c.entryDate),
-          nextContact: String(c.nextContact),
-          mileage: String(c.mileage)
-        }));
-
-      //migrarClientesAHistorial();
-      actualizarStats();
-      mostrarAlertas();
-      actualizarBadgeContactados();
-      actualizarBadgeUsuarios();
-      actualizarBadgeAgenda();
-      actualizarBadgeCitasProgramadas();
-      if (document.getElementById('tab-database').classList.contains('active'))
-        mostrarGeneral(document.getElementById('buscadorGeneral').value);
-      if (document.getElementById('tab-contactados').classList.contains('active'))
-        mostrarContactados();
-      if (document.getElementById('tab-usuarios').classList.contains('active'))
-        mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
-      if (document.getElementById('tab-historial').classList.contains('active'))
-        buscarHistorial();
-      if (document.getElementById('tab-agenda').classList.contains('active'))
-        renderAgenda();
-      if (document.getElementById('tab-citas-programadas').classList.contains('active'))
-        renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
-      console.log('✓ ' + clientesSheets.length + ' clientes sincronizados desde Sheets');
-    })
-    .catch(err => {
-      console.warn('Sheets no disponible — usando datos locales:', err.message);
-    })
-    .finally(() => {
-      mostrarCargando(false);
-    });
-}
-
-
-
-// 🔧 CORREGIDO: sincronizarSoloCitas con manejo de string para citaId
-/*
-async function sincronizarSoloCitas() {
-  try {
-    const res = await fetch(API_BACKEND_URL + "reservations/reservationsList");
-    const datos = await res.json();
-    if (!datos.ok || !Array.isArray(datos.reservationList)) return;
-
-    const citasSheets = datos.reservationList.map(c => ({
-      reservationId: String(c.reservationId),
-      plate: String(c.plate || '').toUpperCase().trim(),
-      name: String(c.name || ''),
-      telephone: String(c.telephone || ''),
-      service: String(c.service || ''),
-      date: String(c.date || ''),
-      hour: String(c.hour || ''),
-      space: String(c.space || ''),
-      notes: String(c.notes || '')
-    }));
-
-    const idsSheets = new Set(citasSheets.map(c => c.citaId));
-    const citasLocales = getCitas();
-    const ahora = Date.now();
-
-    const pendientes = citasLocales.filter(c =>
-      !idsSheets.has(String(c.citaId)) && (ahora - Number(c.citaId)) < 600000
-    );
-
-    const citasMerge = [...citasSheets, ...pendientes];
-
-    const localIds = new Set(citasLocales.map(c => String(c.citaId)));
-    const sheetsIds = new Set(citasMerge.map(c => String(c.citaId)));
-    const hayDiferencia =
-      citasMerge.length !== citasLocales.length ||
-      [...sheetsIds].some(id => !localIds.has(id)) ||
-      [...localIds].some(id => !sheetsIds.has(id));
-
-    if (hayDiferencia) {
-      setCitas().then(respuesta => {
-        console.log(respuesta.status);
-        actualizarBadgeAgenda();
-        mostrarAlertas();
-        if (document.getElementById('tab-database').classList.contains('active'))
-          mostrarGeneral(document.getElementById('buscadorGeneral').value);
-      })
-    }
-  } catch (err) {
-    console.warn('Sync citas falló:', err.message);
+async function refrescarModalRecomendadosSiEstaAbierto() {
+  const modalAbierto = document.getElementById('modalSeleccionarUsuarioContactar')
+    ?.classList.contains('active');
+  if (modalAbierto && usuarioIdDelContextoARecomendar) {
+    await refrescarModalRecomendados();
   }
 }
- */
+
+async function resincronizarStore() {
+  try {
+    await cargarStore();
+    refrescarVistas({ clientes: true, citas: true });
+    refrescarContactados();
+  } catch (err) {
+    console.warn('No se pudo resincronizar el store:', err);
+  }
+}

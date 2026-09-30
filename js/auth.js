@@ -44,21 +44,20 @@ function intentarLogin(e) {
   }, 600);
 }
 
-function mostrarApp() {
+async function mostrarApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('appWrapper').style.display = 'block';
   if (Notification.permission !== "granted") Notification.requestPermission();
 
-  //migrarClientesAHistorial();
-  actualizarStats();
-  mostrarAlertas();
-  revisarCitasDeHoy();
-  actualizarBadgeContactados();
-  actualizarBadgeUsuarios();
-  actualizarBadgeAgenda();
-  actualizarBadgeCitasProgramadas();
+  mostrarCargando(true);
+  try {
+    // Una sola carga: clientes, citas e historial. Después manda el SSE.
+    await cargarStore();
+  } catch (err) {
+    console.error('Error al cargar los datos:', err);
+  }
+  mostrarCargando(false);
 
-  sincronizarConSheets();
   const role = sessionStorage.getItem('ag_role');
   if (role !== 'admin') {
     document.getElementById('nav-trabajadores')?.style.setProperty('display', 'none');
@@ -67,8 +66,13 @@ function mostrarApp() {
     document.querySelectorAll('.btn-editar-usuario, .btn-eliminar-usuario').forEach(btn => {
       btn.style.display = 'none';
     });
-    // cualquier otro elemento que quieras ocultar
   }
+
+  // Un solo paso de render sobre el store ya cargado
+  refrescarVistas({ clientes: true, citas: true });
+  refrescarContactados();
+  revisarCitasDeHoy();
+  actualizarBadgeUsuarios();
 }
 
 function cerrarSesion() {

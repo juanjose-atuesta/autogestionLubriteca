@@ -12,12 +12,11 @@ function cerrarModalNotasCita() {
   document.getElementById('modalNotasCita').classList.remove('active');
 }
 
-async function abrirModalNotasCita(citaId) {
+function abrirModalNotasCita(citaId) {
   const id = String(citaId || '').trim();
   if (!id) return;
 
-  const citas = await getCitas();
-  const cita = (Array.isArray(citas) ? citas : []).find(c => String(c.reservationId) === id);
+  const cita = citaPorId(id);
   if (!cita) return;
 
   const textoNotas = String(cita.notes || '').trim();
@@ -43,12 +42,11 @@ function cargarOpcionesHoraEditarReserva(horaSeleccionada = '') {
   selectHora.value = String(horaSeleccionada || HORAS[0] || '');
 }
 
-async function editarCitaProgramada(citaId) {
+function editarCitaProgramada(citaId) {
   const id = String(citaId || '').trim();
   if (!id) return;
 
-  const citas = await getCitas();
-  const cita = (Array.isArray(citas) ? citas : []).find(c => String(c.reservationId) === id);
+  const cita = citaPorId(id);
   if (!cita) return;
 
   cargarOpcionesHoraEditarReserva(cita.hour);
@@ -94,14 +92,7 @@ async function guardarEdicionReserva() {
     return;
   }
 
-  const citas = await getCitas();
-  const conflicto = (Array.isArray(citas) ? citas : []).find(c =>
-    String(c.reservationId) !== reservationId &&
-    String(c.date) === payload.date &&
-    String(c.hour) === payload.hour &&
-    String(c.space) === payload.space
-  );
-  if (conflicto) {
+  if (hayCitaEnEspacio(payload.date, payload.hour, payload.space, reservationId)) {
     alert(`⚠ Ya existe una reserva en ese horario para ${formatoEspacioCita(payload.space)}.`);
     return;
   }
@@ -115,27 +106,19 @@ async function guardarEdicionReserva() {
     if (!response.status) throw new Error('HTTP ' + response.status);
 
     cerrarModalEditarReserva();
-    await actualizarBadgeAgenda();
-    await actualizarBadgeCitasProgramadas();
-    mostrarAlertas();
-    if (document.getElementById('tab-database').classList.contains('active'))
-      mostrarGeneral(document.getElementById('buscadorGeneral').value);
-    if (document.getElementById('tab-citas-programadas').classList.contains('active'))
-      renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
-    if (document.getElementById('tab-agenda').classList.contains('active')) await renderAgenda();
+    refrescarVistas({ citas: true });
   } catch (error) {
     console.error(error);
   }
 }
 
-async function actualizarBadgeCitasProgramadas() {
+function actualizarBadgeCitasProgramadas() {
   const badge = document.getElementById('nav-badge-citas-programadas');
   if (!badge) return;
-  const citas = await getCitas();
-  badge.textContent = Array.isArray(citas) ? citas.length : 0;
+  badge.textContent = citasAbiertas().length;
 }
 
-async function renderListaCitasProgramadas(filtro = '') {
+function renderListaCitasProgramadas(filtro = '') {
   const tbody = document.getElementById('listaCitasProgramadas');
   if (!tbody) return;
 
@@ -143,12 +126,12 @@ async function renderListaCitasProgramadas(filtro = '') {
   const tabla = document.getElementById('tablaCitasProgramadas');
   const stats = document.getElementById('statsCitasProgramadas');
 
-  const todas = await getCitas();
+  const todas = citasAbiertas();
   const badge = document.getElementById('nav-badge-citas-programadas');
-  if (badge) badge.textContent = Array.isArray(todas) ? todas.length : 0;
+  if (badge) badge.textContent = todas.length;
   const filtroNormalizado = String(filtro || '').trim().toUpperCase();
 
-  let citas = Array.isArray(todas) ? todas : [];
+  let citas = todas;
   if (filtroNormalizado) {
     citas = citas.filter(cita => {
       const nombre = String(cita.name || '').toUpperCase();
@@ -169,11 +152,11 @@ async function renderListaCitasProgramadas(filtro = '') {
 
   citas.sort((a, b) => `${String(a.date || '')} ${String(a.hour || '')}`.localeCompare(`${String(b.date || '')} ${String(b.hour || '')}`));
 
-  const totalConNotas = (Array.isArray(todas) ? todas : []).filter(c => String(c.notes || '').trim()).length;
+  const totalConNotas = todas.filter(c => String(c.notes || '').trim()).length;
   stats.innerHTML = `
     <div class="db-stat-item"><span class="db-dot" style="background:#3b82f6"></span>${citas.length} mostradas</div>
     <div class="db-stat-item"><span class="db-dot" style="background:#14b8a6"></span>${totalConNotas} con notas</div>
-    <div class="db-stats-total">${(Array.isArray(todas) ? todas : []).length} citas</div>`;
+    <div class="db-stats-total">${todas.length} citas</div>`;
 
   tbody.innerHTML = '';
   if (!citas.length) {

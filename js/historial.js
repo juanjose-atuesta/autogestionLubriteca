@@ -21,7 +21,7 @@ function renderEstadoInicialHistorial() {
 }
 
 // ═══════════ HISTORIAL (CITAS CONCLUIDAS) ═══════════
-async function buscarHistorial() {
+function buscarHistorial() {
   const res = document.getElementById('historialResultado');
   const input = document.getElementById('buscadorPlaca');
   if (!res || !input) return;
@@ -29,10 +29,7 @@ async function buscarHistorial() {
   const busqueda = String(input.value || '').trim();
   const busquedaUpper = busqueda.toUpperCase();
 
-  const citasRaw = await getReservationsConcluded();
-  const citasConcluidas = (Array.isArray(citasRaw) ? citasRaw : [])
-    .filter(c => normalizarBooleanConcluido(c.wasConcluded))
-    .sort(compararFechaHoraDesc);
+  const citasConcluidas = citasConcluidas().sort(compararFechaHoraDesc);
 
   if (!busqueda) {
     const recientes = citasConcluidas.slice(0, 20);

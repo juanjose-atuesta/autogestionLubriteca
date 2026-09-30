@@ -34,8 +34,6 @@ document.getElementById('clienteForm').addEventListener('submit', async e => {
   })
     .then(response => response.json())
     .then(data => {
-      //console.log(data.status);
-      //console.log("se logro");
       fetch(API_BACKEND_URL + "historial/saveToHistorialDB", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -43,16 +41,10 @@ document.getElementById('clienteForm').addEventListener('submit', async e => {
       }).then(res => res.json())
         .then(data => {
 
-          mostrarToast(); actualizarStats(); mostrarAlertas(); revisarCitasDeHoy();
+          mostrarToast();
+          refrescarVistas({ clientes: true, historial: true });
           document.getElementById('clienteForm').reset();
           setFechaHoyEnInput('fechaActual');
-
-          fetch(API_BACKEND_URL + "eventos/changeValue", {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({})
-          })
-
         })
 
     })
@@ -60,29 +52,20 @@ document.getElementById('clienteForm').addEventListener('submit', async e => {
 });
 
 function eliminarCliente(id) {
-  console.log("Hiciste click en eliminar cliente con id:", id);
-  id = String(id);
-  getClientes().then(cl => {
-    const c = cl.find(x => String(x.id) === id);
-    if (c) {
-      fetch(API_BACKEND_URL + "customers/deleteCustomer/" + id, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
-      }).then(response => response.json())
-        .then(data => {
-          actualizarStats(); mostrarAlertas(); actualizarBadgeAgenda();
-          if (document.getElementById('tab-database').classList.contains('active'))
-            mostrarGeneral(document.getElementById('buscadorGeneral').value);
-          if (document.getElementById('tab-agenda').classList.contains('active'))
-            renderAgenda();
+  const clave = String(id);
+  if (!clientePorId(clave)) return;
 
-          // cerrarModalEliminar();
-        })
-      //No se para que es esto, pero no lo borro por si las moscas
-      //setCitas(getCitas().filter(ct => String(ct.placa).toUpperCase() !== String(c.placa).toUpperCase()));
-    }
-  }).catch(console.error);
+  fetch(API_BACKEND_URL + "customers/deleteCustomer/" + clave, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' }
+  }).then(response => response.json())
+    .then(data => {
+      // El backend solo borra de `customers`; el log de historialDB se conserva.
+      refrescarVistas({ clientes: true, citas: true });
+    })
+    .catch(console.error);
 }
+
 function formatoParaInput(fecha) {
   // Convierte "aaaa-mm-dd" a "aaaa-mm-dd"
   const anio = fecha.slice(0, 4);
@@ -93,67 +76,55 @@ function formatoParaInput(fecha) {
 
 
 // ═══════════ MODAL EDITAR ═══════════
-function abrirModalEditar(id) {
+// El listener se registra UNA sola vez, al cargar el archivo.
+document.getElementById("buttonSaveEdition").addEventListener("click", () => {
+  const id = String(window.clienteEnEdicion || '').trim();
+  if (!id) return;
 
-  id = String(id);
-  getClientes().then(clientes => {
-    const c = clientes.find(x => String(x.id) === id);
-    if (!c) return;
-    //document.getElementById('editId').value = c.id;
-    document.getElementById('editNombre').value = c.name;
-    document.getElementById('editTelefono').value = c.telephone;
-    document.getElementById('editPlaca').value = c.plate;
-    document.getElementById('editCategoria').value = c.service;
+  const datos = {
+    name: document.getElementById('editNombre').value.toUpperCase(),
+    telephone: limpiarTelefono(document.getElementById('editTelefono').value),
+    plate: document.getElementById('editPlaca').value.toUpperCase().trim(),
+    service: document.getElementById('editCategoria').value,
+    entryDate: document.getElementById('editFechaActual').value,
+    nextContact: document.getElementById('editFechaFutura').value,
+    mileage: document.getElementById('editKm').value
+  };
 
-    document.getElementById('editFechaActual').value = formatoParaInput(c.entryDate);
-    document.getElementById('editFechaFutura').value = formatoParaInput(c.nextContact);
-    document.getElementById('editKm').value = c.mileage;
-    document.getElementById('modalEditar').classList.add('active');
-  }).catch(console.error);
-  document.querySelector("#buttonSaveEdition").addEventListener("click", () => {
-
-    fetch(API_BACKEND_URL + "customers/editCustomer/" + id, {
+  fetch(API_BACKEND_URL + "customers/editCustomer/" + id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: id, ...datos })
+  })
+    .then(() => fetch(API_BACKEND_URL + "historial/editHistorialDBCustomer/" + id, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: id,
-        name: document.getElementById('editNombre').value.toUpperCase(),
-        telephone: limpiarTelefono(document.getElementById('editTelefono').value),
-        plate: document.getElementById('editPlaca').value.toUpperCase().trim(),
-        service: document.getElementById('editCategoria').value,
-        entryDate: document.getElementById('editFechaActual').value,
-        nextContact: document.getElementById('editFechaFutura').value,
-        mileage: document.getElementById('editKm').value
-      })
+      body: JSON.stringify({ id: id, ...datos })
+    }))
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === "success") {
+        cerrarModalEditar();
+        refrescarVistas({ clientes: true, historial: true });
+      }
     })
-      .then(() => {
-        fetch(API_BACKEND_URL + "historial/editHistorialDBCustomer/" + id, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: id,
-            name: document.getElementById('editNombre').value.toUpperCase(),
-            telephone: limpiarTelefono(document.getElementById('editTelefono').value),
-            plate: document.getElementById('editPlaca').value.toUpperCase().trim(),
-            service: document.getElementById('editCategoria').value,
-            entryDate: document.getElementById('editFechaActual').value,
-            nextContact: document.getElementById('editFechaFutura').value,
-            mileage: document.getElementById('editKm').value
+    .catch(console.error);
+});
 
-          })
-        })
+function abrirModalEditar(id) {
+  const clave = String(id);
+  const c = clientePorId(clave);
+  if (!c) return;
 
-          .then(response => response.json())
-          .then(data => {
-            if (data.status === "success") {
-              cerrarModalEditar(); actualizarStats(); mostrarAlertas();
-              if (document.getElementById('tab-database').classList.contains('active'))
-                mostrarGeneral(document.getElementById('buscadorGeneral').value);
-
-            }
-          })
-      })
-  });
+  window.clienteEnEdicion = clave;
+  document.getElementById('editNombre').value = c.name;
+  document.getElementById('editTelefono').value = c.telephone;
+  document.getElementById('editPlaca').value = c.plate;
+  document.getElementById('editCategoria').value = c.service;
+  document.getElementById('editFechaActual').value = formatoParaInput(c.entryDate);
+  document.getElementById('editFechaFutura').value = formatoParaInput(c.nextContact);
+  document.getElementById('editKm').value = c.mileage;
+  document.getElementById('modalEditar').classList.add('active');
 }
 
 
