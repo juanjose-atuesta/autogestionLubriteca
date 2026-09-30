@@ -1,4 +1,4 @@
-//const API_BACKEND_URL = ""
+//const API_BACKEND_URL = "localhost:8080"
 const API_BACKEND_URL = "https://apilt.juanjodev.win/api/";
 const documento_autorizacion_datos_url = "https://docs.google.com/document/d/1JuuQcjqJRRoOjid0BEr6Yz_FpABXftCkNRBVhflbGLI/edit?usp=sharing";
 

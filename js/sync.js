@@ -26,31 +26,28 @@ async function refrescarModalRecomendados() {
 }
 
 // ═══════════ DISPATCH DE RENDERS ═══════════
-// Única puerta de entrada: el store cambió → redibujar lo que corresponda.
-// No hace fetch, solo lee del store.
+// Única puerta de entrada. Repinta TODO desde el store (sin fetch):
+// así, pase lo que pase, la pantalla siempre refleja el estado
+// actual en memoria. El argumento _cambios se ignora a propósito:
+// pintar todo es más barato y a prueba de errores que pintar solo lo
+// que "cambió" y arriesgarse a quedar con datos viejos en pantalla.
 const tabActiva = tabId => !!document.getElementById(tabId)?.classList.contains('active');
 
-function refrescarVistas(cambios = {}) {
-  if (cambios.clientes) actualizarStats();
+function refrescarVistas(_cambios = {}) {
+  actualizarStats();
+  mostrarAlertas();
 
-  // Las alertas dependen de clientes (quick-filter) y de citas (botón Reservar)
-  if (cambios.clientes || cambios.citas) {
-    mostrarAlertas();
-    if (tabActiva('tab-database')) mostrarGeneral(document.getElementById('buscadorGeneral').value);
-  }
+  // Vistas según pestaña visible (todas leen del store, nunca hacen fetch)
+  if (tabActiva('tab-database')) mostrarGeneral(document.getElementById('buscadorGeneral').value);
+  if (tabActiva('tab-agenda')) renderAgenda();
+  if (tabActiva('tab-citas-programadas')) renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
+  if (tabActiva('tab-historial')) buscarHistorial();
+  if (tabActiva('tab-contactados')) mostrarContactados(document.getElementById('buscadorContactados').value);
 
-  if (cambios.citas) {
-    actualizarBadgeAgenda();
-    actualizarBadgeCitasProgramadas();
-    if (tabActiva('tab-agenda')) renderAgenda();
-    if (tabActiva('tab-citas-programadas')) renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
-    if (tabActiva('tab-historial')) buscarHistorial();
-  }
-
-  if (cambios.historial) {
-    actualizarBadgeContactados();
-    if (tabActiva('tab-contactados')) mostrarContactados(document.getElementById('buscadorContactados').value);
-  }
+  // Badges (cambien o no, se mantienen al día)
+  actualizarBadgeAgenda();
+  actualizarBadgeCitasProgramadas();
+  actualizarBadgeContactados();
 }
 
 // ═══════════ SSE ═══════════
@@ -82,7 +79,11 @@ function iniciarSSE() {
 
   eventosDelStore.forEach(evento => {
     sseSource.addEventListener(evento, e => {
-      const cambios = aplicarEventoSSE(evento, parsearEvento(e));
+      const payload = parsearEvento(e);
+      const cambios = aplicarEventoSSE(evento, payload);
+      if (!payload.cliente && !payload.reserva && !payload.historial) {
+        console.warn('[SSE] "' + evento + '" llegó sin documento completo -> no se puede actualizar el store. ¿Backend desactualizado?', payload);
+      }
       refrescarVistas(cambios);
     });
   });
