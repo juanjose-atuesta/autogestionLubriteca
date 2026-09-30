@@ -31,13 +31,13 @@ async function refrescarModalRecomendados() {
 const tabActiva = tabId => !!document.getElementById(tabId)?.classList.contains('active');
 
 function refrescarVistas(cambios = {}) {
-  if (!cambios.clientes && !cambios.citas) return;
-
-  // Las alertas dependen de clientes y de citas (botón Reservar)
   if (cambios.clientes) actualizarStats();
-  mostrarAlertas();
 
-  if (tabActiva('tab-database')) mostrarGeneral(document.getElementById('buscadorGeneral').value);
+  // Las alertas dependen de clientes (quick-filter) y de citas (botón Reservar)
+  if (cambios.clientes || cambios.citas) {
+    mostrarAlertas();
+    if (tabActiva('tab-database')) mostrarGeneral(document.getElementById('buscadorGeneral').value);
+  }
 
   if (cambios.citas) {
     actualizarBadgeAgenda();
@@ -46,11 +46,11 @@ function refrescarVistas(cambios = {}) {
     if (tabActiva('tab-citas-programadas')) renderListaCitasProgramadas(document.getElementById('buscadorCitasProgramadas').value);
     if (tabActiva('tab-historial')) buscarHistorial();
   }
-}
 
-function refrescarContactados() {
-  actualizarBadgeContactados();
-  if (tabActiva('tab-contactados')) mostrarContactados(document.getElementById('buscadorContactados').value);
+  if (cambios.historial) {
+    actualizarBadgeContactados();
+    if (tabActiva('tab-contactados')) mostrarContactados(document.getElementById('buscadorContactados').value);
+  }
 }
 
 // ═══════════ SSE ═══════════
@@ -84,7 +84,6 @@ function iniciarSSE() {
     sseSource.addEventListener(evento, e => {
       const cambios = aplicarEventoSSE(evento, parsearEvento(e));
       refrescarVistas(cambios);
-      if (cambios.historial) refrescarContactados();
     });
   });
 
@@ -146,8 +145,7 @@ async function refrescarModalRecomendadosSiEstaAbierto() {
 async function resincronizarStore() {
   try {
     await cargarStore();
-    refrescarVistas({ clientes: true, citas: true });
-    refrescarContactados();
+    refrescarVistas({ clientes: true, citas: true, historial: true });
   } catch (err) {
     console.warn('No se pudo resincronizar el store:', err);
   }

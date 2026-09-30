@@ -33,13 +33,17 @@ document.getElementById('clienteForm').addEventListener('submit', async e => {
     body: JSON.stringify(c)
   })
     .then(response => response.json())
-    .then(data => {
+    .then(datosCliente => {
+      // Aplica el cliente nuevo al store ya mismo (no esperamos el SSE).
+      if (datosCliente && datosCliente.customerSaved) setCliente(datosCliente.customerSaved);
+
       fetch(API_BACKEND_URL + "historial/saveToHistorialDB", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(c)
       }).then(res => res.json())
-        .then(data => {
+        .then(datosHistorial => {
+          if (datosHistorial && datosHistorial.historialDBSaved) setHistorial(datosHistorial.historialDBSaved);
 
           mostrarToast();
           refrescarVistas({ clientes: true, historial: true });
@@ -61,6 +65,8 @@ function eliminarCliente(id) {
   }).then(response => response.json())
     .then(data => {
       // El backend solo borra de `customers`; el log de historialDB se conserva.
+      // Borramos del store con el documento devuelto (no esperamos el SSE).
+      if (data && data.customerDeleted) eliminarClienteDelStore(String(data.customerDeleted.id));
       refrescarVistas({ clientes: true, citas: true });
     })
     .catch(console.error);
@@ -96,13 +102,18 @@ document.getElementById("buttonSaveEdition").addEventListener("click", () => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id: id, ...datos })
   })
-    .then(() => fetch(API_BACKEND_URL + "historial/editHistorialDBCustomer/" + id, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: id, ...datos })
-    }))
+    .then(response => response.json())
+    .then(actualizado => {
+      if (actualizado && actualizado.customerUpdated) setCliente(actualizado.customerUpdated);
+      return fetch(API_BACKEND_URL + "historial/editHistorialDBCustomer/" + id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id, ...datos })
+      });
+    })
     .then(response => response.json())
     .then(data => {
+      if (data && data.customerUpdated) setHistorial(data.customerUpdated);
       if (data.status === "success") {
         cerrarModalEditar();
         refrescarVistas({ clientes: true, historial: true });

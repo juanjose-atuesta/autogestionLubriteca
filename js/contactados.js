@@ -15,10 +15,12 @@ async function toggleContactado(id) {
       headers: { "Content-Type": "application/json" },
     });
 
-    await fetch(API_BACKEND_URL + "historial/toggleWasContacted/" + clienteId, {
+    const histResp = await fetch(API_BACKEND_URL + "historial/toggleWasContacted/" + clienteId, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" }
     });
+    const histData = await histResp.json();
+    if (histData && histData.customerUpdated) setHistorial(histData.customerUpdated);
 
     // El store se actualiza con el evento SSE; mientras llega, ajustamos
     // localmente para que la tabla responda al instante.
@@ -77,10 +79,12 @@ async function eliminarLogContactado(id) {
   }
 
   try {
-    await fetch(API_BACKEND_URL + "historial/toggleWasContacted/" + clave, {
+    const resp = await fetch(API_BACKEND_URL + "historial/toggleWasContacted/" + clave, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" }
     });
+    const data = await resp.json();
+    if (data && data.customerUpdated) setHistorial(data.customerUpdated);
     refrescarVistas({ historial: true });
   } catch (err) {
     console.error("Error al quitar el contactado del log:", err);

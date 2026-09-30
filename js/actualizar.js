@@ -2,8 +2,7 @@
 // El SSE ya llama a refrescarVistas() por evento; esto queda como
 // "pintar todo" manual.
 function actualizar() {
-  refrescarVistas({ clientes: true, citas: true });
-  refrescarContactados();
+  refrescarVistas({ clientes: true, citas: true, historial: true });
   actualizarBadgeUsuarios();
   revisarCitasDeHoy();
 }

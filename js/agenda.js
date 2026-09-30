@@ -85,14 +85,21 @@ async function confirmarConcluirCita() {
     );
     if (!response.ok) throw new Error('HTTP ' + response.status);
 
+    const data = await response.json();
+    if (data && data.reservation) setCita(data.reservation);
+
     if (customerId) {
       const customerResponse = await fetch(
         API_BACKEND_URL + "customers/toogleReservationConcluded/" + customerId,
         { method: 'PATCH', headers: { 'Content-Type': 'application/json' } }
       );
       if (!customerResponse.ok) throw new Error('HTTP ' + customerResponse.status);
+
+      const datosCliente = await customerResponse.json();
+      if (datosCliente && datosCliente.customerUpdated) setCliente(datosCliente.customerUpdated);
     }
 
+    refrescarVistas({ citas: true, clientes: true });
 
   } catch (error) {
     console.error('Error al concluir cita:', error);
@@ -197,6 +204,9 @@ async function confirmarReserva() {
       body: JSON.stringify({ ...nuevaCita })
     });
     if (!response.ok) throw new Error('HTTP ' + response.status);
+
+    const data = await response.json();
+    if (data && data.reservationSaved) setCita(data.reservationSaved);
 
     cerrarModalReservar();
     refrescarVistas({ citas: true });
@@ -347,6 +357,9 @@ async function confirmarEliminarCita() {
     });
     if (!response.ok) throw new Error('HTTP ' + response.status);
 
+    const data = await response.json();
+    if (data && data.reservationDeleted) eliminarCitaDelStore(String(data.reservationDeleted.reservationId));
+
     cerrarModalEliminarCita();
     cerrarDetalleCita();
     refrescarVistas({ citas: true });
@@ -477,6 +490,8 @@ async function onDrop(event, nuevaHora) {
       })
     });
     if (!response.ok) throw new Error('HTTP ' + response.status);
+    const data = await response.json();
+    if (data && data.reservationUpdated) setCita(data.reservationUpdated);
   } catch (error) {
     console.error('Error al mover la cita:', error);
     mostrarToastError('⚠ No se pudo mover la cita');

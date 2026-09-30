@@ -69,8 +69,7 @@ async function mostrarApp() {
   }
 
   // Un solo paso de render sobre el store ya cargado
-  refrescarVistas({ clientes: true, citas: true });
-  refrescarContactados();
+  refrescarVistas({ clientes: true, citas: true, historial: true });
   revisarCitasDeHoy();
   actualizarBadgeUsuarios();
 }

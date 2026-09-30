@@ -105,6 +105,9 @@ async function guardarEdicionReserva() {
     });
     if (!response.status) throw new Error('HTTP ' + response.status);
 
+    const data = await response.json();
+    if (data && data.reservationUpdated) setCita(data.reservationUpdated);
+
     cerrarModalEditarReserva();
     refrescarVistas({ citas: true });
   } catch (error) {

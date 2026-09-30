@@ -6,7 +6,7 @@ function actualizarStats() {
   const hoy = getHoy();
   const r = resumenClientes(hoy);
   document.getElementById('statsGrid').innerHTML = `
-        <div class="stat-card stat-primary"><div class="stat-value">${r.pendientes}</div><div class="stat-label">Total clientes</div></div>
+        <div class="stat-card stat-primary"><div class="stat-value">${r.pendientes}</div><div class="stat-label">Total alertas</div></div>
         <div class="stat-card stat-danger"><div class="stat-value">${r.vencidos}</div><div class="stat-label">Vencidos</div></div>
         <div class="stat-card stat-warning"><div class="stat-value">${r.hoy}</div><div class="stat-label">Citas hoy</div></div>
         <div class="stat-card stat-success"><div class="stat-value">${r.alDia}</div><div class="stat-label">Al día</div></div>`;
