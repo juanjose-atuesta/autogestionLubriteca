@@ -40,7 +40,10 @@ function indiceCitasPorCliente() {
 
 function setCliente(cliente) {
   const k = claveCliente(cliente);
-  if (!k) return null;
+  if (!k) {
+    console.warn('[store.setCliente] cliente SIN id, NO se guarda en el store:', cliente);
+    return null;
+  }
   store.clientes.set(k, cliente);
   return cliente;
 }

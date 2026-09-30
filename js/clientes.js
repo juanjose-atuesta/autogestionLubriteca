@@ -34,8 +34,14 @@ document.getElementById('clienteForm').addEventListener('submit', async e => {
   })
     .then(response => response.json())
     .then(datosCliente => {
+      console.log('[addCustomer] el POST respondió:', datosCliente);
       // Aplica el cliente nuevo al store ya mismo (no esperamos el SSE).
-      if (datosCliente && datosCliente.customerSaved) setCliente(datosCliente.customerSaved);
+      if (datosCliente && datosCliente.customerSaved) {
+        setCliente(datosCliente.customerSaved);
+        console.log('[addCustomer] cliente metido al store. Total clientes ahora:', clientesTodos().length);
+      } else {
+        console.warn('[addCustomer] NO llegó customerSaved — el POST no guardó. El store queda igual:', datosCliente);
+      }
 
       fetch(API_BACKEND_URL + "historial/saveToHistorialDB", {
         method: 'POST',
