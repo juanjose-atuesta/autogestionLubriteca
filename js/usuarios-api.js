@@ -104,7 +104,6 @@ async function obtenerUsuariosRecomendadosUsuario(usuarioId) {
   try {
     const response = await fetch(API_BACKEND_URL + "users/recommendedUsers/" + id);
     const data = await response.json();
-    console.log(data.recommendedUsers);
     return data.recommendedUsers;
   } catch (error) {
     console.error('Error obteniendo recomendados del usuario:', error);
@@ -118,7 +117,6 @@ async function obtenerUsuarioQueMeRecomendo(usuarioId) {
   try {
     const response = await fetch(API_BACKEND_URL + "users/getRecommendedMe/" + id);
     const data = await response.json();
-    console.log(data.recommendedMe);
     return data.recommendedMe;
   } catch (error) {
     console.error('Error obteniendo recomendados del usuario:', error);
@@ -128,7 +126,6 @@ async function obtenerUsuarioQueMeRecomendo(usuarioId) {
 
 }
 async function editarUsuarioRegistrado(usuarioId, payload) {
-  console.log((payload));
   const id = String(usuarioId || '').trim();
   if (!id) return null;
 

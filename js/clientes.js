@@ -60,7 +60,6 @@ document.getElementById('clienteForm').addEventListener('submit', async e => {
 });
 
 function eliminarCliente(id) {
-  console.log("Hiciste click en eliminar cliente con id:", id);
   id = String(id);
   getClientes().then(cl => {
     const c = cl.find(x => String(x.id) === id);
