@@ -9,41 +9,46 @@ Sistema web para gestión de clientes, alertas, historial, contactados y agenda 
 ```text
 autogestionLubriteca/
 ├── index.html
-├── styles.css
+├── css/
+│   ├── base.css
+│   ├── shared.css
+│   └── features/
+│       ├── historial.css
+│       ├── citas.css
+│       ├── pedidos.css
+│       ├── estadisticas.css
+│       ├── usuarios.css
+│       └── clientes.css
 └── js/
-    ├── config.js
-    ├── storage.js
-    ├── utils.js
-    ├── ui-tablas.js
-    ├── contactados.js
-    ├── historial.js
-    ├── notifications.js
-    ├── agenda.js
-    ├── clientes.js
-    ├── sync.js
-    ├── auth.js
-    ├── navigation.js
-    └── main.js 
+    ├── core/          config.js  main.js  navigation.js  auth.js  logins.js
+    ├── store/         storage.js  sync.js
+    ├── shared/        utils.js  ui-tablas.js  notifications.js
+    └── features/
+        ├── clientes/     clientes.js  contactados.js
+        ├── citas/        agenda.js  listaCitas.js
+        ├── usuarios/     usuarios.js  usuarios-api.js
+        ├── historial/    historial.js
+        ├── pedidos/      pedidos.js  pedidosRegistrados.js
+        └── estadisticas/ estadisticas.js  estadisticas-api.js
 ```
 
 ## 📦 ¿Qué hace cada archivo?
 
 | Archivo | Rol general | Funciones principales |
 |---|---|---|
-| `js/config.js` | Configuración global y constantes. | `urlGoogle`, `USUARIOS`, `ESPACIOS`, `HORAS`, `HORAS_DISPLAY` |
-| `js/storage.js` | Acceso a `localStorage` para persistencia local. | `get/setClientes`, `get/setHistorialDB`, `get/setContactados`, `get/setIdsContactados`, `get/setCitas` |
-| `js/utils.js` | Utilidades de fechas e IDs. | `getHoy`, `diasRestantes`, `fechaHoraActual`, `formatearFechaLarga`, `generarIdCliente` |
-| `js/ui-tablas.js` | Render UI de estadísticas y tablas (alertas/base de datos). | `actualizarStats`, `buildBadge`, `construirFila`, `mostrarAlertas`, `mostrarGeneral`, `filtrarGeneral`, `limpiarBuscadorGeneral` |
-| `js/contactados.js` | Lógica de marcación y listado de contactados. | `toggleContactado`, `actualizarBadgeContactados`, `mostrarContactados`, `eliminarLogContactado`, `filtrarContactados`, `limpiarBuscadorContactados` |
-| `js/historial.js` | Búsqueda y render del historial por placa. | `buscarHistorial`, `limpiarHistorial` |
-| `js/notifications.js` | Notificaciones del navegador para citas del día. | `revisarCitasDeHoy`, `dispararNotificacion` |
-| `js/agenda.js` | Flujo completo de reservas, agenda, detalle y drag & drop. | `abrirModalReservar`, `mostrarPaso2`, `seleccionarEspacio`, `mostrarHorasDisponibles`, `seleccionarHora`, `confirmarReserva`, `cerrarModalReservar`, `actualizarBadgeAgenda`, `irHoyAgenda`, `cambiarDiaAgenda`, `setFiltroAgenda`, `renderAgenda`, `siguienteHora`, `eliminarCita`, `verDetalleCita`, `cerrarDetalleCita`, `onDragStart`, `onDragEnd`, `onDragOver`, `onDrop`, `mostrarToastError` |
-| `js/clientes.js` | Alta/edición/eliminación de clientes + migración a historial. | `migrarClientesAHistorial`, submit de `clienteForm`, `eliminarCliente`, `abrirModalEditar`, `guardarEdicion` |
-| `js/sync.js` | Sincronización con Google Sheets y estado de carga. | `mostrarCargando`, `sincronizarConSheets`, `sincronizarSoloCitas` |
-| `js/auth.js` | Inicio/cierre de sesión y arranque de la app. | `verificarSesion`, `intentarLogin`, `mostrarApp`, `cerrarSesion`, `togglePassword` |
-| `js/navigation.js` | Menú lateral, tabs y eventos globales de UI. | `toggleMenu`, `cerrarMenu`, `seleccionarTab`, `setInterval` de sync, listener `Escape` |
-| `js/main.js` | Archivo legacy/puente con piezas aún no extraídas. | `waMsgAutorizacion`, `enviarAutorizacion`, `mostrarToast`, `abrirModalEliminar`, `cerrarModalEliminar`, `confirmarEliminar`, `cerrarModalEditar`, init (`DOMContentLoaded`), estados globales (`reservarEspacioActual`, `reservarHoraActual`, `idPendienteEliminar`) |
-| `js/servidor.js` | Servidor estático local en Node.js para servir la app en red local. | Crea servidor HTTP y publica `index.html`/assets (`IP`, `PORT`, `TIPOS`) |
+| `js/core/config.js` | Configuración global y constantes. | `API_BACKEND_URL`, `USUARIOS`, `ESPACIOS`, `HORAS`, `HORAS_DISPLAY` |
+| `js/store/storage.js` | Acceso a `localStorage` para persistencia local. | `get/setClientes`, `get/setHistorialDB`, `get/setContactados`, `get/setIdsContactados`, `get/setCitas` |
+| `js/shared/utils.js` | Utilidades de fechas e IDs. | `getHoy`, `diasRestantes`, `fechaHoraActual`, `formatearFechaLarga`, `generarIdCliente` |
+| `js/shared/ui-tablas.js` | Render UI de estadísticas y tablas (alertas/base de datos). | `actualizarStats`, `buildBadge`, `construirFila`, `mostrarAlertas`, `mostrarGeneral`, `filtrarGeneral`, `limpiarBuscadorGeneral` |
+| `js/features/clientes/contactados.js` | Lógica de marcación y listado de contactados. | `toggleContactado`, `actualizarBadgeContactados`, `mostrarContactados`, `eliminarLogContactado`, `filtrarContactados`, `limpiarBuscadorContactados` |
+| `js/features/historial/historial.js` | Búsqueda y render del historial por placa. | `buscarHistorial`, `limpiarHistorial` |
+| `js/shared/notifications.js` | Notificaciones del navegador para citas del día. | `revisarCitasDeHoy`, `dispararNotificacion` |
+| `js/features/citas/agenda.js` | Flujo completo de reservas, agenda, detalle y drag & drop. | `abrirModalReservar`, `mostrarPaso2`, `seleccionarEspacio`, `mostrarHorasDisponibles`, `seleccionarHora`, `confirmarReserva`, `cerrarModalReservar`, `actualizarBadgeAgenda`, `irHoyAgenda`, `cambiarDiaAgenda`, `setFiltroAgenda`, `renderAgenda`, `siguienteHora`, `eliminarCita`, `verDetalleCita`, `cerrarDetalleCita`, `onDragStart`, `onDragEnd`, `onDragOver`, `onDrop`, `mostrarToastError` |
+| `js/features/clientes/clientes.js` | Alta/edición/eliminación de clientes + migración a historial. | `migrarClientesAHistorial`, submit de `clienteForm`, `eliminarCliente`, `abrirModalEditar`, `guardarEdicion` |
+| `js/store/sync.js` | Sincronización en tiempo real por SSE, estado de carga y store en memoria. | `mostrarCargando`, `iniciarSSE`, `refrescarVistaClientes`, `refrescarModalRecomendados` |
+| `js/core/auth.js` | Inicio/cierre de sesión y arranque de la app. | `verificarSesion`, `intentarLogin`, `mostrarApp`, `cerrarSesion`, `togglePassword` |
+| `js/core/navigation.js` | Menú lateral, tabs y eventos globales de UI. | `toggleMenu`, `cerrarMenu`, `seleccionarTab`, `setInterval` de sync, listener `Escape` |
+| `js/core/main.js` | Archivo legacy/puente con piezas aún no extraídas. | `waMsgAutorizacion`, `enviarAutorizacion`, `mostrarToast`, `abrirModalEliminar`, `cerrarModalEliminar`, `confirmarEliminar`, `cerrarModalEditar`, init (`DOMContentLoaded`), estados globales (`reservarEspacioActual`, `reservarHoraActual`, `idPendienteEliminar`) |
 
 ---
 
@@ -51,7 +56,7 @@ autogestionLubriteca/
 
 1. **Auth:** valida sesión o login (`auth.js`).
 2. **Carga inicial:** migra historial, renderiza stats/alertas, revisa notificaciones.
-3. **Sync:** trae datos remotos de Sheets (`sync.js`) y fusiona con local.
+3. **Sync:** conecta el SSE (`sync.js`), carga los Map de `storage.js` y los mantiene al día con cada evento.
 4. **Operación diaria:** clientes, contactados, historial y agenda.
 5. **Navegación:** tabs y refrescos periódicos (`navigation.js`).
 

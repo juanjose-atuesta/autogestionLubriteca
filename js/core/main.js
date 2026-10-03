@@ -2,7 +2,7 @@
 // AUTOGESTIÓN v3.4 — JS (CORREGIDO
 // ═══════════════════════════════════════════════
 
-// ⚠️ GOOGLE SHEETS — NO MODIFICAR
+// ESTADO GLOBAL DE LA APP
 let filtroAgendaActual = 'todos';
 let dragCitaId = null;
 
@@ -77,7 +77,7 @@ function abrirModalEliminar(id) {
       const c = clientes.find(x => String(x.id) === id);
       if (!c) return;
       idPendienteEliminar = id;
-      document.getElementById('modalEliminarTexto').textContent = `¿Eliminar a "${c.name}" (${c.plate})? Se moverá a la papelera en Google Sheets.`;
+      document.getElementById('modalEliminarTexto').textContent = `¿Eliminar a "${c.name}" (${c.plate})? Se eliminará de forma permanente.`;
       document.getElementById('modalEliminar').classList.add('active');
     })
     .then(

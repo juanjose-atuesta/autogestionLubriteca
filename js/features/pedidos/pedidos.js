@@ -212,9 +212,9 @@ async function guardarPedidoDesdeFormulario(evento) {
   }
 
   if (pedidoIdEnEdicion) {
-    await editarPedidoRegistrado(pedidoIdEnEdicion, payload);
+    await fetchEditPedidoAPI(pedidoIdEnEdicion, payload);
   } else {
-    await crearPedidoRegistrado(payload);
+    await fetchSavePedidoAPI(payload);
   }
 
   limpiarFormularioPedido();
@@ -242,12 +242,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // ═══════════ MODAL SELECCIONAR USUARIO PARA PEDIDO ═══════════
-let usuariosPedidoCache = [];
-
 async function abrirModalSeleccionarUsuarioPedido() {
+  await cargarUsuarios();
   const data = await getUsuariosRegistrados();
-  usuariosPedidoCache = Array.isArray(data) ? data : [];
-  renderModalUsuariosPedido(usuariosPedidoCache);
+  renderModalUsuariosPedido(Array.isArray(data) ? data : []);
 }
 
 function renderModalUsuariosPedido(usuarios) {
@@ -280,7 +278,7 @@ function renderModalUsuariosPedido(usuarios) {
       <td>${u.email || u.emial || '-'}</td>
       <td>
         <button class="btn-add-action"
-          onclick="seleccionarUsuarioParaPedido('${String(u.id).replace(/'/g, "\\'")}')">
+          onclick="seleccionarUsuarioParaPedido('${claveUsuario(u).replace(/'/g, "\\'")}')">
           Usar
         </button>
       </td>`;
@@ -294,13 +292,14 @@ function filtrarUsuariosModalPedido() {
   const texto = String(document.getElementById('filtroUsuariosModalPedido')?.value || '')
     .trim().toUpperCase();
 
+  const usuarios = Array.from(store.usuarios.values());
   const filtrados = texto
-    ? usuariosPedidoCache.filter(u =>
+    ? usuarios.filter(u =>
       String(u.name || '').toUpperCase().includes(texto) ||
       String(u.id || '').toUpperCase().includes(texto) ||
       String(u.telephone || '').toUpperCase().includes(texto) ||
       String(u.email || u.emial || '').toUpperCase().includes(texto))
-    : usuariosPedidoCache;
+    : usuarios;
 
   const tbody = document.getElementById('listaUsuariosModalPedido');
   const tabla = document.getElementById('tablaUsuariosModalPedido');
@@ -325,7 +324,7 @@ function filtrarUsuariosModalPedido() {
       <td>${u.email || u.emial || '-'}</td>
       <td>
         <button class="btn-add-action"
-          onclick="seleccionarUsuarioParaPedido('${String(u.id).replace(/'/g, "\\'")}')">
+          onclick="seleccionarUsuarioParaPedido('${claveUsuario(u).replace(/'/g, "\\'")}')">
           Usar
         </button>
       </td>`;
@@ -334,7 +333,7 @@ function filtrarUsuariosModalPedido() {
 }
 
 function seleccionarUsuarioParaPedido(usuarioId) {
-  const usuario = usuariosPedidoCache.find(u => String(u.id) === String(usuarioId));
+  const usuario = store.usuarios.get(String(usuarioId));
   if (!usuario) return;
   cerrarModalSeleccionarUsuarioPedido();
   rellenarFormularioPedidoDesdeUsuario(usuario); // ya existe en pedidos.js

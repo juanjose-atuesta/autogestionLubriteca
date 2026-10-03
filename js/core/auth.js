@@ -57,7 +57,6 @@ function mostrarApp() {
   actualizarBadgeAgenda();
   actualizarBadgeCitasProgramadas();
 
-  sincronizarConSheets();
   const role = sessionStorage.getItem('ag_role');
   if (role !== 'admin') {
     document.getElementById('nav-trabajadores')?.style.setProperty('display', 'none');

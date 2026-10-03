@@ -5,40 +5,47 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AutoGestión — Sistema de Mantenimientos</title>
+  <script src="js/core/theme.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/shared.css">
+  <link rel="stylesheet" href="css/features/historial.css">
+  <link rel="stylesheet" href="css/features/citas.css">
+  <link rel="stylesheet" href="css/features/pedidos.css">
+  <link rel="stylesheet" href="css/features/estadisticas.css">
+  <link rel="stylesheet" href="css/features/usuarios.css">
+  <link rel="stylesheet" href="css/features/clientes.css">
+  <link rel="stylesheet" href="css/theme.css">
 
 
-  <script src="js/config.js" defer></script>
-  <script src="js/storage.js" defer></script>
-  <script src="js/utils.js" defer></script>
+  <script src="js/core/config.js" defer></script>
+  <script src="js/store/storage.js" defer></script>
+  <script src="js/shared/utils.js" defer></script>
 
-  <script src="js/ui-tablas.js" defer></script>
-  <script src="js/listaCitas.js" defer></script>
-  <script src="js/contactados.js" defer></script>
-  <script src="js/usuarios-api.js" defer></script>
-  <script src="js/usuarios.js" defer></script>
-  <script src="js/historial.js" defer></script>
-  <script src="js/notifications.js" defer></script>
-  <script src="js/pedidosAPI.js" defer></script>
-  <script src="js/pedidos.js" defer></script>
-  <script src="js/pedidosRegistrados.js" defer></script>
-  <script src="js/estadisticas-api.js" defer></script>
-  <script src="js/estadisticas.js" defer></script>
-  <script src="js/logins.js" defer></script>
+  <script src="js/shared/ui-tablas.js" defer></script>
+  <script src="js/features/citas/listaCitas.js" defer></script>
+  <script src="js/features/clientes/contactados.js" defer></script>
+  <script src="js/features/usuarios/usuarios-api.js" defer></script>
+  <script src="js/features/usuarios/usuarios.js" defer></script>
+  <script src="js/features/historial/historial.js" defer></script>
+  <script src="js/shared/notifications.js" defer></script>
+  <script src="js/features/pedidos/pedidos.js" defer></script>
+  <script src="js/features/pedidos/pedidosRegistrados.js" defer></script>
+  <script src="js/features/estadisticas/estadisticas-api.js" defer></script>
+  <script src="js/features/estadisticas/estadisticas.js" defer></script>
+  <script src="js/core/logins.js" defer></script>
 
-  <script src="js/agenda.js" defer></script>
-  <script src="js/clientes.js" defer></script>
+  <script src="js/features/citas/agenda.js" defer></script>
+  <script src="js/features/clientes/clientes.js" defer></script>
 
 
-  <script src="js/auth.js" defer></script>
-  <script src="js/navigation.js" defer></script>
-  <script src="js/main.js" defer></script>
-  <script src="js/actualizar.js" defer></script>
-      <script src="js/sync.js" defer></script>
+  <script src="js/core/auth.js" defer></script>
+  <script src="js/core/navigation.js" defer></script>
+  <script src="js/core/main.js" defer></script>
+      <script src="js/store/sync.js" defer></script>
 
 </head>
 
@@ -103,6 +110,7 @@
       </div>
       <div class="topbar-right">
         <div class="topbar-badge" id="badge-alertas" title="Alertas activas">0</div>
+        <button class="btn-tema" id="btnTema" onclick="alternarTema()" title="Cambiar a modo oscuro">🌙</button>
         <button class="btn-logout" onclick="cerrarSesion()" title="Cerrar sesión">⏻</button>
       </div>
     </div>
@@ -274,6 +282,9 @@
               <div class="empty-icon">○</div>
               <p>No hay registros aún.</p>
             </div>
+            <div style="display:flex;justify-content:center;margin-top:12px">
+              <button id="btnMostrarMasGeneral" onclick="mostrarMasGeneral()" class="btn-clear" style="display:none">Mostrar más</button>
+            </div>
           </div>
         </div>
       </div>
@@ -339,6 +350,9 @@
               <div class="empty-icon">✓</div>
               <p>Aún no has marcado ningún cliente como contactado.</p>
             </div>
+            <div style="display:flex;justify-content:center;margin-top:12px">
+              <button id="btnMostrarMasContactados" onclick="mostrarMasContactados()" class="btn-clear" style="display:none">Mostrar más</button>
+            </div>
           </div>
         </div>
       </div>
@@ -399,6 +413,9 @@
             <div class="empty-state" id="emptyUsuarios" style="display:none">
               <div class="empty-icon">👥</div>
               <p>No hay usuarios registrados para mostrar.</p>
+            </div>
+            <div style="display:flex;justify-content:center;margin-top:12px">
+              <button id="btnMostrarMasUsuarios" onclick="mostrarMasUsuarios()" class="btn-clear" style="display:none">Mostrar más</button>
             </div>
           </div>
         </div>
@@ -651,6 +668,9 @@
               <div class="empty-icon">📋</div>
               <p>No hay pedidos para mostrar.</p>
             </div>
+            <div style="display:flex;justify-content:center;margin-top:12px">
+              <button id="btnMostrarMasPedidos" onclick="mostrarMasPedidos()" class="btn-clear" style="display:none">Mostrar más</button>
+            </div>
           </div>
         </div>
       </div>
@@ -809,6 +829,19 @@
       <div class="modal-actions">
         <button class="btn-modal-cancel" onclick="cerrarModalEliminarUsuario()">Cancelar</button>
         <button class="btn-modal-confirm" id="btnConfirmarEliminarUsuario">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL USUARIOS DUPLICADOS -->
+  <div class="modal-overlay" id="modalUsuariosDuplicados">
+    <div class="modal">
+      <div class="modal-icon modal-icon-danger">⚠</div>
+      <h3 id="modalUsuariosDuplicadosTitulo">Usuarios duplicados</h3>
+      <p id="modalUsuariosDuplicadosMensaje">No se puede continuar con esta operación.</p>
+      <div class="modal-notas-text" id="listaUsuariosDuplicados"></div>
+      <div class="modal-actions">
+        <button class="btn-modal-confirm" onclick="cerrarModalUsuariosDuplicados()">Entendido</button>
       </div>
     </div>
   </div>
