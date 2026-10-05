@@ -83,7 +83,8 @@ function renderizarEstadisticas(usuarios) {
 
   tbody.innerHTML = '';
   usuarios.forEach((u, i) => {
-    const idSafe = escaparHtmlStats(u.id || '');
+    // Clave interna: la cédula, o el _id cuando la cédula es "."
+    const idSafe = escaparHtmlStats(claveUsuario(u));
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="stats-posicion">#${i + 1}</td>
@@ -185,12 +186,12 @@ function abrirModalEditarPuntos(boton) {
   ).trim();
   if (!id) return;
 
-  const usuario = cacheRankingUsuarios.find(u => String(u.id) === id);
+  const usuario = cacheRankingUsuarios.find(u => claveUsuario(u) === id);
   if (!usuario) return;
 
   estadisticasUsuarioIdEditar = id;
 
-  document.getElementById('editPuntosNombre').textContent = usuario.name || id;
+  document.getElementById('editPuntosNombre').textContent = usuario.name || usuario.id || id;
   document.getElementById('editPuntosRecomendacion').value = usuario.pointsByRecommendation || 0;
   document.getElementById('editPuntosFrecuente').value = usuario.pointsByFrecuentBuy || 0;
   document.getElementById('editPuntosAlta').value = usuario.pointsByHighBuy || 0;
@@ -221,7 +222,14 @@ async function guardarEdicionPuntos() {
     pointsByHighBuy: Number(document.getElementById('editPuntosAlta')?.value) || 0
   };
 
-  await editarPuntosUsuario(estadisticasUsuarioIdEditar, payload);
+  const resultado = await editarPuntosUsuario(estadisticasUsuarioIdEditar, payload);
+  if (!resultado || resultado.status === 'error') {
+    // No cerrar ni repintar: el backend pudo devolver 409 usuarios-duplicados
+    // o la petición pudo fallar, y en ambos casos los puntos no se guardaron.
+    if (avisarErrorUsuario(resultado)) return;
+    alert('No se pudo confirmar el guardado de los puntos. Revisa tu conexión e intenta de nuevo.');
+    return;
+  }
   cerrarModalEditarPuntos();
   mostrarEstadisticas();
 }

@@ -1,5 +1,4 @@
 // ═══════════ ESTADÍSTICAS / PUNTOS — API ═══════════
-
 async function getRankingUsuariosRegistrados() {
   try {
     const response = await fetch(API_BACKEND_URL + "users/rankingUsuarios");
@@ -11,13 +10,13 @@ async function getRankingUsuariosRegistrados() {
 }
 
 async function editarPuntosUsuario(usuarioId, payload) {
-  const id = String(usuarioId || '').trim();
-  if (!id) return null;
+  const usuario = datosUsuarioDesdeClave(usuarioId);
+  if (!usuario) return null;
   try {
-    const response = await fetch(API_BACKEND_URL + "users/editPoints/" + id, {
+    const response = await fetch(urlUsuarioPorCedula("editPoints", usuario.cedula, usuario.telefono), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload || {})
+      body: JSON.stringify({ ...(payload || {}), telephone: usuario.telefono })
     });
     return response.json();
   } catch (error) {

@@ -31,10 +31,10 @@ function actualizarStats() {
       const h = cl.filter(c => esPendienteHoy(c, hoy)).length;
       const alDia = cl.filter(c => estaAlDiaCliente(c, hoy)).length;
       document.getElementById('statsGrid').innerHTML = `
-        <div class="stat-card stat-primary"><div class="stat-value">${cl.length}</div><div class="stat-label">Total clientes</div></div>
-        <div class="stat-card stat-danger"><div class="stat-value">${v}</div><div class="stat-label">Vencidos</div></div>
-        <div class="stat-card stat-warning"><div class="stat-value">${h}</div><div class="stat-label">Citas hoy</div></div>
-        <div class="stat-card stat-success"><div class="stat-value">${alDia}</div><div class="stat-label">Al día</div></div>`;
+        <div class="stat-card stat-primary"><div class="stat-value">${cl.length}</div><div class="stat-label">Total alertas</div></div>
+        <div class="stat-card stat-danger"><div class="stat-value">${v}</div><div class="stat-label">Alertas vencidas</div></div>
+        <div class="stat-card stat-warning"><div class="stat-value">${h}</div><div class="stat-label">Alertas de hoy</div></div>
+        <div class="stat-card stat-success"><div class="stat-value">${alDia}</div><div class="stat-label">Alertas al día</div></div>`;
     }
   )
 }
@@ -90,9 +90,6 @@ Cuidamos la vida de tu motor.`;
 
   // elige cuál mensaje usar según si tienes km o no
   const waTxt = kmEsPunto ? msgSinKm : msgConKm;
-
-  console.log('waTxt:', waTxt);
-  console.log('encoded:', encodeURIComponent(waTxt));
   const citasCliente = citas.filter(ct => ct.customerId == id);
   const citaActiva = citasCliente.find(ct => !normalizarBooleanConcluido(ct.wasConcluded));
   const citaConcluida = citasCliente.find(ct => normalizarBooleanConcluido(ct.wasConcluded));
@@ -154,33 +151,75 @@ async function mostrarAlertas() {
 }
 
 // ═══════════ BASE DE DATOS ═══════════
+const LIMITE_GENERAL = 50;
+let limiteGeneralActual = LIMITE_GENERAL;
+let filtroGeneralAplicado = '';
+let temporizadorFiltroGeneral = null;
+
 async function mostrarGeneral(filtro = '') {
   const tbody = document.getElementById('listaGeneral'), empty = document.getElementById('emptyGeneral'), hoy = getHoy();
-  Promise.all([getClientesDB(), getCitas()]).then(([todos, citas]) => {
-    let cl = todos;
-    if (filtro.trim()) {
-      const f = filtro.trim().toUpperCase();
-      cl = cl.filter(c => {
-        const nombre = String(c.name || '').toUpperCase();
-        const placa = String(c.plate || '').toUpperCase();
-        const servicio = String(c.service || '').toUpperCase();
-        const telefono = String(c.telephone || '');
-        return nombre.includes(f) || placa.includes(f) || servicio.includes(f) || telefono.includes(filtro.trim());
-      });
-    }
-    cl.sort((a, b) => String(a.nextContact).localeCompare(String(b.nextContact)));
-    const v = todos.filter(c => estaVencidoCliente(c, hoy)).length;
-    const hC = todos.filter(c => esPendienteHoy(c, hoy)).length;
-    const alDia = todos.filter(c => estaAlDiaCliente(c, hoy)).length;
-    document.getElementById('dbStats').innerHTML = `
+  await cargarClientesDB();
+  const [todos, citas] = await Promise.all([getClientesDB(), getCitas()]);
+
+  let cl = todos;
+  if (filtro.trim()) {
+    const f = filtro.trim().toUpperCase();
+    cl = cl.filter(c => {
+      const nombre = String(c.name || '').toUpperCase();
+      const placa = String(c.plate || '').toUpperCase();
+      const servicio = String(c.service || '').toUpperCase();
+      const telefono = String(c.telephone || '');
+      return nombre.includes(f) || placa.includes(f) || servicio.includes(f) || telefono.includes(filtro.trim());
+    });
+  }
+  cl.sort((a, b) => String(a.nextContact).localeCompare(String(b.nextContact)));
+  const visibles = cl.slice(0, limiteGeneralActual);
+  const v = todos.filter(c => estaVencidoCliente(c, hoy)).length;
+  const hC = todos.filter(c => esPendienteHoy(c, hoy)).length;
+  const alDia = todos.filter(c => estaAlDiaCliente(c, hoy)).length;
+  document.getElementById('dbStats').innerHTML = `
         <div class="db-stat-item"><span class="db-dot" style="background:#ef4444"></span>${v} vencidos</div>
         <div class="db-stat-item"><span class="db-dot" style="background:#f59e0b"></span>${hC} hoy</div>
         <div class="db-stat-item"><span class="db-dot" style="background:#10b981"></span>${alDia} al día</div>
         <div class="db-stats-total">${todos.length} registros</div>`;
-    tbody.innerHTML = '';
-    if (!cl.length) { empty.style.display = 'block'; document.getElementById('tablaGeneral').style.display = 'none'; }
-    else { empty.style.display = 'none'; document.getElementById('tablaGeneral').style.display = ''; cl.forEach(c => tbody.appendChild(construirFila(c, citas))); }
-  }).catch(console.error);
+  tbody.innerHTML = '';
+  if (!visibles.length) { empty.style.display = 'block'; document.getElementById('tablaGeneral').style.display = 'none'; }
+  else { empty.style.display = 'none'; document.getElementById('tablaGeneral').style.display = ''; visibles.forEach(c => tbody.appendChild(construirFila(c, citas))); }
+
+  actualizarBotonMostrarMasGeneral(cl.length - visibles.length);
 }
-function filtrarGeneral() { mostrarGeneral(document.getElementById('buscadorGeneral').value); }
-function limpiarBuscadorGeneral() { document.getElementById('buscadorGeneral').value = ''; mostrarGeneral(); document.getElementById('buscadorGeneral').focus(); }
+
+function actualizarBotonMostrarMasGeneral(quedan = 0) {
+  const boton = document.getElementById('btnMostrarMasGeneral');
+  if (!boton) return;
+  const restantes = Number(quedan) || 0;
+  if (restantes > 0) {
+    boton.textContent = `Mostrar más (${restantes})`;
+    boton.style.display = 'inline-flex';
+    return;
+  }
+  boton.style.display = 'none';
+}
+
+function mostrarMasGeneral() {
+  limiteGeneralActual += LIMITE_GENERAL;
+  mostrarGeneral(document.getElementById('buscadorGeneral')?.value || '');
+}
+
+function filtrarGeneral() {
+  const texto = document.getElementById('buscadorGeneral').value;
+  if (texto !== filtroGeneralAplicado) limiteGeneralActual = LIMITE_GENERAL;
+  clearTimeout(temporizadorFiltroGeneral);
+  temporizadorFiltroGeneral = setTimeout(() => {
+    filtroGeneralAplicado = texto;
+    mostrarGeneral(texto);
+  }, 200);
+}
+function limpiarBuscadorGeneral() {
+  document.getElementById('buscadorGeneral').value = '';
+  limiteGeneralActual = LIMITE_GENERAL;
+  filtroGeneralAplicado = '';
+  clearTimeout(temporizadorFiltroGeneral);
+  mostrarGeneral();
+  document.getElementById('buscadorGeneral').focus();
+}

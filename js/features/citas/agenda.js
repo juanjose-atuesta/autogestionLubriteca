@@ -82,18 +82,10 @@ async function confirmarConcluirCita() {
   cerrarModalConcluirCita();
 
   try {
-    const response = await fetch(
-      API_BACKEND_URL + "reservations/reservationConcluded/" + reservationId,
-      { method: 'PATCH', headers: { 'Content-Type': 'application/json' } }
-    );
-    if (!response.ok) throw new Error('HTTP ' + response.status);
+    await fetchReservationConcludedAPI(reservationId);
 
     if (customerId) {
-      const customerResponse = await fetch(
-        API_BACKEND_URL + "customers/toogleReservationConcluded/" + customerId,
-        { method: 'PATCH', headers: { 'Content-Type': 'application/json' } }
-      );
-      if (!customerResponse.ok) throw new Error('HTTP ' + customerResponse.status);
+      await fetchToogleReservationConcludedAPI(customerId);
     }
 
 
@@ -202,12 +194,7 @@ async function confirmarReserva() {
     };
 
     // guardamos la cita en la DB 
-    const response = await fetch(API_BACKEND_URL + "reservations/saveReservation", {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...nuevaCita })
-    });
-    if (!response.ok) throw new Error('HTTP ' + response.status);
+    await fetchSaveReservationAPI({ ...nuevaCita });
 
     cerrarModalReservar();
     await actualizarBadgeAgenda();
@@ -366,11 +353,7 @@ async function confirmarEliminarCita() {
   const reservationId = reservationIdPendienteEliminar;
 
   try {
-    const response = await fetch(API_BACKEND_URL + "reservations/deleteReservation/" + reservationId, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    if (!response.ok) throw new Error('HTTP ' + response.status);
+    await fetchDeleteReservationAPI(reservationId);
 
     cerrarModalEliminarCita();
     cerrarDetalleCita();
@@ -500,12 +483,15 @@ async function onDrop(event, nuevaHora) {
     return;
   }
 
-  citas[citaIdx] = { ...cita, hour: nuevaHora };
-  fetch(urlGoogle, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: JSON.stringify({ reservationId: String(dragCitaId), hour: nuevaHora, accion: 'mover_cita' })
-  }).catch(console.error);
+  try {
+    await fetchEditReservationAPI(String(dragCitaId), { ...cita, hour: nuevaHora });
+  } catch (error) {
+    console.error('Error al mover cita:', error);
+    mostrarToastError('⚠ No se pudo mover la cita. Intenta de nuevo.');
+    dragCitaId = null;
+    return;
+  }
+
   dragCitaId = null;
   await renderAgenda();
 }

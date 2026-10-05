@@ -29,6 +29,7 @@ async function buscarHistorial() {
   const busqueda = String(input.value || '').trim();
   const busquedaUpper = busqueda.toUpperCase();
 
+  await cargarCitasConcluidas();
   const citasRaw = await getReservationsConcluded();
   const citasConcluidas = (Array.isArray(citasRaw) ? citasRaw : [])
     .filter(c => normalizarBooleanConcluido(c.wasConcluded))

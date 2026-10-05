@@ -1,0 +1,6 @@
+services:
+  frontend:
+    build: .
+    ports:
+      - "7080:80"
+    restart: unless-stopped

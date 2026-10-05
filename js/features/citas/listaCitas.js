@@ -107,12 +107,7 @@ async function guardarEdicionReserva() {
   }
 
   try {
-    const response = await fetch(API_BACKEND_URL + "reservations/editReservation/" + reservationId, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (!response.status) throw new Error('HTTP ' + response.status);
+    await fetchEditReservationAPI(reservationId, payload);
 
     cerrarModalEditarReserva();
     await actualizarBadgeAgenda();

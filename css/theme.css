@@ -1,0 +1,114 @@
+/* ═══════════════════════════════════════════════
+   TEMA — toggle claro/oscuro
+   Se carga DESPUÉS de base/shared/features para poder
+   invertir los colores claros que están hardcodeados.
+   Todo lo oscuro vive bajo [data-theme="dark"].
+═══════════════════════════════════════════════ */
+
+/* ── Botón del toggle (topbar) ── */
+.btn-tema { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.6); width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:0.95rem; display:flex; align-items:center; justify-content:center; transition:all 0.2s; flex-shrink:0; }
+.btn-tema:hover { background:rgba(56,189,248,0.18); border-color:rgba(56,189,248,0.4); color:#7dd3fc; transform:scale(1.06); }
+
+/* ═══════════ MODO OSCURO ═══════════ */
+
+[data-theme="dark"] {
+    color-scheme: dark;
+
+    --bg:                #0b1220;
+    --surface:           #131c2e;
+    --surface-2:         #1b2438;
+    --border:            #26324a;
+    --border-dark:       #36455f;
+    --text:              #e8eef8;
+    --text-muted:        #93a3ba;
+    --text-light:        #6b7d96;
+
+    --danger-soft:       #2b141a;
+    --warning-soft:      #2b2210;
+    --success-soft:      #0d2a22;
+    --contactado-soft:   #0d2a22;
+
+    --carcamo-soft:      #10233f;
+    --carcamo-border:    #2b4a7d;
+    --hidraulico-soft:   #0d2a22;
+    --hidraulico-border: #1f5c48;
+    --electrico-soft:    #2b2210;
+    --electrico-border:  #6b4d16;
+    --agenda-soft:       #221a3d;
+    --agenda-border:     #4c3a86;
+
+    --shadow:            0 1px 3px rgba(0,0,0,0.45), 0 4px 16px rgba(0,0,0,0.35);
+    --shadow-md:         0 4px 24px rgba(0,0,0,0.5);
+    --shadow-lg:         0 8px 40px rgba(0,0,0,0.65);
+}
+
+[data-theme="dark"] .btn-save { background:var(--primary); }
+[data-theme="dark"] .btn-save:hover { background:var(--primary-mid); }
+[data-theme="dark"] .btn-add-fila-pedido:hover { background:var(--primary-mid); }
+
+/* Cabeceras de tarjeta */
+[data-theme="dark"] .card-header { background:var(--surface-2); }
+[data-theme="dark"] .card-header-danger     { background:linear-gradient(135deg,#2a151a 0%,var(--surface-2) 100%); }
+[data-theme="dark"] .card-header-contactados { background:linear-gradient(135deg,#0d2a22 0%,var(--surface-2) 100%); }
+[data-theme="dark"] .card-header-usuarios    { background:linear-gradient(135deg,#12294d 0%,var(--surface-2) 100%); }
+[data-theme="dark"] .card-header-agenda      { background:linear-gradient(135deg,#221a3d 0%,var(--surface-2) 100%); }
+[data-theme="dark"] .db-stats { background:var(--surface-2); }
+[data-theme="dark"] .agenda-toolbar { background:var(--surface-2); }
+[data-theme="dark"] .agenda-leyenda { background:var(--surface-2); }
+[data-theme="dark"] .historial-placa-header { background:var(--surface-2); }
+[data-theme="dark"] .tabla-pedido-items thead th { background:var(--surface-2); }
+
+/* Tablas */
+[data-theme="dark"] tbody tr:hover { background:#1b2438; }
+[data-theme="dark"] .fila-hoy:hover      { background:#33280f !important; }
+[data-theme="dark"] .fila-vencido:hover  { background:#3a1818 !important; }
+[data-theme="dark"] .fila-contactado:hover { background:#12352a !important; }
+[data-theme="dark"] .fila-grupo-label td { background:#12294d; color:#93c5fd; }
+[data-theme="dark"] .agenda-slot.tiene-citas { background:#141d33; }
+
+/* Superficies blancas */
+[data-theme="dark"] .modal,
+[data-theme="dark"] .historial-card,
+[data-theme="dark"] .agenda-nav-btn,
+[data-theme="dark"] .agenda-hoy-btn,
+[data-theme="dark"] .agenda-filtro-btn,
+[data-theme="dark"] .espacio-btn,
+[data-theme="dark"] .hora-btn,
+[data-theme="dark"] .detalle-item,
+[data-theme="dark"] .hora-btn.ocupada,
+[data-theme="dark"] .modal-concluir-detalle { background:var(--surface); color:var(--text); }
+[data-theme="dark"] .agenda-nav-btn { border-color:var(--border); }
+[data-theme="dark"] .hora-btn.ocupada { background:#151d2e; }
+
+/* Badges */
+[data-theme="dark"] .badge-hoy      { background:#2e2510; color:#fcd34d; border-color:#7c5a1a; }
+[data-theme="dark"] .badge-vencido  { background:#331617; color:#fca5a5; border-color:#7f2d2d; }
+[data-theme="dark"] .badge-ok       { background:#0d2a22; color:#6ee7b7; border-color:#1f5c48; }
+[data-theme="dark"] .badge-pronto   { background:#12294d; color:#93c5fd; border-color:#2b4a7d; }
+[data-theme="dark"] .badge-eliminado{ background:#1b2438; color:var(--text-muted); border-color:var(--border-dark); }
+[data-theme="dark"] .modal-icon-danger  { background:#331617; }
+[data-theme="dark"] .modal-icon-primary { background:#12294d; }
+
+/* Botones tipo pastilla */
+[data-theme="dark"] .btn-wa,
+[data-theme="dark"] .btn-wa-auth,
+[data-theme="dark"] .btn-compra-frecuente { background:#0f2b1e; color:#6ee7b7; border-color:#1f5c48; }
+[data-theme="dark"] .btn-chulo,
+[data-theme="dark"] .btn-concluir-cita-chip { background:#0f2b1e; color:#6ee7b7; border-color:#1f5c48; }
+[data-theme="dark"] .btn-edit,
+[data-theme="dark"] .btn-wa-auth,
+[data-theme="dark"] .btn-compra-alta { background:#12294d; color:#93c5fd; border-color:#2b4a7d; }
+[data-theme="dark"] .btn-view,
+[data-theme="dark"] .btn-ver-recomendados { background:#0d2f30; color:#5eead4; border-color:#2b6b6b; }
+[data-theme="dark"] .btn-del,
+[data-theme="dark"] .btn-del-contactado,
+[data-theme="dark"] .btn-del-fila-pedido { background:#331617; color:#fca5a5; border-color:#7f2d2d; }
+[data-theme="dark"] .btn-add-usuario { background:#2e2510; color:#fcd34d; border-color:#7c5a1a; }
+
+/* Textos de apoyo */
+[data-theme="dark"] .toast { color:#6ee7b7; }
+[data-theme="dark"] .btn-reservado { color:var(--contactado-color) !important; }
+[data-theme="dark"] .input,
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea { color-scheme: dark; }

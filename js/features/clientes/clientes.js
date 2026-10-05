@@ -60,7 +60,6 @@ document.getElementById('clienteForm').addEventListener('submit', async e => {
 });
 
 function eliminarCliente(id) {
-  console.log("Hiciste click en eliminar cliente con id:", id);
   id = String(id);
   getClientes().then(cl => {
     const c = cl.find(x => String(x.id) === id);
@@ -201,7 +200,6 @@ function guardarEdicion(idAux) {
     mostrarGeneral(document.getElementById('buscadorGeneral').value);
 }
 
-let cacheUsuariosBusqueda = [];
 let contextoBusquedaUsuario = 'principal';
 
 function normalizarUsuarioBusqueda(usuario = {}) {
@@ -246,7 +244,7 @@ function renderUsuariosBusqueda(filtro = '') {
   if (!tbody || !empty || !tabla) return;
 
   const textoFiltro = String(filtro || '').trim().toUpperCase();
-  const usuarios = (Array.isArray(cacheUsuariosBusqueda) ? cacheUsuariosBusqueda : []).filter(usuario => {
+  const usuarios = Array.from(store.usuarios.values()).map(normalizarUsuarioBusqueda).filter(usuario => {
     if (!textoFiltro) return true;
     return (
       String(usuario.name || '').toUpperCase().includes(textoFiltro) ||
@@ -296,8 +294,7 @@ function renderUsuariosBusqueda(filtro = '') {
 }
 
 async function cargarUsuariosBusqueda() {
-  const datos = await getUsuariosRegistrados();
-  cacheUsuariosBusqueda = Array.isArray(datos) ? datos.map(normalizarUsuarioBusqueda) : [];
+  await cargarUsuarios();
   renderUsuariosBusqueda(document.getElementById('buscadorUsuariosBusqueda')?.value || '');
 }
 
@@ -307,6 +304,13 @@ async function abrirPanelBuscarUsuario(contexto = 'principal') {
   contextoBusquedaUsuario = String(contexto || 'principal').trim() || 'principal';
   modal.classList.add('active');
   await cargarUsuariosBusqueda();
+}
+
+// El modal lee store.usuarios: si se abre con datos viejos se refresca al vuelo
+function refrescarModalBuscarUsuarioSiAbierto() {
+  const modal = document.getElementById('modalBuscarUsuario');
+  if (!modal?.classList.contains('active')) return;
+  renderUsuariosBusqueda(document.getElementById('buscadorUsuariosBusqueda')?.value || '');
 }
 
 function filtrarUsuariosBusqueda() {

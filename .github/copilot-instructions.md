@@ -15,26 +15,26 @@ This is a browser-only SPA served from `index.html`, with plain JavaScript files
 
 1. **Bootstrapping and app shell**
    - `index.html` defines all tabs/modals and inline `onclick`/`onsubmit` handlers.
-   - `js/main.js` starts initialization (`DOMContentLoaded`), session check, and shared modal/global state.
-   - `js/auth.js` handles login, role storage (`sessionStorage.ag_role`), and first app render.
-   - `js/navigation.js` controls tab switching and tab-triggered renders.
+   - `js/core/main.js` starts initialization (`DOMContentLoaded`), session check, and shared modal/global state.
+   - `js/core/auth.js` handles login, role storage (`sessionStorage.ag_role`), and first app render.
+   - `js/core/navigation.js` controls tab switching and tab-triggered renders.
 
 2. **Backend access and data sources**
-   - Backend base URL is hardcoded in `js/config.js` as `API_BACKEND_URL`.
-   - `js/storage.js` provides base fetchers for customers, history, contacted records, and reservations.
+   - Backend base URL is hardcoded in `js/core/config.js` as `API_BACKEND_URL`.
+   - `js/store/storage.js` provides base fetchers for customers, history, contacted records, and reservations.
    - Domain API wrappers:
-     - `js/usuarios-api.js` for users/recommendations/points
-     - `js/pedidosAPI.js` for orders
-     - `js/estadisticas-api.js` for ranking/points edits
+     - `js/features/usuarios/usuarios-api.js` for users/recommendations/points
+     - `js/features/pedidos/pedidos.js` for orders
+     - `js/features/estadisticas/estadisticas-api.js` for ranking/points edits
 
 3. **Feature modules (UI + domain behavior)**
-   - Customers/alerts/table rendering: `js/ui-tablas.js`, `js/clientes.js`, `js/contactados.js`, `js/historial.js`
-   - Reservations/agenda: `js/agenda.js`, `js/listaCitas.js`, `js/notifications.js`
-   - Users/recommendations/points: `js/usuarios.js`, `js/estadisticas.js`, `js/logins.js`
-   - Orders: `js/pedidos.js`, `js/pedidosRegistrados.js`
+   - Customers/alerts/table rendering: `js/shared/ui-tablas.js`, `js/features/clientes/clientes.js`, `js/features/clientes/contactados.js`, `js/features/historial/historial.js`
+   - Reservations/agenda: `js/features/citas/agenda.js`, `js/features/citas/listaCitas.js`, `js/shared/notifications.js`
+   - Users/recommendations/points: `js/features/usuarios/usuarios.js`, `js/features/estadisticas/estadisticas.js`, `js/core/logins.js`
+   - Orders: `js/features/pedidos/pedidos.js`, `js/features/pedidos/pedidosRegistrados.js`
 
 4. **Realtime refresh**
-   - `js/sync.js` opens an `EventSource` (`/eventos`) and refreshes affected tabs/badges when backend events arrive.
+   - `js/store/sync.js` opens an `EventSource` (`/eventos`) and refreshes affected tabs/badges when backend events arrive.
    - Mutation flows usually end by re-rendering active views plus badge counters (instead of local state stores).
 
 ## Key repository conventions
@@ -49,7 +49,7 @@ This is a browser-only SPA served from `index.html`, with plain JavaScript files
    - Plates and many search inputs are normalized to uppercase/trimmed before filtering or sending.
 
 3. **Date logic is string-based (`YYYY-MM-DD`)**
-   - `getHoy()` (`js/utils.js`) returns `en-CA` date strings.
+   - `getHoy()` (`js/shared/utils.js`) returns `en-CA` date strings.
    - Many comparisons rely on lexical date ordering (`f < hoy`, `f === hoy`) instead of `Date` objects.
    - Keep date formats consistent when adding/altering flows, especially in agenda/history.
 

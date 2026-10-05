@@ -23,7 +23,6 @@ function intentarLogin(e) {
       })
         .then(res => res.json())
         .then(data => {
-          console.log(data);
           if (data.status === true) {
             sessionStorage.setItem('ag_sesion', 'ok');
             sessionStorage.setItem('ag_role', data.role); // ← guardas el rol
@@ -58,7 +57,6 @@ function mostrarApp() {
   actualizarBadgeAgenda();
   actualizarBadgeCitasProgramadas();
 
-  sincronizarConSheets();
   const role = sessionStorage.getItem('ag_role');
   if (role !== 'admin') {
     document.getElementById('nav-trabajadores')?.style.setProperty('display', 'none');

@@ -1,5 +1,9 @@
 // ═══════════ PEDIDOS REGISTRADOS — LISTADO Y ACCIONES ═══════════
-let cachePedidosRegistrados = [];
+const LIMITE_PEDIDOS = 50;
+let limitePedidosActual = LIMITE_PEDIDOS;
+let filtroPedidosAplicado = '';
+let temporizadorFiltroPedidos = null;
+
 let pedidoIdPendienteEliminar = null;
 let pedidoIdEnEdicionRegistrado = null;
 
@@ -213,12 +217,15 @@ function cargarPedidoEnModalEditar(pedido) {
   actualizarTotalGeneralPedidoEdicion();
 }
 
-async function abrirModalEditarPedidoDesdeBoton(boton) {
-  const pedidoId = obtenerIdPedidoDesdeClick(boton);
-  if (!pedidoId) return;
+async function abrirModalEditarPedidoDesdeBoton(pedidoId) {
+  const id = String(pedidoId || '').trim();
+  if (!id) return;
 
-  let pedido = cachePedidosRegistrados.find(p => String(p._id) === pedidoId);
-  if (!pedido) pedido = await getPedidoPorId(pedidoId);
+  let pedido = store.pedidos.get(id);
+  if (!pedido) {
+    await recargarPedidos();
+    pedido = store.pedidos.get(id);
+  }
   if (!pedido) return;
 
   cargarPedidoEnModalEditar(pedido);
@@ -236,7 +243,7 @@ async function guardarEdicionPedidoRegistradoDesdeModal(evento) {
     return;
   }
 
-  await editarPedidoRegistrado(pedidoIdEnEdicionRegistrado, payload);
+  await fetchEditPedidoAPI(pedidoIdEnEdicionRegistrado, payload);
   cerrarModalEditarPedido();
   mostrarPedidos(document.getElementById('buscadorPedidos')?.value || '');
 }
@@ -279,10 +286,10 @@ function renderizarFilasPedidos(pedidos) {
       <td>${pedido.telephone || '-'}</td>
       <td>${formatearMonedaPedido(pedido.precioTotal)}</td>
       <td>
-        <button class="btn-view" data-pedido-id="${idSafe}" onclick="verDetallePedidoDesdeBoton(this)">👁 Ver detalles</button>
-        <button class="btn-edit" data-pedido-id="${idSafe}" onclick="editarPedidoDesdeBoton(this)">✎ Editar</button>
-        <button class="btn-modal-cancel" data-pedido-id="${idSafe}" onclick="descargarTxtPedidoRegistradoDesdeBoton(this)">📄 .txt</button>
-        <button class="btn-del"  data-pedido-id="${idSafe}" onclick="eliminarPedidoDesdeBoton(this)">✕ Eliminar</button>
+        <button class="btn-view" onclick="verDetallePedidoDesdeBoton('${idSafe}')">👁 Ver detalles</button>
+        <button class="btn-edit" onclick="editarPedidoDesdeBoton('${idSafe}')">✎ Editar</button>
+        <button class="btn-modal-cancel" onclick="descargarTxtPedidoRegistradoDesdeBoton('${idSafe}')">📄 .txt</button>
+        <button class="btn-del" onclick="eliminarPedidoDesdeBoton('${idSafe}')">✕ Eliminar</button>
       </td>`;
     tbody.appendChild(tr);
   });
@@ -296,37 +303,52 @@ async function mostrarPedidos(filtro) {
   // Sin filtro y sin modo hoy -> tabla vacía
   if (!textoFiltro && !modoPedidosHoy) {
     renderizarFilasPedidos([]);
+    actualizarBotonMostrarMasPedidos(0);
     return;
   }
 
-  if (modoPedidosHoy) {
-    // Llama al endpoint dedicado de hoy en el backend
-    const data = await getPedidosDeHoyRegistrados();
-    const todos = Array.isArray(data) ? data : [];
-    cachePedidosRegistrados = todos;
-    const pedidos = textoFiltro
-      ? todos.filter(p =>
-        String(p.name || '').toUpperCase().includes(textoFiltro) ||
-        String(p.id || '').toUpperCase().includes(textoFiltro) ||
-        String(p.plate || '').toUpperCase().includes(textoFiltro) ||
-        String(p.orden || '').toUpperCase().includes(textoFiltro) ||
-        String(p.vehicleMake || '').toUpperCase().includes(textoFiltro))
-      : todos;
-    renderizarFilasPedidos([...pedidos].reverse());
+  await cargarPedidos();
+  const todos = (await getPedidosRegistrados()).map(normalizarPedidoRegistrado);
+
+  // El backend entregaba "hoy" ordenado por updatedAt desc y la vista lo reversea
+  const base = modoPedidosHoy
+    ? todos.filter(esPedidoDeHoy).sort((a, b) => new Date(b.updatedAt || b.updateAt || 0) - new Date(a.updatedAt || a.updateAt || 0))
+    : todos;
+
+  const pedidos = textoFiltro
+    ? base.filter(p =>
+      String(p.name || '').toUpperCase().includes(textoFiltro) ||
+      String(p.id || '').toUpperCase().includes(textoFiltro) ||
+      String(p.plate || '').toUpperCase().includes(textoFiltro) ||
+      String(p.orden || '').toUpperCase().includes(textoFiltro) ||
+      String(p.vehicleMake || '').toUpperCase().includes(textoFiltro))
+    : base;
+
+  const visibles = [...pedidos].reverse().slice(0, limitePedidosActual);
+  renderizarFilasPedidos(visibles);
+  actualizarBotonMostrarMasPedidos(pedidos.length - visibles.length);
+}
+
+function normalizarPedidoRegistrado(pedido) {
+  const datos = pedido && typeof pedido === 'object' ? pedido : {};
+  return Array.isArray(datos.otros) ? datos : { ...datos, otros: [] };
+}
+
+function actualizarBotonMostrarMasPedidos(quedan = 0) {
+  const boton = document.getElementById('btnMostrarMasPedidos');
+  if (!boton) return;
+  const restantes = Number(quedan) || 0;
+  if (restantes > 0) {
+    boton.textContent = `Mostrar más (${restantes})`;
+    boton.style.display = 'inline-flex';
     return;
   }
+  boton.style.display = 'none';
+}
 
-  // Modo búsqueda general: trae todos y filtra
-  const data = await getPedidosRegistrados();
-  const todos = Array.isArray(data) ? data : [];
-  cachePedidosRegistrados = todos;
-  const pedidos = todos.filter(p =>
-    String(p.name || '').toUpperCase().includes(textoFiltro) ||
-    String(p.id || '').toUpperCase().includes(textoFiltro) ||
-    String(p.plate || '').toUpperCase().includes(textoFiltro) ||
-    String(p.orden || '').toUpperCase().includes(textoFiltro) ||
-    String(p.vehicleMake || '').toUpperCase().includes(textoFiltro));
-  renderizarFilasPedidos([...pedidos].reverse());
+function mostrarMasPedidos() {
+  limitePedidosActual += LIMITE_PEDIDOS;
+  mostrarPedidos(document.getElementById('buscadorPedidos')?.value || '');
 }
 
 async function togglePedidosHoy() {
@@ -337,6 +359,8 @@ async function togglePedidosHoy() {
     const buscador = document.getElementById('buscadorPedidos');
     if (buscador) buscador.value = '';
   }
+  limitePedidosActual = LIMITE_PEDIDOS;
+  filtroPedidosAplicado = '';
   mostrarPedidos(document.getElementById('buscadorPedidos')?.value || '');
 }
 
@@ -348,13 +372,21 @@ function filtrarPedidos() {
     const btn = document.getElementById('btnPedidosHoy');
     if (btn) btn.classList.remove('activo');
   }
-  mostrarPedidos(texto);
+  if (texto !== filtroPedidosAplicado) limitePedidosActual = LIMITE_PEDIDOS;
+  clearTimeout(temporizadorFiltroPedidos);
+  temporizadorFiltroPedidos = setTimeout(() => {
+    filtroPedidosAplicado = texto;
+    mostrarPedidos(texto);
+  }, 200);
 }
 
 function limpiarBuscadorPedidos() {
   const buscador = document.getElementById('buscadorPedidos');
   if (!buscador) return;
   buscador.value = '';
+  limitePedidosActual = LIMITE_PEDIDOS;
+  filtroPedidosAplicado = '';
+  clearTimeout(temporizadorFiltroPedidos);
   mostrarPedidos('');
   buscador.focus();
 }
@@ -486,12 +518,15 @@ function construirDetallePedidoHTML(pedido) {
   `;
 }
 
-async function verDetallePedidoDesdeBoton(boton) {
-  const pedidoId = obtenerIdPedidoDesdeClick(boton);
-  if (!pedidoId) return;
+async function verDetallePedidoDesdeBoton(pedidoId) {
+  const id = String(pedidoId || '').trim();
+  if (!id) return;
 
-  let pedido = cachePedidosRegistrados.find(p => String(p._id) === pedidoId);
-  if (!pedido) pedido = await getPedidoPorId(pedidoId);
+  let pedido = store.pedidos.get(id);
+  if (!pedido) {
+    await recargarPedidos();
+    pedido = store.pedidos.get(id);
+  }
   if (!pedido) return;
 
   const contenido = document.getElementById('detallePedidoContenido');
@@ -507,27 +542,17 @@ function cerrarDetallePedido() {
   if (modal) modal.classList.remove('active');
 }
 
-function obtenerIdPedidoDesdeClick(elemento) {
-  const id = String(
-    elemento?.dataset?.pedidoId ||
-    elemento?.closest?.('[data-pedido-id]')?.dataset?.pedidoId ||
-    ''
-  ).trim();
-  if (!id) console.error('No se pudo obtener el id del pedido desde el botón clickeado.');
-  return id;
+async function editarPedidoDesdeBoton(pedidoId) {
+  await abrirModalEditarPedidoDesdeBoton(pedidoId);
 }
 
-async function editarPedidoDesdeBoton(boton) {
-  await abrirModalEditarPedidoDesdeBoton(boton);
-}
+async function eliminarPedidoDesdeBoton(pedidoId) {
+  const id = String(pedidoId || '').trim();
+  if (!id) return;
 
-async function eliminarPedidoDesdeBoton(boton) {
-  const pedidoId = obtenerIdPedidoDesdeClick(boton);
-  if (!pedidoId) return;
-
-  const pedido = cachePedidosRegistrados.find(p => String(p._id) === pedidoId);
+  const pedido = store.pedidos.get(id);
   const referencia = pedido ? `Orden ${pedido.orden} — ${pedido.name}` : 'este pedido';
-  pedidoIdPendienteEliminar = pedidoId;
+  pedidoIdPendienteEliminar = id;
 
   const texto = document.getElementById('modalEliminarPedidoTexto');
   const botonConfirmar = document.getElementById('btnConfirmarEliminarPedido');
@@ -550,7 +575,7 @@ async function confirmarEliminarPedido() {
   const pedidoId = pedidoIdPendienteEliminar;
   cerrarModalEliminarPedido();
 
-  await eliminarPedidoRegistrado(pedidoId);
+  await fetchDeletePedidoAPI(pedidoId);
   mostrarPedidos(document.getElementById('buscadorPedidos')?.value || '');
 }
 
@@ -569,11 +594,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnHoy = document.getElementById('btnPedidosHoy');
   if (btnHoy) btnHoy.addEventListener('click', togglePedidosHoy);
 });
-function descargarTxtPedidoRegistradoDesdeBoton(boton) {
-  const pedidoId = obtenerIdPedidoDesdeClick(boton);
-  if (!pedidoId) return;
+function descargarTxtPedidoRegistradoDesdeBoton(pedidoId) {
+  const id = String(pedidoId || '').trim();
+  if (!id) return;
 
-  const pedido = cachePedidosRegistrados.find(p => String(p._id) === pedidoId);
+  const pedido = store.pedidos.get(id);
   if (!pedido) return;
 
   descargarTxtPedidoRegistrado(pedido); // función que ya te pasé en pedidos.js

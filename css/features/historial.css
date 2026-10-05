@@ -1,0 +1,24 @@
+/* ═══════════ HISTORIAL ═══════════ */
+.historial-placa-header { display:flex;align-items:center;gap:16px;padding:20px 24px;border-bottom:1px solid var(--border);background:#fafbfc; }
+
+.historial-meta { color:var(--text-muted);font-size:0.82rem; }
+.historial-meta strong { color:var(--text);font-family:var(--font-display); }
+.historial-timeline { padding:24px;display:flex;flex-direction:column; }
+.historial-item { display:flex;gap:16px;position:relative; }
+.historial-linea { display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:32px; }
+.historial-dot { width:14px;height:14px;border-radius:50%;background:var(--primary);border:2px solid white;box-shadow:0 0 0 2px var(--primary);flex-shrink:0;margin-top:4px;z-index:1; }
+.historial-dot.dot-actual  { background:var(--accent);  box-shadow:0 0 0 2px var(--accent); }
+.historial-connector { width:2px;flex:1;background:var(--border);min-height:24px; }
+.historial-card { flex:1;background:white;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 18px;margin-bottom:16px;transition:box-shadow 0.2s; }
+.historial-card:hover { box-shadow:var(--shadow-md); }
+.historial-card.card-actual   { border-left:3px solid var(--accent); }
+.historial-card-top { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:8px; }
+.historial-nombre { font-weight:600;font-size:0.92rem;color:var(--text); }
+.historial-nombre small { display:block;font-size:0.73rem;color:var(--text-muted);font-style:italic;font-weight:400;margin-top:2px; }
+.historial-card-info { display:flex;gap:16px;flex-wrap:wrap;font-size:0.78rem;color:var(--text-muted); }
+.historial-info-item { display:flex;align-items:center;gap:5px; }
+.historial-info-item strong { color:var(--text);font-weight:600; }
+
+@media (max-width:640px) {
+    .historial-timeline { padding:16px; }
+}

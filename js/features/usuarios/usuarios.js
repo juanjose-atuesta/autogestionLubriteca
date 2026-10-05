@@ -1,4 +1,8 @@
-let cacheUsuariosRegistrados = [];
+const LIMITE_USUARIOS = 50;
+let limiteUsuariosActual = LIMITE_USUARIOS;
+let filtroUsuariosAplicado = '';
+let temporizadorFiltroUsuarios = null;
+
 let usuarioIdPendienteEliminar = null;
 let compraUsuarioIdPendiente = null;
 let compraTipoPendiente = null;
@@ -66,6 +70,60 @@ function formatearRegistrationDayParaInputDate(valorFecha) {
   return '';
 }
 
+// ═══════════ USUARIOS DUPLICADOS ═══════════
+// El backend responde 409 con motivo "usuarios-duplicados" y la lista completa
+// de registros que chocan, para que se decida de forma consciente.
+function abrirModalUsuariosDuplicados(mensaje = '', duplicados = [], titulo = 'Usuarios duplicados') {
+  const modal = document.getElementById('modalUsuariosDuplicados');
+  const textoTitulo = document.getElementById('modalUsuariosDuplicadosTitulo');
+  const textoMensaje = document.getElementById('modalUsuariosDuplicadosMensaje');
+  const lista = document.getElementById('listaUsuariosDuplicados');
+  if (!modal) return;
+
+  if (textoTitulo) textoTitulo.textContent = titulo;
+  if (textoMensaje) textoMensaje.textContent = mensaje || 'No se puede continuar con esta operación.';
+
+  if (lista) {
+    lista.innerHTML = '';
+    const registros = Array.isArray(duplicados) ? duplicados : [];
+    if (!registros.length) {
+      const vacio = document.createElement('div');
+      vacio.textContent = 'El backend no devolvió el detalle de los registros duplicados.';
+      lista.appendChild(vacio);
+    }
+    registros.forEach(duplicado => {
+      const usuario = duplicado && typeof duplicado === 'object' ? duplicado : {};
+      const fila = document.createElement('div');
+      const campos = Array.isArray(usuario.coincideEn) && usuario.coincideEn.length
+        ? ` [coincide por ${usuario.coincideEn.join(', ')}]`
+        : '';
+      fila.textContent = `${usuario.name || '-'} · C.C ${usuario.id || '-'} · ${usuario.telephone || '-'}${campos}`;
+      lista.appendChild(fila);
+    });
+  }
+
+  modal.classList.add('active');
+}
+
+function cerrarModalUsuariosDuplicados() {
+  document.getElementById('modalUsuariosDuplicados')?.classList.remove('active');
+}
+
+// Muestra los duplicados si el backend los devuelve; devuelve true si los mostró
+function avisarErrorUsuario(resultado) {
+  if (!resultado || resultado.status !== 'error') return false;
+  if (resultado.motivo === 'usuarios-duplicados') {
+    abrirModalUsuariosDuplicados(
+      resultado.message,
+      resultado.duplicados,
+      resultado.cedulaRegistrada === false ? 'Cédula no dada' : 'Usuarios duplicados'
+    );
+    return true;
+  }
+  alert(resultado.message || 'Ocurrió un error');
+  return true;
+}
+
 async function registrarUsuarioDesdeFormulario(evento) {
   if (evento) evento.preventDefault();
   const autorizado = await confirmarAutorizacionDatos();
@@ -93,10 +151,7 @@ async function registrarUsuarioDesdeFormulario(evento) {
     email
   });
 
-  if (resultado?.status === 'error') {
-    alert(resultado.message);
-    return;
-  }
+  if (avisarErrorUsuario(resultado)) return;
 
   const form = document.getElementById('usuarioForm');
   if (form) form.reset();
@@ -164,21 +219,17 @@ async function resolverUsuariosRecomendadosDetallados(recomendados = []) {
 
   if (!idsPendientes.length) return usuariosDetallados;
 
-  let mapaUsuarios = new Map(
-    (Array.isArray(cacheUsuariosRegistrados) ? cacheUsuariosRegistrados : [])
-      .map(usuario => [String(usuario.id || '').trim(), usuario])
-  );
-
-  const faltantes = idsPendientes.filter(idRef => !mapaUsuarios.has(idRef));
-  if (faltantes.length) {
-    const data = await getUsuariosRegistrados();
-    const todos = (Array.isArray(data) ? data : []).map(normalizarUsuarioRegistrado);
-    cacheUsuariosRegistrados = todos;
-    mapaUsuarios = new Map(todos.map(usuario => [String(usuario.id || '').trim(), usuario]));
-  }
+  // recommendedUsers guarda cédulas, así que se indexa por cédula
+  const todos = await getUsuariosRegistrados();
+  const porCedula = new Map();
+  todos.forEach(usuario => {
+    const cedula = String(usuario.id || '').trim();
+    if (cedula && !porCedula.has(cedula)) porCedula.set(cedula, normalizarUsuarioRegistrado(usuario));
+  });
 
   idsPendientes.forEach(idRef => {
-    const usuario = mapaUsuarios.get(idRef);
+    // Con cédula "." puede haber más de un usuario: se muestra el primero
+    const usuario = porCedula.get(String(idRef).trim());
     if (usuario) {
       usuariosDetallados.push(normalizarUsuarioRelacionado(usuario));
       return;
@@ -192,6 +243,7 @@ async function resolverUsuariosRecomendadosDetallados(recomendados = []) {
 async function actualizarBadgeUsuarios() {
   const badge = document.getElementById('nav-badge-usuarios');
   if (!badge) return;
+  await cargarUsuarios();
   const usuarios = await getUsuariosRegistrados();
   badge.textContent = Array.isArray(usuarios) ? usuarios.length : 0;
 }
@@ -203,9 +255,9 @@ async function mostrarUsuarios(filtro = '') {
   const empty = document.getElementById('emptyUsuarios');
   const tabla = document.getElementById('tablaUsuarios');
 
+  await cargarUsuarios();
   const data = await getUsuariosRegistrados();
   const todos = (Array.isArray(data) ? data : []).map(normalizarUsuarioRegistrado);
-  cacheUsuariosRegistrados = todos;
 
   const textoFiltro = String(filtro || '').trim().toUpperCase();
   let usuarios = todos;
@@ -219,19 +271,22 @@ async function mostrarUsuarios(filtro = '') {
   }
 
   usuarios = [...usuarios].reverse();
+  const visibles = usuarios.slice(0, limiteUsuariosActual);
 
   tbody.innerHTML = '';
   if (!usuarios.length) {
     empty.style.display = 'block';
     tabla.style.display = 'none';
+    actualizarBotonMostrarMasUsuarios(0);
     return;
   }
 
   empty.style.display = 'none';
   tabla.style.display = '';
 
-  usuarios.forEach(usuario => {
-    const idSafe = String(usuario.id || '').replace(/'/g, "\\'");
+  visibles.forEach(usuario => {
+    // Clave interna: la cedula, o el _id cuando la cedula se guardo como "."
+    const idSafe = claveUsuario(usuario).replace(/'/g, "\\'");
     const esAdmin = sessionStorage.getItem('ag_role') === 'admin';
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -239,20 +294,20 @@ async function mostrarUsuarios(filtro = '') {
       <td>${usuario.id || '-'}</td>
       <td>${usuario.telephone || '-'}</td>
       <td>${usuario.registrationDay || '-'}</td>
-      <td><button class="btn-compra btn-compra-alta" data-usuario-id="${idSafe}" onclick="abrirModalCompraUsuario(this, 'alta')" ${idSafe ? '' : 'disabled'}>Agregar compra alta</button></td>
-      <td><button class="btn-compra btn-compra-frecuente" data-usuario-id="${idSafe}" onclick="abrirModalCompraUsuario(this, 'frecuente')" ${idSafe ? '' : 'disabled'}>Agregar compra frecuente</button></td>
+      <td><button class="btn-compra btn-compra-alta" onclick="abrirModalCompraUsuario('${idSafe}', 'alta')" ${idSafe ? '' : 'disabled'}>Agregar compra alta</button></td>
+      <td><button class="btn-compra btn-compra-frecuente" onclick="abrirModalCompraUsuario('${idSafe}', 'frecuente')" ${idSafe ? '' : 'disabled'}>Agregar compra frecuente</button></td>
       <td>
         <div class="usuarios-acciones">
           ${esAdmin ? `
           <div class="usuarios-acciones-edicion">
-            <button class="btn-edit" data-usuario-id="${idSafe}" onclick="editarUsuarioRegistradoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✎ Editar</button>
-            <button class="btn-del" data-usuario-id="${idSafe}" onclick="eliminarUsuarioRegistradoDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>✕ Eliminar</button>
+            <button class="btn-edit" onclick="editarUsuarioRegistradoDesdeBoton('${idSafe}')" ${idSafe ? '' : 'disabled'}>✎ Editar</button>
+            <button class="btn-del" onclick="eliminarUsuarioRegistradoDesdeBoton('${idSafe}')" ${idSafe ? '' : 'disabled'}>✕ Eliminar</button>
           </div>` : ''}
           <div class="usuarios-acciones-principales">
-            <button class="btn-add-usuario" data-usuario-id="${idSafe}" onclick="abrirModalSeleccionarUsuarioContactar(this)" ${idSafe ? '' : 'disabled'}>
+            <button class="btn-add-usuario" onclick="abrirModalSeleccionarUsuarioContactar('${idSafe}')" ${idSafe ? '' : 'disabled'}>
               + Agregar
             </button>
-            <button class="btn-ver-recomendados" data-usuario-id="${idSafe}" onclick="verUsuariosRecomendadosDesdeBoton(this)" ${idSafe ? '' : 'disabled'}>
+            <button class="btn-ver-recomendados" onclick="verUsuariosRecomendadosDesdeBoton('${idSafe}')" ${idSafe ? '' : 'disabled'}>
               👁 Ver (${(usuario.recommendedUsers || []).length})
             </button>
           </div>
@@ -261,32 +316,45 @@ async function mostrarUsuarios(filtro = '') {
     tbody.appendChild(tr);
   });
 
+  actualizarBotonMostrarMasUsuarios(usuarios.length - visibles.length);
   actualizarBadgeUsuarios();
 }
 
+function actualizarBotonMostrarMasUsuarios(quedan = 0) {
+  const boton = document.getElementById('btnMostrarMasUsuarios');
+  if (!boton) return;
+  const restantes = Number(quedan) || 0;
+  if (restantes > 0) {
+    boton.textContent = `Mostrar más (${restantes})`;
+    boton.style.display = 'inline-flex';
+    return;
+  }
+  boton.style.display = 'none';
+}
+
+function mostrarMasUsuarios() {
+  limiteUsuariosActual += LIMITE_USUARIOS;
+  mostrarUsuarios(document.getElementById('buscadorUsuarios')?.value || '');
+}
+
 function filtrarUsuarios() {
-  mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
+  const texto = document.getElementById('buscadorUsuarios')?.value || '';
+  if (texto !== filtroUsuariosAplicado) limiteUsuariosActual = LIMITE_USUARIOS;
+  clearTimeout(temporizadorFiltroUsuarios);
+  temporizadorFiltroUsuarios = setTimeout(() => {
+    filtroUsuariosAplicado = texto;
+    mostrarUsuarios(texto);
+  }, 200);
 }
 
 function limpiarBuscadorUsuarios() {
   const buscador = document.getElementById('buscadorUsuarios');
   buscador.value = '';
+  limiteUsuariosActual = LIMITE_USUARIOS;
+  filtroUsuariosAplicado = '';
+  clearTimeout(temporizadorFiltroUsuarios);
   mostrarUsuarios();
   buscador.focus();
-}
-
-async function sumarPuntosUsuarioDesdeBoton(boton) {
-  const usuarioId = obtenerIdUsuarioDesdeClick(boton);
-  if (!usuarioId) return;
-  await actualizarPuntosUsuario(usuarioId, 1);
-  mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
-}
-
-async function restarPuntosUsuarioDesdeBoton(boton) {
-  const usuarioId = obtenerIdUsuarioDesdeClick(boton);
-  if (!usuarioId) return;
-  await actualizarPuntosUsuario(usuarioId, -1);
-  mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
 }
 
 function cerrarModalCompraUsuario() {
@@ -298,9 +366,9 @@ function cerrarModalCompraUsuario() {
   compraTipoPendiente = null;
 }
 
-function abrirModalCompraUsuario(boton, tipo) {
-  const usuarioId = obtenerIdUsuarioDesdeClick(boton);
-  if (!usuarioId) return;
+function abrirModalCompraUsuario(usuarioId, tipo) {
+  const id = String(usuarioId || '').trim();
+  if (!id) return;
 
   const modal = document.getElementById('modalCompraUsuario');
   const titulo = document.getElementById('modalCompraUsuarioTitulo');
@@ -309,7 +377,7 @@ function abrirModalCompraUsuario(boton, tipo) {
   if (!modal || !titulo || !mensaje || !input) return;
 
   const tipoNormalizado = String(tipo || '').trim();
-  compraUsuarioIdPendiente = usuarioId;
+  compraUsuarioIdPendiente = id;
   compraTipoPendiente = tipoNormalizado;
 
   if (tipoNormalizado === 'alta') {
@@ -345,13 +413,13 @@ async function guardarCompraUsuarioRegistrado() {
   cerrarModalCompraUsuario();
 }
 
-async function verUsuariosRecomendadosDesdeBoton(boton) {
-  const usuarioId = obtenerIdUsuarioDesdeClick(boton);
-  if (!usuarioId) return;
+async function verUsuariosRecomendadosDesdeBoton(usuarioId) {
+  const id = String(usuarioId || '').trim();
+  if (!id) return;
 
-  const usuarioBase = cacheUsuariosRegistrados.find(u => String(u.id) === usuarioId);
-  const nombreUsuario = usuarioBase?.name || 'Usuario';
-  let recomendados = await obtenerUsuariosRecomendadosUsuario(usuarioId);
+  const usuarioBase = normalizarUsuarioRegistrado(store.usuarios.get(id) || {});
+  const nombreUsuario = usuarioBase.name || 'Usuario';
+  let recomendados = await obtenerUsuariosRecomendadosUsuario(id);
   if (!Array.isArray(recomendados) || !recomendados.length) {
     recomendados = Array.isArray(usuarioBase?.recommendedUsers) ? usuarioBase.recommendedUsers : [];
   }
@@ -430,7 +498,7 @@ async function guardarEdicionUsuarioRegistrado() {
   const registrationInput = String(document.getElementById('editUsuarioFechaRegistro')?.value || '').trim();
   if (!name || !idNew || !telephone || !registrationInput) return;
 
-  await editarUsuarioRegistrado(usuarioIdOriginal, {
+  const resultadoEdicion = await editarUsuarioRegistrado(usuarioIdOriginal, {
     name: name.toUpperCase(),
     idNew,
     registrationDay: formatearRegistrationDayComoTexto(registrationInput),
@@ -439,33 +507,35 @@ async function guardarEdicionUsuarioRegistrado() {
 
   });
 
+  if (avisarErrorUsuario(resultadoEdicion)) return;
+
   cerrarModalEditarUsuario();
   mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
 }
 
-async function editarUsuarioRegistradoDesdeBoton(boton) {
-  const usuarioId = obtenerIdUsuarioDesdeClick(boton);
-  if (!usuarioId) return;
+async function editarUsuarioRegistradoDesdeBoton(usuarioId) {
+  const id = String(usuarioId || '').trim();
+  if (!id) return;
 
-  const usuarioActual = cacheUsuariosRegistrados.find(u => String(u.id) === usuarioId);
+  const usuarioActual = store.usuarios.get(id);
   if (!usuarioActual) return;
-  abrirModalEditarUsuario(usuarioActual);
+  abrirModalEditarUsuario(normalizarUsuarioRegistrado(usuarioActual));
 }
 
-async function eliminarUsuarioRegistradoDesdeBoton(boton) {
-  const usuarioId = obtenerIdUsuarioDesdeClick(boton);
-  if (!usuarioId) return;
+async function eliminarUsuarioRegistradoDesdeBoton(usuarioId) {
+  const id = String(usuarioId || '').trim();
+  if (!id) return;
 
-  const usuarioActual = cacheUsuariosRegistrados.find(u => String(u.id) === usuarioId);
+  const usuarioActual = store.usuarios.get(id);
   const nombreUsuario = String(usuarioActual?.name || 'este usuario').trim();
-  usuarioIdPendienteEliminar = usuarioId;
+  usuarioIdPendienteEliminar = id;
 
   const texto = document.getElementById('modalEliminarUsuarioTexto');
   const botonConfirmar = document.getElementById('btnConfirmarEliminarUsuario');
   const modal = document.getElementById('modalEliminarUsuario');
   if (!texto || !botonConfirmar || !modal) return;
 
-  texto.textContent = `¿Eliminar a "${nombreUsuario}" (C.C ${usuarioId})? Esta acción no se puede deshacer.`;
+  texto.textContent = `¿Eliminar a "${nombreUsuario}" (C.C ${id})? Esta acción no se puede deshacer.`;
   botonConfirmar.onclick = confirmarEliminarUsuarioRegistrado;
   modal.classList.add('active');
 }
@@ -481,7 +551,11 @@ async function confirmarEliminarUsuarioRegistrado() {
   const usuarioId = usuarioIdPendienteEliminar;
   cerrarModalEliminarUsuario();
 
-  await eliminarUsuarioRegistrado(usuarioId);
+  const resultado = await eliminarUsuarioRegistrado(usuarioId);
+  if (resultado?.status === 'error') {
+    avisarErrorUsuario(resultado);
+    return;
+  }
   mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
 }
 
@@ -489,10 +563,10 @@ async function confirmarEliminarUsuarioRegistrado() {
 let usuarioIdDelContextoARecomendar = null;
 let usuariosDisponiblesCache = [];
 
-async function abrirModalSeleccionarUsuarioContactar(boton) {
-  const usuarioId = obtenerIdUsuarioDesdeClick(boton);
-  if (!usuarioId) return;
-  usuarioIdDelContextoARecomendar = usuarioId;
+async function abrirModalSeleccionarUsuarioContactar(usuarioId) {
+  const id = String(usuarioId || '').trim();
+  if (!id) return;
+  usuarioIdDelContextoARecomendar = id;
   await refrescarModalRecomendados();
   // renderModalSeleccionarUsuarioContactar ya abre el modal internamente
 }
@@ -520,11 +594,13 @@ function renderModalSeleccionarUsuarioContactar(usuarios = []) {
   tabla.style.display = '';
 
   usuarios.forEach(usuario => {
-    const usuarioId = String(usuario.id || '').trim();
+    // Clave interna del store (la cédula, o el _id si la cédula es ".")
+    const usuarioId = claveUsuario(usuario);
+    const usuarioCedula = String(usuario.id || '').trim();
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${usuario.name || '-'}</td>
-      <td>${usuarioId || '-'}</td>
+      <td>${usuarioCedula || '-'}</td>
       <td>${usuario.telephone || '-'}</td>
       <td>
         <button class="btn-add-action" onclick="confirmarContactarUsuario('${usuarioId.replace(/'/g, "\\'")}')">
@@ -566,11 +642,13 @@ function filtrarUsuariosDisponibles() {
   tabla.style.display = '';
 
   usuariosFiltrados.forEach(usuario => {
-    const usuarioId = String(usuario.id || '').trim();
+    // Clave interna del store (la cédula, o el _id si la cédula es ".")
+    const usuarioId = claveUsuario(usuario);
+    const usuarioCedula = String(usuario.id || '').trim();
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${usuario.name || '-'}</td>
-      <td>${usuarioId || '-'}</td>
+      <td>${usuarioCedula || '-'}</td>
       <td>${usuario.telephone || '-'}</td>
       <td>
         <button class="btn-add-action" onclick="confirmarContactarUsuario('${usuarioId.replace(/'/g, "\\'")}')">
@@ -588,11 +666,26 @@ async function confirmarContactarUsuario(usuarioIdRecomendar) {
   cerrarModalSeleccionarUsuarioContactar();
 
   // Marcar al usuario recomendado como "recommended: true"
-  await marcarUsuarioComoRecomendado(usuarioIdRecomendar);
+  const resultadoMarcar = await marcarUsuarioComoRecomendado(usuarioIdRecomendar);
+  if (avisarErrorUsuario(resultadoMarcar)) {
+    mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
+    return;
+  }
 
   // Agregar el id del usuario recomendado al usuario que lo recomendó
-  await agregarUsuarioRecomendadoAlUsuario(usuarioIdOrigen, usuarioIdRecomendar);
-  await agregarUsuarioQueMeRecomendo(usuarioIdOrigen, usuarioIdRecomendar);
+  const resultado = await agregarUsuarioRecomendadoAlUsuario(usuarioIdOrigen, usuarioIdRecomendar);
+  if (avisarErrorUsuario(resultado)) {
+    mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
+    return;
+  }
+
+  // Registrar el vínculo recíproco
+  const resultadoReciproco = await agregarUsuarioQueMeRecomendo(usuarioIdOrigen, usuarioIdRecomendar);
+  if (avisarErrorUsuario(resultadoReciproco)) {
+    mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
+    return;
+  }
+
   mostrarUsuarios(document.getElementById('buscadorUsuarios').value);
 
   usuarioIdDelContextoARecomendar = null;
