@@ -1,6 +1,6 @@
 
 // const API_BACKEND_URL = "http://192.168.0.132:3000/api/";
-const API_BACKEND_URL = "http://localhost:3000/api/";
+const API_BACKEND_URL = "https://localtestb.juanjodev.win/api/";
 
 const documento_autorizacion_datos_url = "https://docs.google.com/document/d/1JuuQcjqJRRoOjid0BEr6Yz_FpABXftCkNRBVhflbGLI/edit?usp=sharing";
 
