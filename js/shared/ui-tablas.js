@@ -169,7 +169,9 @@ async function mostrarGeneral(filtro = '') {
       const placa = String(c.plate || '').toUpperCase();
       const servicio = String(c.service || '').toUpperCase();
       const telefono = String(c.telephone || '');
-      return nombre.includes(f) || placa.includes(f) || servicio.includes(f) || telefono.includes(filtro.trim());
+      const entry = String(c.entryDate || '').toUpperCase();
+      const next = String(c.nextContact || '').toUpperCase();
+      return nombre.includes(f) || placa.includes(f) || servicio.includes(f) || telefono.includes(filtro.trim()) || entry.includes(f) || next.includes(f);
     });
   }
   cl.sort((a, b) => String(a.nextContact).localeCompare(String(b.nextContact)));
@@ -203,11 +205,12 @@ function actualizarBotonMostrarMasGeneral(quedan = 0) {
 
 function mostrarMasGeneral() {
   limiteGeneralActual += LIMITE_GENERAL;
-  mostrarGeneral(document.getElementById('buscadorGeneral')?.value || '');
+  const texto = document.getElementById('buscadorGeneral')?.value || '';
+  mostrarGeneral(texto);
 }
 
 function filtrarGeneral() {
-  const texto = document.getElementById('buscadorGeneral').value;
+  const texto = document.getElementById('buscadorGeneral')?.value || '';
   if (texto !== filtroGeneralAplicado) limiteGeneralActual = LIMITE_GENERAL;
   clearTimeout(temporizadorFiltroGeneral);
   temporizadorFiltroGeneral = setTimeout(() => {
@@ -217,9 +220,13 @@ function filtrarGeneral() {
 }
 function limpiarBuscadorGeneral() {
   document.getElementById('buscadorGeneral').value = '';
+
   limiteGeneralActual = LIMITE_GENERAL;
   filtroGeneralAplicado = '';
   clearTimeout(temporizadorFiltroGeneral);
   mostrarGeneral();
-  document.getElementById('buscadorGeneral').focus();
+  document.getElementById('buscadorGeneral')?.focus();
 }
+window.limpiarBuscadorGeneral = limpiarBuscadorGeneral;
+window.mostrarMasGeneral = mostrarMasGeneral;
+window.filtrarGeneral = filtrarGeneral;
