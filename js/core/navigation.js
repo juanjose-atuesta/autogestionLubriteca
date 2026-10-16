@@ -24,8 +24,8 @@ function seleccionarTab(tab) {
     usuarios: 'Usuarios',
     agenda: 'Agenda',
     'citas-programadas': 'Citas programadas',
-    pedidos: 'Pedidos (inhabilitado)',
-    'pedidos-registrados': 'Pedidos registrados (inhabilitado)',
+    pedidos: 'Pedidos',
+    'pedidos-registrados': 'Pedidos registrados',
     trabajadores: 'trabajadores'
   };
   document.getElementById('tab-indicator').textContent = t[tab];
