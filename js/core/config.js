@@ -2,7 +2,7 @@
 // ═══════════ CONFIGURACIÓN DEL BACKEND ═══════════
 // URL pública del backend en producción (Render).
 // ⚠️ Reemplaza el placeholder por la URL real que Render te asigne al desplegar el backend.
-const PROD_API_BACKEND_URL = "https://TU-BACKEND.onrender.com/api/";
+const PROD_API_BACKEND_URL = "https://autogestion-lubriteca-backend.onrender.com/api/";
 
 // Se considera entorno local si se abre desde localhost o desde una IP privada de la LAN.
 const esEntornoLocal =
