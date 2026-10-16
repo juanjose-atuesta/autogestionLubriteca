@@ -1,6 +1,19 @@
 
-const API_BACKEND_URL = "http://192.168.0.132:3000/api/";
-// const API_BACKEND_URL = "https://localtestb.juanjodev.win/api/";
+// ═══════════ CONFIGURACIÓN DEL BACKEND ═══════════
+// URL pública del backend en producción (Render).
+// ⚠️ Reemplaza el placeholder por la URL real que Render te asigne al desplegar el backend.
+const PROD_API_BACKEND_URL = "https://TU-BACKEND.onrender.com/api/";
+
+// Se considera entorno local si se abre desde localhost o desde una IP privada de la LAN.
+const esEntornoLocal =
+  ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname) ||
+  /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(window.location.hostname);
+
+// En local apunta al backend local (puerto 3000, misma IP/equipo que sirve el frontend);
+// en producción apunta al backend de Render.
+const API_BACKEND_URL = esEntornoLocal
+  ? `http://${window.location.hostname}:3000/api/`
+  : PROD_API_BACKEND_URL;
 
 const documento_autorizacion_datos_url = "https://docs.google.com/document/d/1JuuQcjqJRRoOjid0BEr6Yz_FpABXftCkNRBVhflbGLI/edit?usp=sharing";
 
